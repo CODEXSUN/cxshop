@@ -1,0 +1,53 @@
+{
+  "name": "cxshop",
+  "version": "1.1.1",
+  "private": true,
+  "description": "CXShop modular multi-vendor commerce platform",
+  "packageManager": "npm@10.9.2",
+  "workspaces": [
+    "apps/*/*",
+    "packages/*",
+    "tools/*"
+  ],
+  "scripts": {
+    "dev": "node tools/dev-stack.mjs",
+    "dev:api": "npm run dev -w @cxshop/platform-api",
+    "dev:worker": "npm run dev:worker -w @cxshop/platform-api",
+    "dev:web": "npm run dev -w @cxshop/platform-web",
+    "clean": "node tools/build-artifacts.mjs clean",
+    "build": "npm run clean && npm run build --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "check": "npm run typecheck && npm run test && npm run check:boundaries && npm run check:artifacts",
+    "check:artifacts": "node tools/build-artifacts.mjs check",
+    "check:boundaries": "node tools/check-module-boundaries.mjs",
+    "db:migrate": "npm run db:migrate -w @cxshop/platform-api",
+    "db:seed": "npm run db:seed -w @cxshop/platform-api",
+    "setup:base": "node tools/configure-env.mjs",
+    "env:check": "node tools/configure-env.mjs --check",
+    "env:example:check": "node tools/configure-env.mjs --check --example",
+    "test:env": "node --test tools/env-contract.test.mjs",
+    "infrastructure:check": "node tools/shared-infrastructure.mjs --config-only",
+    "infrastructure:check:live": "node tools/shared-infrastructure.mjs",
+    "version:show": "node tools/version/version.mjs show",
+    "version:bump": "node tools/version-bump.mjs",
+    "check:versions": "node tools/check-versions.mjs",
+    "github:now": "node tools/github-helper.mjs"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "tsx": "^4.20.0",
+    "typescript": "^5.9.0"
+  },
+  "allowScripts": {
+    "argon2": true,
+    "esbuild": true,
+    "sharp": true
+  },
+  "engines": {
+    "node": ">=22.0.0",
+    "npm": ">=10.0.0"
+  }
+}

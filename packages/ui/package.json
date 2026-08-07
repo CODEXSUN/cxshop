@@ -1,0 +1,24 @@
+{
+  "name": "@cxshop/ui",
+  "version": "1.1.1",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./styles.css": "./src/styles.css",
+    "./auth-login.css": "./src/auth-login.css",
+    "./auth-layout-fixes.css": "./src/auth-layout-fixes.css",
+    "./portal-switcher.css": "./src/portal-switcher.css",
+    "./state-pages.css": "./src/state-pages.css",
+    "./business-assist.css": "./src/business-assist.css"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "lucide-react": "^0.468.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {}
+}

@@ -1,0 +1,6 @@
+{
+  "name": "@cxshop/version-tools",
+  "version": "1.1.1",
+  "private": true,
+  "type": "module"
+}

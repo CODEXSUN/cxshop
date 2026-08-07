@@ -1,0 +1,36 @@
+{
+  "name": "@cxshop/platform-api",
+  "version": "1.1.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/main.ts",
+    "dev:worker": "tsx watch src/worker.ts",
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "test": "node --import tsx --test src/**/*.test.ts",
+    "start": "node ../../../dist/platform/api/main.js",
+    "db:migrate": "tsx src/database/cli.ts migrate",
+    "db:seed": "tsx src/database/cli.ts seed"
+  },
+  "dependencies": {
+    "@cxshop/contracts": "*",
+    "@cxshop/framework": "*",
+    "@fastify/cookie": "^11.0.0",
+    "@fastify/cors": "^11.0.0",
+    "@fastify/helmet": "^13.0.0",
+    "@fastify/rate-limit": "^10.3.0",
+    "@fastify/swagger": "^9.5.0",
+    "@scalar/fastify-api-reference": "^1.37.0",
+    "argon2": "^0.44.0",
+    "bullmq": "^6.0.8",
+    "fastify": "^5.6.0",
+    "graphql": "^16.11.0",
+    "ioredis": "^5.7.0",
+    "jose": "^6.0.0",
+    "kysely": "^0.28.8",
+    "openai": "^7.4.0",
+    "zod": "^4.0.0"
+  },
+  "devDependencies": {}
+}
