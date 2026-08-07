@@ -12,11 +12,14 @@
 - [x] Add environment-gated auto-login, persisted portal switching, and desk-aware expiry redirects.
 - [x] Adopt Kysely for typed repositories, ordered migrations, and repeatable foundation seeds.
 - [x] Add disabled-by-default OpenAI Business Assist with durable requests, worker retries, result polling, and provider isolation.
+- [x] Add the Catalog schema, repeatable sample catalog, public reads, Admin writes, audit records, outbox events, and SSR storefront routes.
+- [x] Add the interim WhatsApp enquiry, manual confirmation, billing, ready-for-collection, and collected workflow.
 
 Exit when all four portals authenticate against live persistence with correct isolated scopes.
 
 ## Stage 1: Single-vendor transaction
 
+- [x] Ship a responsive enquiry-to-store-collection flow without online checkout, payment, shipping, or inventory claims.
 - Vendor onboarding, verification, membership, and permission workflows
 - Catalog products and variants, vendor offers, pricing, and atomic inventory
 - Store discovery, cart, checkout, customer order, and seller order

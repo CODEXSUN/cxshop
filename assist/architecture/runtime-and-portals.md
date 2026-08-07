@@ -13,6 +13,8 @@ CXShop is a modular monolith with one transactional MariaDB database, one Next.j
 
 Local development uses web port `7520` and API port `7510`. Production uses the same two-runtime boundary behind its public origin or reverse proxy.
 
+API startup checks that its port is available before database work. It creates the owned CXShop database when missing, applies ordered migrations, and runs repeatable development seeds before listening. Production startup applies migrations but never creates development identities or sample catalog data.
+
 Browser requests use the same-origin `/api/*` web path. Next.js proxies that path to the configured API origin so cookies and authentication do not depend on whether a developer opens `localhost` or `127.0.0.1`.
 
 ## Portal ownership

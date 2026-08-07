@@ -8,7 +8,6 @@ export const requiredEnvironmentKeys = [
   "RUNTIME_LOCATION",
   "SHARED_DOCKER_NETWORK",
   "SHARED_CREDENTIALS_READY",
-  "API_HOST",
   "API_PORT",
   "WEB_PORT",
   "API_URL",
@@ -16,7 +15,9 @@ export const requiredEnvironmentKeys = [
   "RATE_LIMIT_MAX",
   "RATE_LIMIT_WINDOW",
   "GRAPHQL_QUERY_MAX_BYTES",
-  "WEB_URL",
+  "STORE_NAME",
+  "STORE_WHATSAPP",
+  "STORE_ADDRESS",
   "PUBLIC_URL",
   "DEV_LOGIN_AUTO",
   "DEV_LOGIN_STORE_EMAIL",
@@ -112,7 +113,6 @@ function validatePorts(values, errors) {
 function validateOrigins(values, errors) {
   for (const key of [
     "API_URL",
-    "WEB_URL",
     "PUBLIC_URL"
   ]) {
     try {
@@ -178,9 +178,6 @@ function validateProduction(values, errors) {
   }
   if (values.LOGIN_COOKIE_SECURE !== "1") {
     errors.push("Production requires a secure session cookie.");
-  }
-  if (values.API_HOST === "127.0.0.1") {
-    errors.push("Production cannot use the local API host default.");
   }
   if (["manual", "console"].includes(values.PAYMENT_DRIVER)) {
     errors.push("Production requires a configured payment driver.");

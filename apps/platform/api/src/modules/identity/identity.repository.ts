@@ -38,7 +38,7 @@ export class IdentityRepository {
     return {
       ...identity,
       portal: row.portal as Portal,
-      permissions: JSON.parse(row.permissions) as string[],
+      permissions: parsePermissions(row.permissions),
       ...(vendorId ? { vendorId } : {})
     };
   }
@@ -53,4 +53,12 @@ export class IdentityRepository {
       ...(identity.vendorId ? { vendorId: identity.vendorId } : {})
     };
   }
+}
+
+function parsePermissions(value: string): string[] {
+  const parsed: unknown = typeof value === "string" ? JSON.parse(value) : value;
+  if (!Array.isArray(parsed) || !parsed.every(permission => typeof permission === "string")) {
+    throw new Error("Persisted portal permissions are invalid");
+  }
+  return parsed;
 }

@@ -35,6 +35,23 @@ The order stores immutable commercial snapshots:
 
 Later catalog or vendor changes must not rewrite an accepted order.
 
+## Current walk-in sales phase
+
+The public store accepts a product enquiry and opens a customer-approved WhatsApp conversation. This is not an online checkout and it does not reserve inventory or accept payment.
+
+The Admin desk owns the current order path:
+
+1. Receive the enquiry.
+2. Confirm availability and the agreed total manually.
+3. Book the order with an immutable product snapshot.
+4. Record the bill number.
+5. Mark the product ready for store collection and send the collection note through WhatsApp.
+6. Mark the order collected when the customer receives it in store.
+
+Every accepted transition records its actor, reason, correlation ID, audit event, and outbox event. Customer scope comes from the persisted enquiry; an Admin request cannot substitute it.
+
+Future cart, checkout, payment, inventory reservation, delivery, and multi-vendor fulfilment must be added as new owned workflows behind public contracts. They must not reinterpret enquiries as paid orders or rewrite completed walk-in records.
+
 ## Inventory model
 
 Track these quantities separately:

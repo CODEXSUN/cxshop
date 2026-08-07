@@ -1,3 +1,10 @@
 import { createApp } from "./app";
-const { app, config } = await createApp();
-await app.listen({ host: "0.0.0.0", port: config.API_PORT });
+import { loadConfig } from "./config";
+import { bootstrapDatabase } from "./database/lifecycle";
+import { preflightPort, startServer } from "./startup";
+
+const config = loadConfig();
+await preflightPort("0.0.0.0", config.API_PORT);
+await bootstrapDatabase(config);
+const { app } = await createApp();
+await startServer(app, "0.0.0.0", config.API_PORT);

@@ -12,8 +12,8 @@
   "scripts": {
     "dev": "node tools/dev-stack.mjs",
     "dev:api": "npm run dev -w @cxshop/platform-api",
-    "dev:worker": "npm run dev:worker -w @cxshop/platform-api",
     "dev:web": "npm run dev -w @cxshop/platform-web",
+    "dev:worker": "npm run dev:worker -w @cxshop/platform-api",
     "clean": "node tools/build-artifacts.mjs clean",
     "build": "npm run clean && npm run build --workspaces --if-present",
     "typecheck": "npm run typecheck --workspaces --if-present",
@@ -23,6 +23,7 @@
     "check:boundaries": "node tools/check-module-boundaries.mjs",
     "db:migrate": "npm run db:migrate -w @cxshop/platform-api",
     "db:seed": "npm run db:seed -w @cxshop/platform-api",
+    "db:bootstrap": "npm run db:bootstrap -w @cxshop/platform-api",
     "setup:base": "node tools/configure-env.mjs",
     "env:check": "node tools/configure-env.mjs --check",
     "env:example:check": "node tools/configure-env.mjs --check --example",

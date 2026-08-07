@@ -10,7 +10,12 @@
     "./auth-layout-fixes.css": "./src/auth-layout-fixes.css",
     "./portal-switcher.css": "./src/portal-switcher.css",
     "./state-pages.css": "./src/state-pages.css",
-    "./business-assist.css": "./src/business-assist.css"
+    "./business-assist.css": "./src/business-assist.css",
+    "./catalog.css": "./src/catalog.css",
+    "./mega-menu.css": "./src/mega-menu.css",
+    "./product-slider.css": "./src/product-slider.css",
+    "./backoffice.css": "./src/backoffice.css",
+    "./walk-in-sales.css": "./src/walk-in-sales.css"
   },
   "scripts": {
     "typecheck": "tsc --noEmit"

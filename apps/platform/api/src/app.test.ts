@@ -21,3 +21,21 @@ test("publishes OpenAPI and Scalar documentation", async () => {
   assert.ok([200, 301, 302].includes(docs.statusCode));
   await app.close();
 });
+
+test("accepts the development localhost CORS preflight", async () => {
+  const { app } = await createApp();
+  const response = await app.inject({
+    method: "OPTIONS",
+    url: "/v1/auth/development-login",
+    headers: {
+      origin: "http://localhost:7520",
+      "access-control-request-method": "POST",
+      "access-control-request-headers": "content-type"
+    }
+  });
+  assert.equal(response.statusCode, 204);
+  assert.equal(response.headers["access-control-allow-origin"], "http://localhost:7520");
+  assert.match(String(response.headers["access-control-allow-methods"]), /OPTIONS/u);
+  assert.equal(response.headers["access-control-allow-credentials"], "true");
+  await app.close();
+});

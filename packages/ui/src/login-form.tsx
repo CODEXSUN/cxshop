@@ -31,8 +31,8 @@ export function LoginForm({ description, destination, portal, title }: LoginForm
     void authenticate("/v1/auth/development-login", { portal })
       .then(response => response.ok
         ? window.location.replace(destination)
-        : undefined)
-      .catch(() => undefined)
+        : setError(response.status === 503 ? "The development database is offline." : "Development auto-login is unavailable."))
+      .catch(() => setError("The API is unavailable."))
       .finally(() => setLoading(false));
   }, [destination, portal]);
 

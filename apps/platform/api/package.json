@@ -11,7 +11,8 @@
     "test": "node --import tsx --test src/**/*.test.ts",
     "start": "node ../../../dist/platform/api/main.js",
     "db:migrate": "tsx src/database/cli.ts migrate",
-    "db:seed": "tsx src/database/cli.ts seed"
+    "db:seed": "tsx src/database/cli.ts seed",
+    "db:bootstrap": "tsx src/database/cli.ts bootstrap"
   },
   "dependencies": {
     "@cxshop/contracts": "*",
@@ -29,6 +30,7 @@
     "ioredis": "^5.7.0",
     "jose": "^6.0.0",
     "kysely": "^0.28.8",
+    "mysql2": "^3.15.3",
     "openai": "^7.4.0",
     "zod": "^4.0.0"
   },

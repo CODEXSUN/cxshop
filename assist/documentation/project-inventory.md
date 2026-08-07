@@ -26,10 +26,17 @@ Last reviewed: 2026-08-07.
 - Root-owned build artifacts: `.next/` for the unified web runtime and `dist/platform/api/` for the API
 - Root artifact cleanup and boundary check; workspace-local build output is rejected
 - Human-readable environment contract grouped by `API_*`, `WEB_*`, `DB_*`, `LOGIN_*`, `DEV_LOGIN_*`, `REDIS_*`, and `OPENAI_*`
+- Catalog-owned MariaDB schema, repeatable development data, public and Admin APIs, audit records, and transactional outbox events
+- Database-backed storefront home, category, and product pages with metadata, structured product data, and dynamic sitemap entries
+- Computer-store test catalog with laptops, desktops, monitors, components, storage, networking, accessories, spares, remote product images, and search
+- Admin Catalog workspace with category and product creation, publishing status, and live record lists
+- Responsive product enquiry UI for mobile, medium, and large screens with customer-approved WhatsApp hand-off
+- Admin Walk-in Orders workspace for confirmation, order booking, bill recording, collection readiness, and collection completion
+- Walk-in Sales-owned migration, state machine, persistence, audit history, transactional outbox events, public API, and protected Admin API
 
 ## Verification state
 
-The source above is implemented but is not yet live-database or browser verified. Do not describe catalog, cart, checkout, orders, payments, fulfilment, returns, settlements, CXApp/Frappe connectors, or production deployment as implemented.
+Catalog and walk-in sales migrations are verified against the development MariaDB, including repeated bootstrap. Online cart, checkout, payment, inventory reservation, shipping, returns, settlements, CXApp/Frappe connectors, and production deployment are not implemented.
 
 ## Workspace
 

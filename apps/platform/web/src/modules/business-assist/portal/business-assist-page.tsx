@@ -1,9 +1,8 @@
 "use client";
 
 import { useEffect, useState, type FormEvent } from "react";
-import { PortalShell } from "@cxshop/ui";
 
-export function BusinessAssistPage({ portal }: { portal: "admin" | "sa" }) {
+export function BusinessAssistPage() {
   const [enabled, setEnabled] = useState<boolean | null>(null);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
@@ -58,8 +57,7 @@ export function BusinessAssistPage({ portal }: { portal: "admin" | "sa" }) {
     }
   }
 
-  return <PortalShell accent={portal === "sa" ? "#69498b" : "#405d8b"} eyebrow="OpenAI integration" title="Business Assist">
-    <section className="surface">
+  return <section className="surface">
       <h2>Ask for marketplace guidance</h2>
       <p>Business Assist uses only the context you submit. It cannot execute business actions or access private modules directly.</p>
       <p role="status">{enabled === null ? "Checking connectivity..." : enabled ? "OpenAI adapter enabled" : "OpenAI adapter disabled in environment"}</p>
@@ -70,8 +68,7 @@ export function BusinessAssistPage({ portal }: { portal: "admin" | "sa" }) {
         {message && <p role="status">{message}</p>}
       </form>
       {advice && <article className="assist-result"><h2>Guidance</h2><p>{advice}</p></article>}
-    </section>
-  </PortalShell>;
+  </section>;
 }
 
 function api(path: string, init?: RequestInit): Promise<Response> {

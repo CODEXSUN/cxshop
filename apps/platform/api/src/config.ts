@@ -13,6 +13,9 @@ const configSchema = z.object({
   RATE_LIMIT_MAX: z.coerce.number().int().positive(),
   RATE_LIMIT_WINDOW: z.string().min(1),
   GRAPHQL_QUERY_MAX_BYTES: z.coerce.number().int().positive(),
+  STORE_NAME: z.string().min(2),
+  STORE_WHATSAPP: z.string().regex(/^[0-9]{8,15}$/),
+  STORE_ADDRESS: z.string().min(5),
   DB_URL: z.string().min(1).optional(),
   DB_HOST: z.string().min(1),
   DB_PORT: z.coerce.number().int().positive(),
@@ -32,7 +35,7 @@ const configSchema = z.object({
   DEV_LOGIN_VENDOR_EMAIL: z.string().email(),
   DEV_LOGIN_ADMIN_EMAIL: z.string().email(),
   DEV_LOGIN_SA_EMAIL: z.string().email(),
-  ALLOWED_WEB_URLS: z.string().min(1),
+  PUBLIC_URL: z.string().url(),
   OPENAI_ENABLED: z.enum(["0", "1"]),
   OPENAI_API_KEY: z.string().optional(),
   OPENAI_URL: z.string().url(),
@@ -46,8 +49,20 @@ export function loadConfig() {
   const databaseUrl = config.DB_URL ?? `mysql://${encodeURIComponent(config.DB_USER)}:${encodeURIComponent(config.DB_PASSWORD)}@${config.DB_HOST}:${config.DB_PORT}/${config.DB_NAME}`;
   return {
     ...config,
-    allowedWebUrls: config.ALLOWED_WEB_URLS.split(",").map(value => value.trim()),
+    allowedWebUrls: webOrigins(config.PUBLIC_URL, config.NODE_ENV),
     authSecret: config.LOGIN_SECRET,
     databaseUrl
   };
+}
+
+function webOrigins(publicUrl: string, environment: "development" | "test" | "production"): string[] {
+  const origins = new Set([new URL(publicUrl).origin]);
+  if (environment !== "production") {
+    const url = new URL(publicUrl);
+    if (["127.0.0.1", "localhost"].includes(url.hostname)) {
+      url.hostname = url.hostname === "localhost" ? "127.0.0.1" : "localhost";
+      origins.add(url.origin);
+    }
+  }
+  return [...origins];
 }
