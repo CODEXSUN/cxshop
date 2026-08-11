@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import {
+  getStorefrontAnnouncement,
   getStorefrontDiscovery,
   getStorefrontProduct,
   getStorefrontSiteNavigation,
@@ -7,16 +8,19 @@ import {
   listStorefrontProducts
 } from "./storefront.services";
 import {
+  BackToTopButton,
   BrandsSection,
   BlogSolutionsSection,
   CatalogFilters,
   HeroSlider,
+  HomeClosingCta,
   ProductCard,
   PromotionsSection,
-  StoreFooter,
-  StoreHeader
+  StoreFooter
 } from "./storefront.components";
+import { StoreHeader } from "./storefront.navigation";
 import type {
+  StorefrontAnnouncement,
   StorefrontDiscovery,
   StorefrontFilters,
   StorefrontProduct,
@@ -57,10 +61,12 @@ function CatalogPage({ category, searchPage = false }: { category: string; searc
   const [loading, setLoading] = useState(true);
   const [blogPosts, setBlogPosts] = useState<StorefrontBlogPost[]>([]);
   const [siteNavigation, setSiteNavigation] = useState<StorefrontSiteNavigation | null>(null);
+  const [announcement, setAnnouncement] = useState<StorefrontAnnouncement | null>(null);
 
   useEffect(() => {
     getStorefrontDiscovery().then(setDiscovery);
     getStorefrontSiteNavigation().then(setSiteNavigation);
+    getStorefrontAnnouncement().then(setAnnouncement);
     if (!searchPage) listLatestBlogPosts().then((items) => setBlogPosts(items.slice(0, 3)));
   }, [searchPage]);
   useEffect(() => {
@@ -77,7 +83,7 @@ function CatalogPage({ category, searchPage = false }: { category: string; searc
   );
   return (
     <div className="cx-store">
-      <StoreHeader discovery={discovery} filters={filters} />
+      <StoreHeader announcement={announcement} discovery={discovery} filters={filters} />
       <main>
         {!searchPage ? <HeroSlider products={featured} /> : null}
         {!searchPage ? <PromotionsSection products={promotions} /> : null}
@@ -118,7 +124,9 @@ function CatalogPage({ category, searchPage = false }: { category: string; searc
           </div>
         </section>
         {!searchPage ? <BlogSolutionsSection posts={blogPosts} /> : null}
+        {!searchPage ? <HomeClosingCta /> : null}
       </main>
+      <BackToTopButton />
       <StoreFooter navigation={siteNavigation} />
     </div>
   );
@@ -129,6 +137,7 @@ function ProductPage({ slug }: { slug: string }) {
   const [discovery, setDiscovery] = useState<StorefrontDiscovery>(emptyDiscovery);
   const [error, setError] = useState("");
   const [siteNavigation, setSiteNavigation] = useState<StorefrontSiteNavigation | null>(null);
+  const [announcement, setAnnouncement] = useState<StorefrontAnnouncement | null>(null);
   useEffect(() => {
     Promise.all([getStorefrontProduct(slug), getStorefrontDiscovery()])
       .then(([item, data]) => {
@@ -140,9 +149,20 @@ function ProductPage({ slug }: { slug: string }) {
       );
   }, [slug]);
   useEffect(() => {
-    getStorefrontSiteNavigation().then(setSiteNavigation);
+    Promise.all([getStorefrontSiteNavigation(), getStorefrontAnnouncement()]).then(
+      ([navigation, activeAnnouncement]) => {
+        setSiteNavigation(navigation);
+        setAnnouncement(activeAnnouncement);
+      }
+    );
   }, []);
-  const header = <StoreHeader discovery={discovery} filters={defaultFilters("", "")} />;
+  const header = (
+    <StoreHeader
+      announcement={announcement}
+      discovery={discovery}
+      filters={defaultFilters("", "")}
+    />
+  );
   if (error)
     return (
       <div className="cx-store">
@@ -197,6 +217,7 @@ function ProductPage({ slug }: { slug: string }) {
           </div>
         </div>
       </main>
+      <BackToTopButton />
       <StoreFooter navigation={siteNavigation} />
     </div>
   );

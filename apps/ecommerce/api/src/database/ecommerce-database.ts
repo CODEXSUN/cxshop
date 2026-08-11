@@ -33,6 +33,11 @@ import {
   upgradeCatalogMatchingUuidWidth
 } from "../modules/catalog-matching/catalog-matching.migration.js";
 import { seedCatalogMatchingModule } from "../modules/catalog-matching/catalog-matching.seed.js";
+import {
+  migrateStorefrontAnnouncementModule,
+  storefrontAnnouncementMigration
+} from "../modules/storefront-announcement/storefront-announcement.migration.js";
+import { seedStorefrontAnnouncementModule } from "../modules/storefront-announcement/storefront-announcement.seed.js";
 
 export type EcommerceDatabase = Record<string, unknown>;
 type ConnectionOptions = {
@@ -53,7 +58,8 @@ export const ecommerceTenantMigrations = [
   productVariantMigration,
   productImageMigration,
   catalogMatchingMigration,
-  catalogMatchingUuidWidthMigration
+  catalogMatchingUuidWidthMigration,
+  storefrontAnnouncementMigration
 ] as const;
 export const ecommerceMigrationBatch: MigrationBatch<EcommerceDatabase> = {
   batch: 1,
@@ -105,6 +111,21 @@ export const ecommerceMigrationBatch: MigrationBatch<EcommerceDatabase> = {
     }
   ]
 };
+const ecommerceStorefrontMigrationBatch: MigrationBatch<EcommerceDatabase> = {
+  batch: 2,
+  description: "Ecommerce storefront announcement events.",
+  scope: "ecommerce",
+  version: "1.0.56",
+  steps: [
+    {
+      checksum: `${storefrontAnnouncementMigration.key}:v1`,
+      description: storefrontAnnouncementMigration.description,
+      name: storefrontAnnouncementMigration.key,
+      up: migrateStorefrontAnnouncementModule,
+      version: 1
+    }
+  ]
+};
 
 export function resolveEcommerceDatabaseName(value: unknown) {
   void value;
@@ -152,10 +173,12 @@ export async function bootstrapEcommerceDatabase(databaseName: string) {
   if (migrated.has(name)) return;
   await ensureDatabase(name);
   await runMigrationBatch(getEcommerceDatabase(name), ecommerceMigrationBatch);
+  await runMigrationBatch(getEcommerceDatabase(name), ecommerceStorefrontMigrationBatch);
   await runWithEcommerceDatabase(name, seedProductInformationModule);
   await runWithEcommerceDatabase(name, seedProductVariantModule);
   await runWithEcommerceDatabase(name, seedProductImageModule);
   await runWithEcommerceDatabase(name, seedCatalogMatchingModule);
+  await runWithEcommerceDatabase(name, seedStorefrontAnnouncementModule);
   migrated.add(name);
 }
 
@@ -163,6 +186,7 @@ export async function migrateEcommerceTenantDatabase(databaseName: string) {
   const name = resolveEcommerceDatabaseName(databaseName);
   await ensureDatabase(name);
   await runMigrationBatch(getEcommerceDatabase(name), ecommerceMigrationBatch);
+  await runMigrationBatch(getEcommerceDatabase(name), ecommerceStorefrontMigrationBatch);
 }
 
 export async function seedEcommerceTenantDatabase(databaseName: string) {
@@ -172,9 +196,14 @@ export async function seedEcommerceTenantDatabase(databaseName: string) {
   await runWithEcommerceDatabase(name, seedProductVariantModule);
   await runWithEcommerceDatabase(name, seedProductImageModule);
   await runWithEcommerceDatabase(name, seedCatalogMatchingModule);
+  await runWithEcommerceDatabase(name, seedStorefrontAnnouncementModule);
 }
 
 export async function rollbackEcommerceTenantDatabase(databaseName: string) {
+  await rollbackMigrationBatch(
+    getEcommerceDatabase(databaseName),
+    ecommerceStorefrontMigrationBatch
+  );
   return rollbackMigrationBatch(getEcommerceDatabase(databaseName), ecommerceMigrationBatch);
 }
 

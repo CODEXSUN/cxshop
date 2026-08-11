@@ -50,6 +50,13 @@ Records UI, API, service logic, tooling, packaging, and documentation changes.
   copyright, logo, and social links.
 - Added and connected the About, Team, Contact, Shipping, Returns, Cookies, Privacy, and Terms pages.
 - Registered Blogs in the Platform application registry and added the Blog editor desk route.
+- Fixed the Blogs route guard so public Blog requests complete instead of waiting indefinitely before
+  the article handler runs.
+- Added shadcn navigation menus with animated directional content for Shop, Solutions, and Company.
+- Centered the animated public navigation viewport on the page and refined its spacing, radius, shadow,
+  and hover movement for a balanced desktop presentation.
+- Applied the public header, complete menu, and ecommerce footer to Blog, article, company, support,
+  shipping, returns, privacy, terms, cookie, and status pages.
 
 ## v-1.0.55
 

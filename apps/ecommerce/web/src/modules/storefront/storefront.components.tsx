@@ -1,13 +1,15 @@
 import { useEffect, useState } from "react";
 import {
+  ArrowUpIcon,
   ArrowUpRightIcon,
   HeadphonesIcon,
   AtSignIcon,
   CameraIcon,
   MessageCircleIcon,
-  ShoppingBagIcon,
+  MenuIcon,
   Globe2Icon,
-  UserRoundIcon
+  UserRoundIcon,
+  XIcon
 } from "lucide-react";
 import type {
   StorefrontDiscovery,
@@ -17,74 +19,12 @@ import type {
   StorefrontSiteNavigation
 } from "./storefront.types";
 import { money, whatsappLink } from "./storefront.formatters";
-import { StorefrontSearch } from "./storefront.search";
 
 type FilterProps = {
   discovery: StorefrontDiscovery;
   filters: StorefrontFilters;
   onFilters: (value: StorefrontFilters) => void;
 };
-
-export function StoreHeader({ discovery, filters }: Pick<FilterProps, "discovery" | "filters">) {
-  return (
-    <>
-      <div className="cx-store__notice">
-        Free delivery on selected systems · Business purchase support available
-      </div>
-      <header className="cx-store__header">
-        <a className="cx-store__brand" href="/">
-          <ShoppingBagIcon />
-          <strong>CXShop</strong>
-        </a>
-        <nav>
-          <details className="cx-store__menu">
-            <summary>Catalog</summary>
-            <MenuPanel discovery={discovery} />
-          </details>
-          <a href="/#promotions">Promotions</a>
-          <a href="/#solutions">Solutions</a>
-          <a href="/#brands">Brands</a>
-          <a href="/blog">Blog</a>
-        </nav>
-        <StorefrontSearch discovery={discovery} filters={filters} />
-        <a className="cx-store__account" href="/login">
-          <UserRoundIcon size={17} /> Portal
-        </a>
-      </header>
-    </>
-  );
-}
-
-function MenuPanel({ discovery }: { discovery: StorefrontDiscovery }) {
-  return (
-    <div className="cx-store__menu-panel">
-      <div>
-        <strong>Categories</strong>
-        {discovery.categories.map((item) => (
-          <a href={`/shop/category/${encodeURIComponent(item.name)}`} key={item.name}>
-            {item.name}
-            <span>{item.productCount}</span>
-          </a>
-        ))}
-      </div>
-      <div>
-        <strong>Brands</strong>
-        {discovery.brands.map((item) => (
-          <a href={`/search?q=${encodeURIComponent(item.name)}&scope=brands`} key={item.name}>
-            {item.name}
-            <span>{item.productCount}</span>
-          </a>
-        ))}
-      </div>
-      <div>
-        <strong>Customer</strong>
-        <a href="/login">Customer portal</a>
-        <a href="/login">Orders and invoices</a>
-        <a href="/contact">Service and support</a>
-      </div>
-    </div>
-  );
-}
 
 export function HeroSlider({ products }: { products: StorefrontProduct[] }) {
   const [active, setActive] = useState(0);
@@ -225,7 +165,7 @@ export function BlogSolutionsSection({ posts }: { posts: StorefrontBlogPost[] })
             <span className="cx-store__blog-solution-copy">
               <span className="cx-store__blog-meta">
                 <b>{articleCategory(post.title)}</b>
-                <span>Â·</span>
+                <span>·</span>
                 <span>{readingMinutes(post.excerpt)} min read</span>
               </span>
               <strong>{post.title}</strong>
@@ -385,14 +325,51 @@ export function ProductCard({ product }: { product: StorefrontProduct }) {
   );
 }
 
+export function HomeClosingCta() {
+  return (
+    <section className="cx-store__closing-cta">
+      <div>
+        <span>Ready when you are</span>
+        <h2>Find technology that fits the way you work.</h2>
+        <p>Compare dependable systems, accessories, and practical support in one place.</p>
+      </div>
+      <a href="/shop">
+        Browse all products <ArrowUpRightIcon />
+      </a>
+    </section>
+  );
+}
+
+export function BackToTopButton() {
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    const update = () => setVisible(window.scrollY > 480);
+    update();
+    window.addEventListener("scroll", update, { passive: true });
+    return () => window.removeEventListener("scroll", update);
+  }, []);
+  return (
+    <button
+      aria-label="Back to top"
+      className={`cx-store__back-to-top${visible ? " is-visible" : ""}`}
+      onClick={() => window.scrollTo({ behavior: "smooth", top: 0 })}
+      tabIndex={visible ? 0 : -1}
+      type="button"
+    >
+      <ArrowUpIcon />
+    </button>
+  );
+}
+
 export function StoreFooter({ navigation }: { navigation: StorefrontSiteNavigation | null }) {
   const groups = navigation?.groups ?? defaultFooterGroups;
+  const [menuOpen, setMenuOpen] = useState(false);
   return (
     <footer className="cx-store__footer">
       <div className="cx-store__footer-main">
         <section className="cx-store__footer-brand">
           <a className="cx-store__footer-logo" href="/">
-            <ShoppingBagIcon />
+            <StoreBrandMark dark />
             <strong>CXShop</strong>
           </a>
           <p>
@@ -421,13 +398,28 @@ export function StoreFooter({ navigation }: { navigation: StorefrontSiteNavigati
             </a>
           </div>
         </section>
-        {groups.map((group) => (
-          <FooterColumn
-            title={group.title}
-            links={group.links.map((link) => [link.label, link.href])}
-            key={group.title}
-          />
-        ))}
+        <button
+          aria-controls="cx-store-footer-menu"
+          aria-expanded={menuOpen}
+          className="cx-store__footer-menu-toggle"
+          onClick={() => setMenuOpen((value) => !value)}
+          type="button"
+        >
+          <span>Explore footer</span>
+          {menuOpen ? <XIcon /> : <MenuIcon />}
+        </button>
+        <div
+          className={`cx-store__footer-menu${menuOpen ? " is-open" : ""}`}
+          id="cx-store-footer-menu"
+        >
+          {groups.map((group) => (
+            <FooterColumn
+              title={group.title}
+              links={group.links.map((link) => [link.label, link.href])}
+              key={group.title}
+            />
+          ))}
+        </div>
       </div>
       <div className="cx-store__footer-support">
         <a href="/login">
@@ -446,12 +438,23 @@ export function StoreFooter({ navigation }: { navigation: StorefrontSiteNavigati
       </div>
       <div className="cx-store__footer-bottom">
         <span>
-          Â© {new Date().getFullYear()} {navigation?.copyrightOwner ?? "CXShop"}. All rights
+          © {new Date().getFullYear()} {navigation?.copyrightOwner ?? "CXShop"}. All rights
           reserved.
         </span>
         <span>Secure commerce powered by CODEXSUN</span>
       </div>
     </footer>
+  );
+}
+
+function StoreBrandMark({ dark = false }: { dark?: boolean }) {
+  return (
+    <img
+      alt=""
+      aria-hidden="true"
+      className="cx-store__brand-mark"
+      src={dark ? "/icons/logo-dark.svg" : "/icons/logo.svg"}
+    />
   );
 }
 

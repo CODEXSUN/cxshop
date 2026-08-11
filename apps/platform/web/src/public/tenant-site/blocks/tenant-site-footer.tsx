@@ -14,18 +14,18 @@ export function TenantSiteFooter() {
           <strong>{portal.brandName}</strong>
         </div>
         <p>
-          Billing, accounts, compliance documents, staff controls, and daily follow-up in one clear
-          business flow.
+          Computers, practical buying guidance, and business-ready support for work, study, and
+          creativity.
         </p>
         {portal.domain ? <small>{portal.domain}</small> : null}
       </div>
       <div className="tenant-portal-footer-links">
         <section>
-          <strong>Product</strong>
-          <Link to="/workspace">Billing overview</Link>
-          <Link to="/features">Features</Link>
-          <Link to="/security">Security</Link>
-          <Link to="/updates">Updates</Link>
+          <strong>Shop</strong>
+          <Link to="/shop">All products</Link>
+          <a href="/#promotions">Promotions</a>
+          <a href="/#brands">Brands</a>
+          <Link to="/blog">Buying guides</Link>
           <a href={authenticated ? "/app/" : portal.loginPath}>
             {authenticated ? "Dashboard" : "Log in"}
           </a>
@@ -53,7 +53,7 @@ export function TenantSiteFooter() {
         </section>
       </div>
       <div className="tenant-portal-footer-bottom">
-        <span>Billing and accounts application</span>
+        <span>Computer store and practical technology guidance</span>
         <span>
           © {new Date().getFullYear()} {portal.brandName}
         </span>

@@ -13,3 +13,4 @@ export * from "./modules/product-variant/index.js";
 export * from "./modules/product-image/index.js";
 export * from "./modules/catalog-matching/index.js";
 export * from "./modules/storefront/index.js";
+export * from "./modules/storefront-announcement/index.js";

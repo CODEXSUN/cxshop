@@ -10,16 +10,22 @@ import { productVariantModule } from "./modules/product-variant/index.js";
 import { productImageModule } from "./modules/product-image/index.js";
 import { catalogMatchingModule } from "./modules/catalog-matching/index.js";
 import { registerStorefrontRoutes } from "./modules/storefront/index.js";
+import {
+  registerStorefrontAnnouncementPublicRoutes,
+  storefrontAnnouncementModule
+} from "./modules/storefront-announcement/index.js";
 
 export const ecommerceApiModuleKeys = [
   productInformationModule.key,
   productVariantModule.key,
   productImageModule.key,
-  catalogMatchingModule.key
+  catalogMatchingModule.key,
+  storefrontAnnouncementModule.key
 ];
 export async function registerEcommerceApi(app: FastifyInstance) {
   await bootstrapEcommerceDatabase(resolveEcommerceDatabaseName(undefined));
   await registerStorefrontRoutes(app);
+  await registerStorefrontAnnouncementPublicRoutes(app);
   await app.register(async (ecommerceApp) => {
     ecommerceApp.addHook("preHandler", async (request) => {
       const database = resolveEcommerceDatabaseName(undefined);
@@ -34,5 +40,6 @@ export async function registerEcommerceApi(app: FastifyInstance) {
     await productVariantModule.register(ecommerceApp);
     await productImageModule.register(ecommerceApp);
     await catalogMatchingModule.register(ecommerceApp);
+    await storefrontAnnouncementModule.register(ecommerceApp);
   });
 }

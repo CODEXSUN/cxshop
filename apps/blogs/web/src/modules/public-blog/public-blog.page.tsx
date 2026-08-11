@@ -10,7 +10,7 @@ export function PublicBlogPage() {
     queryFn: () => searchPublicArticles(search)
   });
   return (
-    <main className="public-blog">
+    <div className="public-blog">
       <header>
         <a href="/">CODEXSUN Journal</a>
         <label>
@@ -50,6 +50,6 @@ export function PublicBlogPage() {
           </article>
         ))}
       </section>
-    </main>
+    </div>
   );
 }

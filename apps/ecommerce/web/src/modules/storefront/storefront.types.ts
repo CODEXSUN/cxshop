@@ -50,3 +50,10 @@ export type StorefrontSiteNavigation = {
   groups: Array<{ title: string; links: Array<{ label: string; href: string }> }>;
   socialLinks: Array<{ label: string; href: string }>;
 };
+export type StorefrontAnnouncement = {
+  displayDurationMs: number;
+  endsAt: string | null;
+  eventKey: string;
+  message: string;
+  startsAt: string;
+};

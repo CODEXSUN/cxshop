@@ -7,6 +7,7 @@ import type {
 } from "./storefront.types";
 import type { StorefrontBlogPost } from "./storefront.types";
 import type { StorefrontSiteNavigation } from "./storefront.types";
+import type { StorefrontAnnouncement } from "./storefront.types";
 type Envelope<T> = { data: T; success: true } | { error: { message: string }; success: false };
 async function get<T>(path: string) {
   const response = await fetch(`/api/platform${path}`, { headers: { Accept: "application/json" } });
@@ -34,3 +35,5 @@ export const getStorefrontProduct = (slug: string) =>
 export const listLatestBlogPosts = () => get<StorefrontBlogPost[]>("/public/blog?kind=post");
 export const getStorefrontSiteNavigation = () =>
   get<StorefrontSiteNavigation>("/storefront/site-navigation");
+export const getStorefrontAnnouncement = () =>
+  get<StorefrontAnnouncement | null>("/storefront/announcement");

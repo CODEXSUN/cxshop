@@ -1,5 +1,6 @@
 import { createRootRoute, createRoute, createRouter, useParams } from "@tanstack/react-router";
 import { lazy } from "react";
+import { TenantSiteTemplate } from "../public/tenant-site/templates/tenant-site.template";
 
 const AdminDesk = lazy(() =>
   import("../desks/admin/AdminDesk").then((module) => ({ default: module.AdminDesk }))
@@ -160,10 +161,18 @@ const securityRoute = createRoute({
 });
 
 const blogRoute = createRoute({
-  component: PublicBlogPage,
+  component: PublicBlogRoute,
   getParentRoute: () => rootRoute,
   path: "/blog"
 });
+
+function PublicBlogRoute() {
+  return (
+    <TenantSiteTemplate activePage="blog" pageTitle="Blog">
+      <PublicBlogPage />
+    </TenantSiteTemplate>
+  );
+}
 
 const blogArticleRoute = createRoute({
   component: BlogArticleRoute,
@@ -173,7 +182,11 @@ const blogArticleRoute = createRoute({
 
 function BlogArticleRoute() {
   const { slug } = useParams({ from: "/blog/$slug" });
-  return <PublicArticlePage slug={slug} />;
+  return (
+    <TenantSiteTemplate activePage="blog">
+      <PublicArticlePage slug={slug} />
+    </TenantSiteTemplate>
+  );
 }
 
 const updatesRoute = createRoute({

@@ -109,8 +109,9 @@ export function StorefrontSearch({
           role="dialog"
         >
           <div className="cx-store-search__top">
-            <a className="cx-store-search__wordmark" href="/">
-              CXShop
+            <a className="cx-store-search__wordmark" href="/" aria-label="CXShop home">
+              <img alt="" aria-hidden="true" src="/icons/logo.svg" />
+              <span>CXShop</span>
             </a>
             <button aria-label="Close search" onClick={() => setOpen(false)} type="button">
               <XIcon />

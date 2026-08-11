@@ -56,7 +56,12 @@ function SurfaceMark({ surface }: { surface: "admin" | "sa" | "tenant" }) {
   const Icon = surface === "sa" ? Crown : surface === "admin" ? Headphones : Building2;
   return (
     <span className="auth-surface-mark" data-surface={surface}>
-      <img className="auth-logo-image dark:hidden" src="/icons/logo.svg" alt="" aria-hidden="true" />
+      <img
+        className="auth-logo-image dark:hidden"
+        src="/icons/logo.svg"
+        alt=""
+        aria-hidden="true"
+      />
       <img
         className="auth-logo-image hidden dark:block"
         src="/icons/logo-dark.svg"

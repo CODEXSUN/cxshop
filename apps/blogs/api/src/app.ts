@@ -16,7 +16,7 @@ export const blogsApiModuleKeys = [
 export async function registerBlogsApi(app: FastifyInstance) {
   await bootstrapBlogsDatabase();
   await app.register(async (blogsApp) => {
-    blogsApp.addHook("preHandler", (request) => {
+    blogsApp.addHook("preHandler", async (request) => {
       if (request.url.startsWith("/public/blog") || request.url.startsWith("/sitemap.xml")) return;
       requireApplicationAccess({
         applicationDatabase: blogsEnv.DB_MASTER_NAME,

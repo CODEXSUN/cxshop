@@ -13,12 +13,12 @@ export function PublicArticlePage({ slug }: { slug: string }) {
     setMeta("description", query.data.seoDescription || query.data.excerpt);
     setCanonical(query.data.canonicalUrl || window.location.href);
   }, [query.data]);
-  if (query.isLoading) return <main className="public-article">Loading story…</main>;
+  if (query.isLoading) return <div className="public-article">Loading story…</div>;
   if (query.error || !query.data)
-    return <main className="public-article">This story is unavailable.</main>;
+    return <div className="public-article">This story is unavailable.</div>;
   const article = query.data;
   return (
-    <main className="public-article">
+    <div className="public-article">
       <a href="/blog">CODEXSUN Journal</a>
       <header>
         <span>{article.kind}</span>
@@ -27,7 +27,7 @@ export function PublicArticlePage({ slug }: { slug: string }) {
       </header>
       {article.featuredImage ? <img src={article.featuredImage} alt={article.imageAlt} /> : null}
       <article>{renderMarkdown(article.mdx)}</article>
-    </main>
+    </div>
   );
 }
 
