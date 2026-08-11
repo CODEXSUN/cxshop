@@ -1,0 +1,20 @@
+export type PublicArticle = {
+  id: number;
+  uuid: string;
+  kind: "post" | "page";
+  title: string;
+  slug: string;
+  excerpt: string;
+  mdx: string;
+  featuredImage: string;
+  imageAlt: string;
+  categoryId: number | null;
+  tagIds: number[];
+  seoTitle: string;
+  seoDescription: string;
+  canonicalUrl: string;
+  status: "published";
+  publishedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+};

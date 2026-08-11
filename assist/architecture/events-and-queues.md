@@ -1,58 +1,68 @@
-# Events and Queues
+# Events And Queues
 
-## Transactional outbox
+## Runtime Decision
 
-Write an important domain event to the outbox in the same transaction as the business change.
+CXShop is one standalone modular monolith. MariaDB on port 3306 is the authoritative database. The configured product database is `cxshop_db`.
 
-An event envelope contains:
+MariaDB owns:
 
-- Event ID
-- Event name
-- Schema version
-- Aggregate type and ID
-- Actor type and ID
-- Correlation and causation IDs
-- Occurred time
-- Required scope
-- Validated payload
+- Business records.
+- Module outboxes.
+- Durable queue jobs.
+- Attempts, schedules, results, errors, and recovery state.
+- Consumer idempotency evidence.
 
-## Durable jobs
+Redis is optional. BullMQ may wake workers or accelerate delivery, and Redis may cache derived data. Neither may become the only copy of an accepted command, event, job, or business result.
 
-Use durable jobs for:
+## Module-Owned Event Flow
 
-- Payment provider calls
-- Payment and shipping webhooks
-- Search indexing
-- Email and messaging
-- Settlement generation and payout
-- CXApp and Frappe synchronization
-- Imports and exports
-- Media processing
-- Scheduled reservation expiry
-- Reconciliation
-- OpenAI Business Assist generation
+1. A module validates a command with its domain service.
+2. Its repository opens one MariaDB transaction.
+3. The repository writes business state and the module's outbox event.
+4. The module-owned relay reads ready outbox rows.
+5. The relay submits an idempotent job through the Queue Manager port.
+6. The module-owned worker handles the job and writes the result.
+7. The relay or worker records success, retry, or terminal failure in MariaDB.
 
-## Job contract
+The Queue Manager owns durable scheduling infrastructure. It does not own business event definitions or handler logic. Application composition registers each module's public worker handler.
 
-A job contains:
+## Required Event Data
 
-- Job name and version
-- Idempotency key
-- Correlation ID
-- Actor and scope
-- Attempt limit
-- Backoff policy
-- Safe payload
-- Creation and availability times
+Events and jobs use stable lowercase dotted names and include:
 
-Workers must record attempts, results, failures, and completion.
+- Aggregate identity.
+- Correlation identity.
+- Idempotency key.
+- Source module.
+- Schema version when payload evolution is possible.
+- Retry limit and next available time for queued work.
 
-## Delivery rules
+Payloads contain identifiers and necessary facts, not secrets or large binary data. Consumers must be replay safe.
 
-- Assume at-least-once delivery.
-- Make every consumer idempotent.
-- Store processed event IDs when repeated effects are unsafe.
-- Move exhausted jobs to a visible failed state.
-- Support an audited retry.
-- Do not put secrets or large documents in a job payload.
-- Store a reference to protected content instead.
+## Matching Policy
+
+Catalog matching executes in this order:
+
+1. Exact normalized SKU.
+2. Exact normalized barcode.
+3. Exact normalized slug.
+4. Exact normalized title and brand.
+5. Semantic fallback after deterministic no-match.
+
+The request stores the strategy, confidence, candidate identity, and correlation identity. Semantic fallback is written to the Ecommerce Catalog Matching outbox in the same transaction as the pending request. A semantic result cannot silently replace a deterministic result.
+
+## Failure Rules
+
+- Mark an outbox row published only after the durable queue accepts its idempotency key.
+- Retry delivery with bounded exponential backoff.
+- Keep failed records visible for operations and replay.
+- Do not delete a durable MariaDB job because Redis lost state.
+- Do not acknowledge external work before its result or next retry state is durable.
+- Keep provider-specific adapters behind the owning module's port.
+
+## Current Owners
+
+- `platform.queue-manager` owns `queue_jobs`, `queue_runtime_settings`, leasing, retry, cancellation, retention, and optional BullMQ delivery.
+- `ecommerce.catalog.matching` owns match requests, deterministic rules, `ecommerce_catalog_match_outbox`, relay, semantic worker contract, and its API.
+- Billing keeps its financial outbox inside Billing ownership.
+- Mail keeps message delivery behavior inside Mail ownership and uses the Queue Manager through its public enqueue port.

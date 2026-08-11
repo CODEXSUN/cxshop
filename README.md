@@ -1,93 +1,165 @@
-# CXShop
+# CODEXSUN
 
-CXShop is a multi-vendor commerce platform for customer, vendor, and platform operations.
+Software makes simple.
 
-The product uses a modular monolith, domain-owned data, durable jobs, and explicit integration contracts.
-It can connect to CXApp and Frappe without sharing databases or private module code.
+## Working Repository
 
-## Start here
-
-Read these files before you plan or change the repository:
-
-1. [`AGENTS.md`](AGENTS.md)
-2. [`assist/AGENT-GUIDE.md`](assist/AGENT-GUIDE.md)
-3. [`assist/governance/rules.md`](assist/governance/rules.md)
-4. [`assist/product/ecosystem.md`](assist/product/ecosystem.md)
-5. The closest architecture document for the affected area
-
-## Current state
-
-This repository contains a statically verified Stage 0 application foundation with one web runtime and one API runtime. Live database and browser verification remain required.
-
-## Local runtime
+This CODEXSUN CXShop project is owned and developed from:
 
 ```text
+E:\Workspace\codexsun\cxshop
+```
+
+Treat this checkout and its `https://github.com/CODEXSUN/cxshop.git` Git remote as
+the current project.
+Do not use files, configuration, or assumptions from older CODEXSUN/CXSUN
+workspaces outside `E:\Workspace\codexsun\cxshop`.
+
+CODEXSUN is a monorepo foundation for a multi-tenant business application
+platform. The current workspace includes the Platform API, Platform web shell,
+shared Framework and UI packages, composed Core and Billing business modules,
+tenant-owned Mail modules, master database bootstrap, and version/changelog
+tooling.
+
+## Start
+
+```bash
+npm install
 npm run dev
 ```
 
-- Web: `http://127.0.0.1:7520`
-- API: `http://127.0.0.1:7510`
-- Vendor: `http://127.0.0.1:7520/vendor`
-- Admin: `http://127.0.0.1:7520/admin`
-- Super Admin: `http://127.0.0.1:7520/sa`
-- API docs: `http://127.0.0.1:7510/docs`
+The single root command starts the Platform API and Platform web shell together.
+Core, Billing, and Mail attach as packages; they have no standalone development
+entrypoints.
 
-## Build and verification
+Install dependencies only from this repository root. All apps, packages, and
+tools resolve dependencies from the root `node_modules`; workspace-local
+`node_modules` folders are removed automatically and rejected by
+`npm run dependencies:check`.
+
+Platform API: <http://127.0.0.1:7010>
+
+Platform web: <http://127.0.0.1:7020>
+
+## Docker Deployment
+
+Docker deployment files live in `.container/`. Shared MariaDB, Redis, and
+Media services are installed once alongside the composed Platform API and web
+runtime.
+
+```bash
+bash prepare-env.sh
+bash setup.sh
+```
+
+`prepare-env.sh` creates or updates the private `.container/deploy.env` from
+`.container/deploy.env.sample`. It never reads or copies the development
+`.env`. `setup.sh` only validates the prepared deployment file before applying
+the container installation.
+
+A Linux deployment host needs Docker and Compose, but does not need Node.js or
+npm installed: environment preparation runs through the declared Docker Node
+image when host Node.js is unavailable. Press Enter at a credential prompt to
+preserve its existing deployment value.
+
+For a non-interactive host where administrator credentials already exist in
+`.container/deploy.env`, run:
+
+```bash
+bash prepare-env.sh --non-interactive
+bash setup.sh --yes
+```
+
+For repeated local deployments, open the cleanup menu before reinstalling:
+
+```bash
+bash setup.sh --clean
+```
+
+The menu offers application-only cleanup, complete runtime cleanup while
+preserving all data, or full local data cleanup including MariaDB, Redis, File
+Browser, application storage, named volumes, and the CODEXSUN network. Docker
+build-cache pruning is a separate optional choice.
+
+On Windows, use Git Bash explicitly when `bash` resolves to WSL but no Linux
+distribution is installed:
+
+```powershell
+& "C:\Program Files\Git\bin\bash.exe" setup.sh
+```
+
+After pulling or copying an updated checkout, validate the existing deployment
+without changing it:
+
+```bash
+bash update.sh --check
+```
+
+Apply a guarded source update interactively, or use `--yes` on an automated
+deployment host:
+
+```bash
+bash update.sh
+bash update.sh --yes
+```
+
+MariaDB is exposed at the host binding and port declared in
+`.container/deploy.env`. Root `.env` is development-only; container setup,
+updates, migrations, and smoke checks read only `.container/deploy.env`. Normal
+updates preserve configuration, credentials, databases, uploads, and named
+volumes. The updater verifies Compose ownership before any build, creates a
+validated MariaDB backup before migration, replaces only `cxshop-api` and
+`cxshop-web`, runs the complete deployment smoke test, and restores the previous
+application images if replacement fails. See `.container/README.md` for the
+full port map, registry flow, persistence contract, and verification commands.
+
+## Workspace
 
 ```text
-npm run build
+apps/platform/api
+apps/platform/web
+apps/core/api
+apps/core/web
+apps/billing/api
+apps/billing/web
+apps/mail/api
+apps/mail/web
+packages/framework
+packages/ui
+tools/version
+assist
+```
+
+## Strict UI/Form Guardrails
+
+Before changing tenant/common/master forms, relation lookups, switch cards, placeholders, or shared form controls, read:
+
+```text
+assist/devops/ui-form-regression-guardrails.md
+```
+
+Required commands:
+
+```bash
 npm run check
+npm run build
 ```
 
-The unified Next.js runtime writes to root `.next/`. Backend TypeScript writes below root `dist/`. The build cleans stale output first, and `npm run check:artifacts` rejects workspace-local `.next/`, `dist/`, or `dist-types/` directories.
+Use the root checks before finishing shared UI, lookup, common module, or master
+module work.
 
-## Business Assist
+## Strict App Module Shape
 
-OpenAI Business Assist is available to Admin and Super Admin at `/admin/assist` and `/sa/assist`. It is disabled by default.
-
-To enable it, configure these ignored `.env` values and run the migrations and seeders before `npm run dev`:
+Business apps keep backend and frontend modules paired:
 
 ```text
-OPENAI_ENABLED=1
-OPENAI_API_KEY=<private key>
-OPENAI_URL=https://api.openai.com/v1
-OPENAI_MODEL=<approved model>
-OPENAI_REASONING=low
-OPENAI_OUTPUT_MAX_TOKENS=1600
+apps/billing/api/src/modules/sales
+apps/billing/web/src/modules/sales
+apps/billing/web/src/shared
 ```
 
-Business Assist persists requests and results in CXShop MariaDB and executes provider calls through the durable worker. Model output is advisory and cannot directly mutate marketplace state.
+Backend modules must use the complete behavior-bearing file contract in `assist/architecture/module-boundaries.md`.
 
-## Release commands
+Frontend full modules use `index.ts`, `sales.workspace.tsx`, `sales.list.tsx`, `sales.form.tsx`, `sales.services.ts`, `sales.hooks.ts`, `sales.types.ts`, `sales.schema.ts`, and `sales.spec.ts`, with settings/print files when those capabilities exist. Alias-only wrappers and empty role files are forbidden.
 
-```text
-npm run version:show
-npm run check:versions
-npm run version:bump -- --title "Title" --no-database-update
-npm run github:now -- --dry-run
-```
-
-## Local base setup
-
-The ignored `.env` contains independent CXShop development settings.
-The tracked `.env.example` defines the full environment contract.
-
-```text
-npm run setup:base
-npm run env:check
-npm run env:example:check
-npm run test:env
-```
-
-## Shared infrastructure
-
-CXShop reuses approved CXApp infrastructure with separate data scopes.
-
-```text
-npm run infrastructure:check
-npm run infrastructure:check:live
-```
-
-See [`assist/operations/shared-infrastructure.md`](assist/operations/shared-infrastructure.md).
-
-Do not describe CXShop as a working marketplace until the required runtime and live checks pass.
+Use `web/src/shared` only for cross-module web code; module-specific screens stay under `web/src/modules/{module}`.

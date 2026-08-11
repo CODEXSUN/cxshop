@@ -1,1 +1,12 @@
-{"extends":"../../../tsconfig.base.json","compilerOptions":{"outDir":"../../../dist/platform/api","rootDir":"src"},"include":["src"]}
+{
+  "extends": "../../../tsconfig.base.json",
+  "compilerOptions": {
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "noEmit": false,
+    "outDir": "../../../dist/apps/platform/api",
+    "rootDir": "src",
+    "types": ["node"]
+  },
+  "include": ["src"]
+}

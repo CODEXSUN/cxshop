@@ -1,0 +1,15 @@
+export type TenantPublicPageKey =
+  | "home"
+  | "workspace"
+  | "features"
+  | "security"
+  | "blog"
+  | "updates"
+  | "about"
+  | "team"
+  | "contact"
+  | "shipping"
+  | "returns"
+  | "cookies"
+  | "privacy"
+  | "terms";

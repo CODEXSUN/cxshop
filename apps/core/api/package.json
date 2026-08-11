@@ -1,0 +1,21 @@
+{
+  "name": "@cxshop/core-api",
+  "version": "1.0.56",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "npm run build -w @cxshop/framework && tsc -p tsconfig.json --noEmit",
+    "lint": "eslint src --ext .ts"
+  },
+  "dependencies": {
+    "@cxshop/framework": "^1.0.56",
+    "fastify": "^5.2.1",
+    "kysely": "^0.29.0",
+    "mysql2": "^3.22.3",
+    "zod": "^4.4.3"
+  }
+}

@@ -2,47 +2,108 @@
 
 import { existsSync, readFileSync } from "node:fs";
 import { join, relative, resolve } from "node:path";
+import { pathToFileURL } from "node:url";
 import { findWorkspacePackageFiles } from "./version-bump.mjs";
 
 const ROOT = resolve(import.meta.dirname, "..");
-const rootVersion = String(readJson(join(ROOT, "package.json")).version);
-const failures = [];
-
-for (const file of findWorkspacePackageFiles(ROOT)) {
-  const version = String(readJson(file).version);
-  if (version !== rootVersion) failures.push(`${relative(ROOT, file)} is ${version}. Expected ${rootVersion}.`);
-}
-
-const lockPath = join(ROOT, "package-lock.json");
-if (existsSync(lockPath)) {
-  const lock = readJson(lockPath);
-  if (String(lock.version) !== rootVersion) failures.push("The package-lock version does not match the root version.");
-  if (String(lock.packages?.[""]?.version) !== rootVersion) failures.push("The package-lock root package does not match the root version.");
-}
-
-const changelog = readFileSync(join(ROOT, "assist", "documentation", "CHANGELOG.md"), "utf8");
-for (const expected of [
-  `Current version: ${rootVersion}`,
-  `Release tag: v-${rootVersion}`,
-  `Changelog label: v ${rootVersion}`,
-  `## v-${rootVersion}`
-]) {
-  if (!changelog.includes(expected)) failures.push(`The changelog is missing: ${expected}`);
-}
-
-const deploySample = readFileSync(join(ROOT, ".container", "deploy.env.sample"), "utf8");
-if (!deploySample.includes(`APP_VERSION=${rootVersion}`)) {
-  failures.push(`The deployment sample version must be ${rootVersion}.`);
-}
-
-if (failures.length) {
-  console.error(`Version check failed for ${rootVersion}:`);
-  failures.forEach((failure) => console.error(`- ${failure}`));
-  process.exit(1);
-}
-
-console.log(`Version check passed for ${rootVersion}.`);
+const CHANGELOG_PATH = join(ROOT, "assist", "documentation", "CHANGELOG.md");
 
 function readJson(file) {
   return JSON.parse(readFileSync(file, "utf8"));
+}
+
+function readRootVersion(rootDir) {
+  return String(readJson(join(rootDir, "package.json")).version);
+}
+
+function checkVersions(rootDir) {
+  const failures = [];
+  const rootVersion = readRootVersion(rootDir);
+
+  for (const file of findWorkspacePackageFiles(rootDir)) {
+    const pkg = readJson(file);
+    if (String(pkg.version) !== rootVersion) {
+      failures.push(
+        `${relative(rootDir, file)} version is ${pkg.version}; expected ${rootVersion}.`
+      );
+    }
+  }
+
+  if (existsSync(join(rootDir, "package-lock.json"))) {
+    const lock = readJson(join(rootDir, "package-lock.json"));
+    if (String(lock.version) !== rootVersion) {
+      failures.push(`package-lock.json version is ${lock.version}; expected ${rootVersion}.`);
+    }
+
+    const rootLock = lock.packages?.[""];
+    if (rootLock?.version && String(rootLock.version) !== rootVersion) {
+      failures.push(
+        `package-lock root package version is ${rootLock.version}; expected ${rootVersion}.`
+      );
+    }
+  }
+
+  const changelog = readFileSync(CHANGELOG_PATH, "utf8");
+  const expectedTag = `v-${rootVersion}`;
+  const expectedLabel = `v ${rootVersion}`;
+
+  if (!new RegExp(`Current version:\\s*${escapeRegExp(rootVersion)}\\b`, "u").test(changelog)) {
+    failures.push(`Changelog Version State current version must be ${rootVersion}.`);
+  }
+
+  if (!new RegExp(`Release tag:\\s*${escapeRegExp(expectedTag)}\\b`, "u").test(changelog)) {
+    failures.push(`Changelog Version State release tag must be ${expectedTag}.`);
+  }
+
+  if (!new RegExp(`Changelog label:\\s*${escapeRegExp(expectedLabel)}\\b`, "u").test(changelog)) {
+    failures.push(`Changelog Version State label must be ${expectedLabel}.`);
+  }
+
+  if (!changelog.includes(`## ${expectedTag}`)) {
+    failures.push(`Changelog must contain section ## ${expectedTag}.`);
+  }
+
+  const deploymentSample = join(rootDir, ".container", "deploy.env.sample");
+  if (existsSync(deploymentSample)) {
+    const values = Object.fromEntries(
+      readFileSync(deploymentSample, "utf8")
+        .split(/\r?\n/u)
+        .map((line) => line.match(/^([A-Z][A-Z0-9_]*)=(.*)$/u))
+        .filter(Boolean)
+        .map((match) => [match[1], match[2]])
+    );
+    for (const key of [
+      "CXSHOP_VERSION",
+      "BILLING_STACK_API_IMAGE_TAG",
+      "BILLING_STACK_WEB_IMAGE_TAG",
+      "BILLING_STACK_MIGRATIONS_IMAGE_TAG"
+    ]) {
+      if (values[key] !== rootVersion) {
+        failures.push(`.container/deploy.env.sample ${key} must be ${rootVersion}.`);
+      }
+    }
+  }
+
+  return {
+    failures,
+    rootVersion
+  };
+}
+
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
+}
+
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  const result = checkVersions(ROOT);
+
+  if (result.failures.length > 0) {
+    console.error(`Version check failed for ${result.rootVersion}:`);
+    for (const failure of result.failures) {
+      console.error(`- ${failure}`);
+    }
+    process.exit(1);
+  }
+
+  console.log(`Version check passed for ${result.rootVersion}.`);
 }

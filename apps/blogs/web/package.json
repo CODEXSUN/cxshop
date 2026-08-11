@@ -1,0 +1,24 @@
+{
+  "name": "@cxshop/blogs-web",
+  "version": "1.0.56",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./modules/editor": "./src/modules/editor/index.ts",
+    "./modules/public-blog": "./src/modules/public-blog/index.ts"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json --noEmit",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint src --ext .ts,.tsx"
+  },
+  "dependencies": {
+    "@cxshop/ui": "^1.0.56",
+    "@tanstack/react-query": "^5.100.10",
+    "lucide-react": "^1.22.0",
+    "react": "^19.0.0",
+    "sonner": "^2.0.7",
+    "zod": "^4.4.3"
+  }
+}

@@ -1,50 +1,68 @@
 # Quality Gates
 
-## Every change
+## Purpose
 
-- Formatting passes for changed files.
-- Lint passes for affected workspaces.
-- Type checks pass for affected workspaces.
-- Focused tests pass.
-- Dependency and module boundaries pass.
-- The Git diff contains no accidental generated files or secrets.
+Quality gates define when work is ready to move forward.
 
-## Persistence changes
+They help CODEIT, developers, and reviewers decide whether a change is safe enough for the next stage.
 
-- A fresh migration passes.
-- An upgrade migration passes from the supported previous schema.
-- A repeated seed makes no duplicate records.
-- Repository behavior matches the public contract.
-- Data survives a process restart.
+## Planning Gate
 
-## Marketplace workflow changes
+Before build starts, confirm:
 
-- State transitions accept valid paths and reject invalid paths.
-- Duplicate commands do not duplicate effects.
-- Concurrent stock requests cannot oversell.
-- Totals are calculated on the server.
-- Audit history records the actor and reason.
-- Failure and retry paths have tests.
+- Scope is clear.
+- Owning module is identified.
+- Tenant impact is understood.
+- Permission impact is understood.
+- Subscription impact is understood.
+- Data and migration impact are known.
+- Offline impact is considered.
+- Test approach is listed.
 
-## Access changes
+## Build Gate
 
-- Customer, vendor, vendor staff, support, platform admin, and super admin scopes stay distinct.
-- A vendor cannot read or change another vendor's records.
-- A customer cannot read another customer's records.
-- Disabled memberships lose access immediately.
-- UI restrictions have matching API enforcement.
+Before review, confirm:
 
-## Integration changes
+- Code follows module boundaries.
+- Business logic is in the right layer.
+- Tenant context is present.
+- Permissions are checked.
+- Errors are structured.
+- Events and jobs are safe.
+- Tests are added for risky behavior.
+- Documentation is updated if needed.
 
-- Contract validation covers requests and responses.
-- Webhook signature tests pass.
-- Duplicate webhook tests pass.
-- Timeout and retry tests pass.
-- Mapping and reconciliation tests pass.
-- One unavailable external system does not corrupt a committed local transaction.
+## Review Gate
 
-## Release claims
+Before merge or release candidate, confirm:
 
-Static checks do not prove database behavior.
-Database checks do not prove browser behavior.
-Local checks do not prove deployed production behavior.
+- No cross-tenant data risk.
+- No unauthorized access path.
+- No accounting imbalance.
+- No compliance audit gap.
+- No hidden breaking API change.
+- No unplanned migration risk.
+- No uncontrolled background job failure.
+- No major UI inconsistency.
+
+## Release Gate
+
+Before production release, confirm:
+
+- Changelog is updated.
+- Version is correct.
+- Migrations are reviewed.
+- Backups are ready.
+- Rollback or recovery plan exists.
+- Monitoring is active.
+- Support notes are prepared.
+
+## Emergency Gate
+
+For urgent hotfixes:
+
+- Fix the smallest safe issue.
+- Verify the failing path.
+- Add a regression check when possible.
+- Record what was skipped.
+- Follow up with cleanup if needed.

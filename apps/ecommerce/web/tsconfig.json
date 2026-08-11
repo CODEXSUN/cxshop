@@ -1,0 +1,18 @@
+{
+  "extends": "../../../tsconfig.base.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "noEmit": true,
+    "types": ["vite/client", "node"],
+    "paths": {
+      "@cxshop/ui": ["../../../packages/ui/src/index.ts"],
+      "@cxshop/ui/components/*": ["../../../packages/ui/src/components/*"],
+      "@cxshop/ui/layouts/*": ["../../../packages/ui/src/layouts/*"],
+      "@cxshop/ui/blocks/*": ["../../../packages/ui/src/blocks/*"],
+      "@cxshop/ui/workspace": ["../../../packages/ui/src/workspace/index.ts"],
+      "@cxshop/ui/workspace/*": ["../../../packages/ui/src/workspace/*"],
+      "@cxshop/ui/lib/*": ["../../../packages/ui/src/lib/*"]
+    }
+  },
+  "include": ["src"]
+}

@@ -1,53 +1,238 @@
-# Project Inventory
+# CODEXSUN Project Inventory
 
-Last reviewed: 2026-08-07.
+> Database boundary update: the Platform master database contains unprefixed global Platform/Super Admin tables. Tenant Platform runtime tables use `app_`; composed apps keep their owner prefixes. Every database records migrations in `migration_schema`. Platform Task Manager remains JSON-backed. DevKit Platform Registry data and its audit activity are database-backed in both master and enabled tenant databases.
 
-## Repository
+## Purpose
 
-- Local checkout: `E:\Workspace\codexsun\cxshop`
-- Product: standalone multi-vendor commerce ecosystem
-- Runtime direction: modular monolith with MariaDB and durable database queues
+This document records what is present in the current CODEXSUN workspace. Use it as the first practical inventory before
+planning new work, because some assist files describe future direction or older foundation snapshots.
 
-## Implemented source
+Last reviewed: 2026-07-30.
 
-- One Next.js runtime with four module-owned portal compositions: storefront, vendor, admin, and super admin
-- CXShop-owned contracts, framework, and UI packages
-- CXApp-aligned, portal-specific Customer, Vendor, Admin, and Super Admin login UI with independent authentication scope
-- Fastify runtime composition using NestJS-style modules, providers, thin routes, and services
-- Identity repository and service with exact portal access and signed HttpOnly sessions
-- Kysely-owned MariaDB repositories, ordered migration runner, and repeatable portal identity/vendor seeder
-- Environment-gated development auto-login and portal switch links for all four persisted portal identities
-- Shared loading, error, not-found, logout, robots, and sitemap startup routes
-- Optional OpenAI Responses adapter and module-owned Business Assist request, durable worker, result API, and Admin/Super Admin UI
-- Project-management query route for Admin and Super Admin
-- Initial MariaDB schema for migration ledger, identities, portal access, vendor membership, audit, outbox, jobs, projects, and project items
-- Repeatable development identity and foundation-project seeder
-- Root development launcher and module-boundary check
-- Root-owned build artifacts: `.next/` for the unified web runtime and `dist/platform/api/` for the API
-- Root artifact cleanup and boundary check; workspace-local build output is rejected
-- Human-readable environment contract grouped by `API_*`, `WEB_*`, `DB_*`, `LOGIN_*`, `DEV_LOGIN_*`, `REDIS_*`, and `OPENAI_*`
-- Catalog-owned MariaDB schema, repeatable development data, public and Admin APIs, audit records, and transactional outbox events
-- Database-backed storefront home, category, and product pages with metadata, structured product data, and dynamic sitemap entries
-- Computer-store test catalog with laptops, desktops, monitors, components, storage, networking, accessories, spares, remote product images, and search
-- Admin Catalog workspace with category and product creation, publishing status, and live record lists
-- Responsive product enquiry UI for mobile, medium, and large screens with customer-approved WhatsApp hand-off
-- Admin Walk-in Orders workspace for confirmation, order booking, bill recording, collection readiness, and collection completion
-- Walk-in Sales-owned migration, state machine, persistence, audit history, transactional outbox events, public API, and protected Admin API
+## Working Repository
 
-## Verification state
+The current and authoritative checkout is:
 
-Catalog and walk-in sales migrations are verified against the development MariaDB, including repeated bootstrap. Online cart, checkout, payment, inventory reservation, shipping, returns, settlements, CXApp/Frappe connectors, and production deployment are not implemented.
+```text
+E:\Workspace\codexsun\cxshop
+```
 
-## Workspace
+Its Git remote is `https://github.com/CODEXSUN/cxshop.git`. Older CODEXSUN/CXSUN
+workspace paths are not project sources and must not be used for implementation,
+configuration, documentation, or verification.
+
+## Current Workspace Shape
 
 ```text
 apps/
-  platform/api
-  platform/web
+  platform/
+    api/
+    web/
+  core/
+    api/
+    web/
+  billing/
+    api/
+    web/
+  mail/
+    api/
+    web/
+  devkit/
+    api/
+    web/
+
 packages/
-  contracts
-  framework
-  ui
+  framework/
+  ui/
+
+tools/
+  version/
+  *.mjs
+
+assist/
+  agents/
+  architecture/
+  blueprint/
+  devops/
+  documentation/
+  execution/
+  governance/
+  handoff/
+  industries/
+  operations/
+  product/
 ```
 
-Ports are API `7510` and web `7520`. Web routes are `/`, `/vendor`, `/admin`, and `/sa`.
+The root package uses npm workspaces with `apps/*/*`, `packages/*`, and `tools/*`.
+
+## Runtime Application And Composed Packages
+
+### Platform
+
+Platform owns the SaaS foundation.
+
+- `apps/platform/api`: Fastify API for tenant identity, auth, app registry, database setup, tenant provisioning, and
+  platform operations.
+- `apps/platform/web`: React/Vite shell for the domain-resolved tenant app portal, login, super-admin desk, admin
+  desk, tenant desk, tenant UI, and design-system gallery.
+
+Platform is the only runnable application: API `7010` and Web `7020`.
+
+Current Platform API modules:
+
+- `app-registry`
+- `task-manager` (JSON-backed)
+- `tenant`
+
+Current Platform Web modules:
+
+- `design-system`
+- `task-manager`
+- `tenant`
+- `tenant-portal` (read-only public projection owned by `platform.tenant`)
+
+### DevKit
+
+DevKit owns the Platform Registry application and is composed by Platform through its public API and web contracts.
+
+- `apps/devkit/api`: the request-scoped Platform Registry Fastify module, registry migration, JSON registry seed,
+  and registry audit activity.
+- `apps/devkit/web`: the Platform Registry workspace bundle used by the Super Admin desk and enabled tenant desks.
+- DevKit migrations and seeds run against the Platform master database for Super Admin and against each enabled
+  tenant database for tenant users. Tables use the `devkit_` owner prefix and migration state uses
+  `migration_schema`.
+- Platform supplies the authenticated request database and actor. DevKit does not resolve tenant identity from
+  browser input and uses the existing HttpOnly CXShop session cookie.
+
+### Core
+
+Core owns shared business foundation modules consumed by Platform.
+
+- `apps/core/api`: Fastify plugin package registered by Platform API.
+- `apps/core/web`: React module package bundled by Platform Web.
+
+Current Core common modules include location masters, contacts, products, work orders, organisation setup, and the
+accounts masters `ledger-groups` and `ledgers`. Each accounts master owns its API migration, repository, service,
+routes, seed, and frontend workspace; ledgers reference ledger groups within the tenant database.
+
+### Billing
+
+Billing owns billing-related business modules.
+
+### Ecommerce
+
+Ecommerce owns multi-vendor marketplace commerce.
+
+- `apps/ecommerce/api`: tenant-scoped Ecommerce routes, database lifecycle, and catalog owner modules.
+- `apps/ecommerce/web`: Ecommerce desk workspaces and product management.
+- `ecommerce_product_information`: a one-to-one Ecommerce extension of `core_products`.
+
+Platform composes `@cxshop/ecommerce-api` and `@cxshop/ecommerce-web` through their public exports.
+
+- `apps/billing/api`: Fastify plugin package registered by Platform API.
+- `apps/billing/web`: React module package bundled by Platform Web.
+
+Current Billing module:
+
+- `sales`
+
+### Mail
+
+Mail owns tenant-scoped outbound delivery, inbound synchronization, message history, attachments, and provider configuration.
+
+- `apps/mail/api`: Fastify module package with tenant migrations, encrypted settings, SMTP delivery, IMAP/POP3 synchronization, queue workers, retries, events, and public contracts.
+- `apps/mail/web`: React workspace for Inbox, Outbox, Drafts, Scheduled, Sent, Failed, Trash, rich compose, attachments, and tenant settings.
+
+Billing document screens consume Mail only through its public web contract to capture the visible invoice or quotation as a PDF and enqueue a branded customer email.
+
+Product development and release tooling preserves those ownership boundaries while deploying one composed runtime.
+`npm run stack:impact -- <changed files>` identifies the verification blast radius, while
+`npm run stack:plan -- <stack>` prints the composed Platform services, owned migration scopes, and rollback plan.
+
+The `.env` contract contains network configuration only: API/web hosts or origins and ports. Product
+names, purpose text, taglines, and other business identity must not be added to `.env`.
+
+## Shared Packages
+
+### `@cxshop/framework`
+
+Shared backend runtime package. It exports API bootstrap helpers, config/env loading, database contracts, errors,
+events, health, HTTP envelope utilities, logging, module contracts, queues, storage contracts, and testing helpers.
+
+### `@cxshop/ui`
+
+Shared frontend UI package. It exports components, layouts, menu blocks, design-system tokens, workspace controls,
+workspace presets, forms, tables, filters, panels, date picker, autocomplete, drag/drop helpers, print helpers, and
+shared styling.
+
+## Tooling
+
+Important root commands:
+
+```text
+npm run dev
+npm run build
+npm run typecheck
+npm run lint
+npm run check
+npm run verify:platform
+npm run check:module-boundaries
+npm run dependencies:check
+npm run db:migrate
+npm run db:seed
+npm run db:drop
+npm run dbmigrate:fresh
+npm run test:e2e:composed-runtime
+npm run test:e2e:bootstrap
+npm run test:e2e:persistence
+npm run test:e2e:organisation
+npm run version:show
+npm run version:bump
+npm run changelog:append
+npm run check:versions
+```
+
+Shared development dependencies and operational commands are declared only in
+the root `package.json`. Workspace manifests retain their package identity,
+build/typecheck/lint scripts, and direct runtime dependencies. Only the root
+manifest exposes `npm run dev`.
+
+Database commands currently route through `@cxshop/platform-api` and `apps/platform/api/src/database/db-cli.ts`.
+
+## Current Version And Work Update
+
+Current recorded version: `1.0.42`.
+
+Latest changelog entry: `v-1.0.42` on 2026-07-21 at 11:52 pm.
+
+Latest recorded work:
+
+- Added Traefik HTTPS routing for the Platform Web and Media services.
+- Added canonical and tenant host routing plus the permanent `www.codexsun.com` redirect.
+- Added multiple configured Platform Web origins for production CORS.
+- Added tenant host allowlisting to the Platform Web development server.
+- Made the MariaDB bind address independently configurable for host deployment.
+- Added `.container/setup.md` with the current host, port, route, database, account, firewall, and verification contract.
+- Workspace version is `1.0.42`.
+
+Current working tree note:
+
+- The working tree was clean before this documentation update.
+- Always inspect `git status` before editing and preserve unrelated user changes.
+
+## Documentation Notes
+
+Use these files first for active work:
+
+- `assist/README.md`: high-level product and agent entry point.
+- `assist/documentation/CHANGELOG.md`: latest recorded version state and change history.
+- `assist/documentation/project-inventory.md`: current repo inventory.
+- `assist/documentation/app-bundle-structure.md`: target app/module ownership rules.
+- `assist/documentation/design-system-helper.md`: UI and module screen standards.
+- `assist/governance/rules.md`: general development rules.
+- `assist/governance/engineering-standards.md`: engineering practices.
+- `assist/governance/testing-strategy.md`: verification expectations.
+- `assist/governance/quality-gates.md`: finish-line checks.
+
+Some execution and handoff files preserve earlier foundation history or future direction. Validate their code paths
+against this inventory before treating them as current implementation state.

@@ -1,6 +1,0 @@
-node_modules
-dist
-coverage
-storage
-.container/deploy.env
-package-lock.json

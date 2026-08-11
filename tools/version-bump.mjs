@@ -6,6 +6,7 @@ import { dirname, join, relative, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 
 const ROOT = resolve(import.meta.dirname, "..");
+const CHANGELOG_FILE = join("assist", "documentation", "CHANGELOG.md");
 
 export function bumpNextVersion(rootDir, title = "version update", options = {}) {
   const currentVersion = readRootVersion(rootDir);
@@ -17,11 +18,39 @@ export function bumpNextVersion(rootDir, title = "version update", options = {})
     updatePackageVersion(file, currentVersion, nextVersion);
   }
 
-  updatePackageLock(rootDir, packageFiles, currentVersion, nextVersion);
-  updateDeploymentSample(rootDir, nextVersion);
+  updatePackageLock(
+    resolve(rootDir, "package-lock.json"),
+    rootDir,
+    packageFiles,
+    currentVersion,
+    nextVersion
+  );
   updateChangelog(rootDir, nextVersion, title, databaseUpdate);
+  updateDeploymentSample(rootDir, currentVersion, nextVersion);
 
-  return { currentVersion, databaseUpdate, nextVersion, title };
+  return {
+    currentVersion,
+    databaseUpdate,
+    nextVersion,
+    reference: Number(nextVersion.split(".")[2] ?? "0"),
+    title
+  };
+}
+
+function updateDeploymentSample(rootDir, currentVersion, nextVersion) {
+  const file = resolve(rootDir, ".container", "deploy.env.sample");
+  if (!existsSync(file)) return;
+  const content = readFileSync(file, "utf8")
+    .replace(/^CXSHOP_VERSION=.*$/mu, `CXSHOP_VERSION=${nextVersion}`)
+    .replace(/^MARIADB_IMAGE_TAG=.*$/mu, `MARIADB_IMAGE_TAG=11.8-cxshop-${nextVersion}`)
+    .replace(/^MEDIA_IMAGE_TAG=.*$/mu, `MEDIA_IMAGE_TAG=${nextVersion}-filebrowser2.63.5`)
+    .replace(/^BILLING_STACK_API_IMAGE_TAG=.*$/mu, `BILLING_STACK_API_IMAGE_TAG=${nextVersion}`)
+    .replace(/^BILLING_STACK_WEB_IMAGE_TAG=.*$/mu, `BILLING_STACK_WEB_IMAGE_TAG=${nextVersion}`)
+    .replace(
+      /^BILLING_STACK_MIGRATIONS_IMAGE_TAG=.*$/mu,
+      `BILLING_STACK_MIGRATIONS_IMAGE_TAG=${nextVersion}`
+    );
+  writeFileSync(file, content.replaceAll(currentVersion, nextVersion), "utf8");
 }
 
 export function findWorkspacePackageFiles(rootDir) {
@@ -32,164 +61,268 @@ export function findWorkspacePackageFiles(rootDir) {
   for (const pattern of rootPackage.workspaces ?? []) {
     for (const workspaceDir of expandWorkspacePattern(rootDir, pattern)) {
       const packagePath = join(workspaceDir, "package.json");
-      if (existsSync(packagePath)) files.add(packagePath);
+      if (existsSync(packagePath)) {
+        files.add(packagePath);
+      }
     }
   }
 
   return [...files].sort();
 }
 
-export function bumpPatch(version) {
-  const match = version.match(/^(\d+)\.(\d+)\.(\d+)$/u);
-  if (!match) throw new Error(`Unsupported version format: ${version}`);
-  return `${match[1]}.${match[2]}.${Number.parseInt(match[3], 10) + 1}`;
-}
-
 function expandWorkspacePattern(rootDir, pattern) {
-  let directories = [rootDir];
+  const parts = pattern.split(/[\\/]/u).filter(Boolean);
+  let dirs = [rootDir];
 
-  for (const part of pattern.split(/[\\/]/u).filter(Boolean)) {
-    const nextDirectories = [];
-    for (const directory of directories) {
+  for (const part of parts) {
+    const nextDirs = [];
+
+    for (const dir of dirs) {
       if (part === "*") {
-        if (!existsSync(directory)) continue;
-        for (const entry of readdirSync(directory)) {
-          const candidate = join(directory, entry);
-          if (statSync(candidate).isDirectory()) nextDirectories.push(candidate);
+        if (!existsSync(dir)) {
+          continue;
+        }
+
+        for (const entry of readdirSync(dir)) {
+          const fullPath = join(dir, entry);
+          if (statSync(fullPath).isDirectory()) {
+            nextDirs.push(fullPath);
+          }
         }
       } else {
-        const candidate = join(directory, part);
-        if (existsSync(candidate) && statSync(candidate).isDirectory()) {
-          nextDirectories.push(candidate);
+        const fullPath = join(dir, part);
+        if (existsSync(fullPath) && statSync(fullPath).isDirectory()) {
+          nextDirs.push(fullPath);
         }
       }
     }
-    directories = nextDirectories;
+
+    dirs = nextDirs;
   }
 
-  return directories;
+  return dirs;
 }
 
 function readRootVersion(rootDir) {
-  return String(JSON.parse(readFileSync(resolve(rootDir, "package.json"), "utf8")).version);
+  const pkg = JSON.parse(readFileSync(resolve(rootDir, "package.json"), "utf8"));
+
+  if (!pkg.version) {
+    throw new Error("Root package.json does not contain a version.");
+  }
+
+  return String(pkg.version);
+}
+
+export function bumpPatch(version) {
+  const match = /^(\d+)\.(\d+)\.(\d+)$/u.exec(version);
+  const patch = Number(match?.[3]);
+  if (!match || !Number.isSafeInteger(patch)) {
+    throw new Error(`Unsupported version format: ${version}`);
+  }
+  return `${match[1]}.${match[2]}.${patch + 1}`;
 }
 
 function updatePackageVersion(file, currentVersion, nextVersion) {
   const pkg = JSON.parse(readFileSync(file, "utf8"));
   pkg.version = nextVersion;
-  updateInternalDependencies(pkg, currentVersion, nextVersion);
+  updateInternalDependencyRanges(pkg, currentVersion, nextVersion);
   writeFileSync(file, `${JSON.stringify(pkg, null, 2)}\n`, "utf8");
 }
 
-function updateInternalDependencies(pkg, currentVersion, nextVersion) {
-  for (const field of ["dependencies", "devDependencies", "peerDependencies", "optionalDependencies"]) {
-    for (const [name, version] of Object.entries(pkg[field] ?? {})) {
+function updateInternalDependencyRanges(pkg, currentVersion, nextVersion) {
+  for (const field of [
+    "dependencies",
+    "devDependencies",
+    "peerDependencies",
+    "optionalDependencies"
+  ]) {
+    const deps = pkg[field];
+    if (!deps || typeof deps !== "object") {
+      continue;
+    }
+
+    for (const [name, version] of Object.entries(deps)) {
       if (name.startsWith("@cxshop/") && version === `^${currentVersion}`) {
-        pkg[field][name] = `^${nextVersion}`;
+        deps[name] = `^${nextVersion}`;
       }
     }
   }
 }
 
-function updatePackageLock(rootDir, packageFiles, currentVersion, nextVersion) {
-  const file = resolve(rootDir, "package-lock.json");
-  if (!existsSync(file)) return;
+function updatePackageLock(file, rootDir, packageFiles, currentVersion, nextVersion) {
+  if (!existsSync(file)) {
+    return;
+  }
 
   const lock = JSON.parse(readFileSync(file, "utf8"));
-  const workspacePaths = new Set(
-    packageFiles.map((filePath) => relative(rootDir, dirname(filePath)).replaceAll("\\", "/"))
+  const workspaceLockPaths = new Set(
+    packageFiles.map((packageFile) => relative(rootDir, dirname(packageFile)).replaceAll("\\", "/"))
   );
 
-  if (lock.version === currentVersion) lock.version = nextVersion;
+  if (lock.version === currentVersion) {
+    lock.version = nextVersion;
+  }
+
   for (const [lockPath, pkg] of Object.entries(lock.packages ?? {})) {
-    if (pkg?.version === currentVersion && (lockPath === "" || workspacePaths.has(lockPath))) {
+    if (
+      pkg &&
+      typeof pkg === "object" &&
+      pkg.version === currentVersion &&
+      (lockPath === "" || workspaceLockPaths.has(lockPath))
+    ) {
       pkg.version = nextVersion;
     }
-    if (pkg && typeof pkg === "object") updateInternalDependencies(pkg, currentVersion, nextVersion);
+    updateInternalDependencyRanges(pkg, currentVersion, nextVersion);
   }
+
   writeFileSync(file, `${JSON.stringify(lock, null, 2)}\n`, "utf8");
 }
 
-function updateDeploymentSample(rootDir, nextVersion) {
-  const file = resolve(rootDir, ".container", "deploy.env.sample");
-  if (!existsSync(file)) return;
-  const content = readFileSync(file, "utf8").replace(/^APP_VERSION=.*$/mu, `APP_VERSION=${nextVersion}`);
-  writeFileSync(file, content, "utf8");
-}
-
 function updateChangelog(rootDir, nextVersion, title, databaseUpdate) {
-  const file = resolve(rootDir, "assist", "documentation", "CHANGELOG.md");
-  let content = readFileSync(file, "utf8")
+  const file = resolve(rootDir, CHANGELOG_FILE);
+  const tag = `v-${nextVersion}`;
+  const label = `v ${nextVersion}`;
+  let content = readFileSync(file, "utf8");
+
+  content = content
     .replace(/Current version: .*/u, `Current version: ${nextVersion}`)
-    .replace(/Release tag: .*/u, `Release tag: v-${nextVersion}`)
-    .replace(/Changelog label: .*/u, `Changelog label: v ${nextVersion}`);
+    .replace(/Release tag: .*/u, `Release tag: ${tag}`)
+    .replace(/Changelog label: .*/u, `Changelog label: ${label}`);
+
   const entry = [
-    `## v-${nextVersion}`,
+    `## ${tag}`,
     "",
-    `### [v ${nextVersion}] ${formatLocalTimestamp(new Date())} - ${title}`,
+    `### [${label}] ${formatLocalTimestamp(new Date())} - ${title}`,
     "",
     "#### Database Changes",
     "",
-    `- Database update: ${databaseUpdate.hasUpdate ? "Yes" : "No"} (${databaseUpdate.mode}).`,
+    `- Database update: ${databaseUpdate.hasUpdate ? "Yes" : "No"}${
+      databaseUpdate.mode === "auto" ? " (auto-check)" : " (manual)"
+    }.`,
     "",
     "#### App Codebase Changes",
     "",
-    `- Bumped the workspace version to ${nextVersion}.`,
+    `- Bumped workspace version to ${nextVersion}.`,
     ""
   ].join("\n");
-  const marker = content.indexOf("## v-");
-  const insertionPoint = marker === -1 ? content.length : marker;
-  content = `${content.slice(0, insertionPoint)}${entry}\n${content.slice(insertionPoint)}`;
+
+  const markerIndex = content.indexOf("## v-");
+  const insertAt = markerIndex === -1 ? content.length : markerIndex;
+  content = `${content.slice(0, insertAt)}${entry}\n${content.slice(insertAt)}`;
   writeFileSync(file, content, "utf8");
 }
 
 function formatLocalTimestamp(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
   const hours = date.getHours();
-  const parts = [
-    date.getFullYear(),
-    String(date.getMonth() + 1).padStart(2, "0"),
-    String(date.getDate()).padStart(2, "0")
-  ];
-  return `${parts.join("-")} ${hours % 12 || 12}:${String(date.getMinutes()).padStart(2, "0")} ${hours >= 12 ? "pm" : "am"}`;
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+  const suffix = hours >= 12 ? "pm" : "am";
+  const hour12 = hours % 12 || 12;
+
+  return `${year}-${month}-${day} ${hour12}:${minutes} ${suffix}`;
+}
+
+function parseTitleArg(argv) {
+  const titleIndex = argv.findIndex((arg) => arg === "--title" || arg === "-t");
+  if (titleIndex >= 0) {
+    return argv[titleIndex + 1] ?? "version update";
+  }
+
+  return (
+    argv
+      .filter((arg, index) => {
+        const previous = argv[index - 1];
+        return !arg.startsWith("--") && previous !== "--database-update" && previous !== "--title";
+      })
+      .join(" ")
+      .trim() || "version update"
+  );
+}
+
+function parseDatabaseUpdateArg(argv) {
+  if (argv.some((arg) => arg === "--database-update" || arg === "--db-update" || arg === "--db")) {
+    return true;
+  }
+
+  if (
+    argv.some(
+      (arg) => arg === "--no-database-update" || arg === "--no-db-update" || arg === "--no-db"
+    )
+  ) {
+    return false;
+  }
+
+  const valueArg = argv.find((arg) => arg.startsWith("--database-update="));
+  const value = valueArg?.split("=").slice(1).join("=").trim().toLowerCase();
+  if (value === "yes" || value === "true" || value === "1") return true;
+  if (value === "no" || value === "false" || value === "0") return false;
+
+  return "auto";
 }
 
 function resolveDatabaseUpdate(rootDir, requested) {
-  if (typeof requested === "boolean") return { hasUpdate: requested, mode: "manual" };
-  const files = changedFiles(rootDir).filter(isDatabaseFile);
-  return { hasUpdate: files.length > 0, mode: "auto" };
+  if (requested === true || requested === false) {
+    return {
+      files: [],
+      hasUpdate: requested,
+      mode: "manual"
+    };
+  }
+
+  const files = changedFiles(rootDir).filter(isDatabaseUpdateFile);
+  return {
+    files,
+    hasUpdate: files.length > 0,
+    mode: "auto"
+  };
 }
 
 function changedFiles(rootDir) {
   try {
-    return execFileSync("git", ["diff", "--name-only", "HEAD", "--"], {
+    const output = execFileSync("git", ["diff", "--name-only", "HEAD", "--"], {
       cwd: rootDir,
       encoding: "utf8",
       stdio: ["ignore", "pipe", "ignore"]
-    }).split(/\r?\n/u).filter(Boolean);
+    });
+
+    return output
+      .split(/\r?\n/u)
+      .map((file) => file.trim())
+      .filter(Boolean);
   } catch {
     return [];
   }
 }
 
-function isDatabaseFile(file) {
-  const name = file.replaceAll("\\", "/").toLowerCase();
-  return name.includes("/database/") || name.includes("/migrations/") || name.endsWith(".migration.ts") || name.endsWith(".schema.sql");
-}
+function isDatabaseUpdateFile(file) {
+  const normalized = file.replaceAll("\\", "/").toLowerCase();
+  const fileName = normalized.split("/").pop() ?? "";
 
-function parseDatabaseFlag(args) {
-  if (args.includes("--database-update")) return true;
-  if (args.includes("--no-database-update")) return false;
-  return undefined;
-}
-
-function parseTitle(args) {
-  const index = args.findIndex((arg) => arg === "--title" || arg === "-t");
-  return index >= 0 ? args[index + 1] ?? "version update" : "version update";
+  return (
+    normalized.includes("/migrations/") ||
+    normalized.includes("/migration-manager/") ||
+    normalized.includes("/tenant-database/") ||
+    normalized.includes("/infrastructure/database/") ||
+    normalized.includes("/database/") ||
+    normalized.includes("/src/db/") ||
+    fileName === "schema.ts" ||
+    fileName.endsWith(".schema.ts") ||
+    fileName.endsWith(".migration.ts") ||
+    fileName === "migration.ts" ||
+    fileName.endsWith(".database.ts")
+  );
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  const args = process.argv.slice(2);
-  const result = bumpNextVersion(ROOT, parseTitle(args), { databaseUpdate: parseDatabaseFlag(args) });
+  const argv = process.argv.slice(2);
+  const result = bumpNextVersion(ROOT, parseTitleArg(argv), {
+    databaseUpdate: parseDatabaseUpdateArg(argv)
+  });
+
   console.log(`Bumped ${result.currentVersion} -> ${result.nextVersion}`);
-  console.log(`Database update: ${result.databaseUpdate.hasUpdate ? "yes" : "no"} (${result.databaseUpdate.mode})`);
+  console.log(
+    `Database update: ${result.databaseUpdate.hasUpdate ? "yes" : "no"} (${result.databaseUpdate.mode})`
+  );
 }

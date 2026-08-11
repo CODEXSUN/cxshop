@@ -1,104 +1,231 @@
-import cookie from "@fastify/cookie";
-import cors from "@fastify/cors";
-import helmet from "@fastify/helmet";
-import rateLimit from "@fastify/rate-limit";
-import swagger from "@fastify/swagger";
-import scalar from "@scalar/fastify-api-reference";
-import Fastify from "fastify";
-import type { FastifyInstance } from "fastify";
-import { buildSchema, graphql } from "graphql";
-import { sql } from "kysely";
-import { loadConfig } from "./config";
-import { DatabaseProvider } from "./infrastructure/database";
-import { IdentityRepository } from "./modules/identity/identity.repository";
-import { registerIdentityRoutes } from "./modules/identity/identity.routes";
-import { IdentityService } from "./modules/identity/identity.service";
-import { ProjectRepository } from "./modules/project-management/project.repository";
-import { registerProjectRoutes } from "./modules/project-management/project.routes";
-import { BusinessAssistRepository } from "./modules/business-assist/infrastructure/business-assist.repository";
-import { BusinessAssistService } from "./modules/business-assist/application/business-assist.service";
-import { OpenAiBusinessAdvisor } from "./modules/business-assist/infrastructure/openai-business-advisor";
-import { registerBusinessAssistRoutes } from "./modules/business-assist/api/business-assist.routes";
-import { CatalogRepository } from "./modules/catalog/infrastructure/catalog.repository";
-import { CatalogService } from "./modules/catalog/application/catalog.service";
-import { registerCatalogRoutes } from "./modules/catalog/api/catalog.routes";
-import { WalkInSalesRepository } from "./modules/walk-in-sales/infrastructure/walk-in-sales.repository";
-import { WalkInSalesService } from "./modules/walk-in-sales/application/walk-in-sales.service";
-import { registerWalkInSalesRoutes } from "./modules/walk-in-sales/api/walk-in-sales.routes";
+import { createApiApp, registerHealthRoute, registerRequestLogging } from "@cxshop/framework/api";
+import { registerModules } from "@cxshop/framework/modules";
+import { createMailModule } from "@cxshop/mail-api";
+import {
+  billingApiModuleKeys,
+  closeAllBillingDatabases,
+  registerBillingApi
+} from "@cxshop/billing-api";
+import { closeCoreDatabase, coreApiModuleKeys, registerCoreApi } from "@cxshop/core-api";
+import { AppError } from "@cxshop/framework/errors";
+import type { FastifyRequest } from "fastify";
+import type { HealthCheck } from "@cxshop/framework/health";
+import { registerAuthRoutes } from "./auth/auth.routes.js";
+import { appRegistryModule } from "./modules/app-registry/index.js";
+import { tenantUserModule } from "./modules/tenant-user/index.js";
+import { tenantRoleModule } from "./modules/tenant-role/index.js";
+import { tenantPermissionModule } from "./modules/tenant-permission/index.js";
+import { tenantUserRoleModule } from "./modules/tenant-user-role/index.js";
+import { tenantRolePermissionModule } from "./modules/tenant-role-permission/index.js";
+import { IndustryService, industryModule } from "./modules/industry/index.js";
+import { accessControlModule } from "./modules/access-control/index.js";
+import { platformActivityModule } from "./modules/platform-activity/index.js";
+import { queueManagerModule } from "./modules/queue-manager/index.js";
+import { storageManagerModule } from "./modules/storage-manager/index.js";
+import { taskManagerModule } from "./modules/task-manager/index.js";
+import { credentialRecoveryModule } from "./modules/credential-recovery/index.js";
+import { appOrchestrationModule } from "./modules/app-orchestration/index.js";
+import { startQueueManagerWorker } from "./modules/queue-manager/queue-manager.runtime.js";
+import { QueueManagerService } from "./modules/queue-manager/queue-manager.service.js";
+import { tenantAccessContext } from "./auth/tenant-access-context.js";
+import { env } from "./env.js";
+import { bootstrapPlatformDatabase, closePlatformDatabase } from "./database/platform-database.js";
+import { closeAllTenantDatabases } from "./database/tenant-database.js";
+import { registerAuthRequestContext } from "./auth/auth-request-context.js";
+import { registerDevkitHost } from "./devkit-host.js";
+import { devkitApiModuleKeys } from "@cxshop/devkit-api";
+import {
+  closeAllEcommerceDatabases,
+  ecommerceApiModuleKeys,
+  processSemanticCatalogMatch,
+  registerEcommerceApi,
+  semanticCatalogMatchJobName,
+  startCatalogMatchingOutboxRelay
+} from "@cxshop/ecommerce-api";
+import { registerQueueJobHandler } from "./modules/queue-manager/queue-handler.registry.js";
+import { applicationSetupModule } from "./modules/application-setup/index.js";
+import { blogsApiModuleKeys, closeBlogsDatabase, registerBlogsApi } from "@cxshop/blogs-api";
 
 export async function createApp() {
-  const config = loadConfig();
-  const app = Fastify({ logger: true, trustProxy: true, bodyLimit: config.API_BODY_MAX_BYTES });
-  await app.register(helmet, { contentSecurityPolicy: false });
-  await app.register(cookie);
-  await app.register(cors, {
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    origin: config.allowedWebUrls
+  console.info("[platform.boot] bootstrap started");
+  await bootstrapPlatformDatabase();
+
+  const app = await createApiApp({
+    appName: "CODEXSUN Platform API",
+    cookieSecret: env.JWT_SECRET,
+    corsOrigins: await platformWebOrigins(),
+    environment: env.NODE_ENV,
+    shutdownHooks: [
+      async () => {
+        console.info("[shutdown] closing Blogs MariaDB pool");
+        await closeBlogsDatabase();
+      },
+      async () => {
+        console.info("[shutdown] closing Ecommerce MariaDB pools");
+        await closeAllEcommerceDatabases();
+      },
+      async () => {
+        console.info("[shutdown] closing Billing MariaDB pools");
+        await closeAllBillingDatabases();
+      },
+      async () => {
+        console.info("[shutdown] closing Core MariaDB pools");
+        await closeCoreDatabase();
+      },
+      async () => {
+        console.info("[shutdown] closing application MariaDB pools");
+        await closeAllTenantDatabases();
+      },
+      async () => {
+        console.info("[shutdown] closing platform MariaDB pools");
+        await closePlatformDatabase();
+      }
+    ]
   });
-  await app.register(rateLimit, { max: config.RATE_LIMIT_MAX, timeWindow: config.RATE_LIMIT_WINDOW });
-  app.setErrorHandler((error, request, reply) => {
-    if (databaseUnavailable(error)) {
-      request.log.warn({ code: "DATABASE_UNAVAILABLE" }, "MariaDB is unavailable");
-      return reply.code(503).send({ error: { code: "DATABASE_UNAVAILABLE", message: "The data service is temporarily unavailable." } });
+  const queueService = new QueueManagerService();
+  registerQueueJobHandler(semanticCatalogMatchJobName, (payload) =>
+    processSemanticCatalogMatch(payload)
+  );
+  registerAuthRequestContext(app);
+  await registerDevkitHost(app);
+  console.info("[platform.routes] DevKit package ready");
+  const mailModule = createMailModule({
+    enqueue: (payload) => queueService.enqueue(payload),
+    resolveContext: mailContext,
+    secretKey: env.JWT_SECRET
+  });
+
+  const healthChecks: HealthCheck[] = [
+    {
+      name: "platform-api",
+      check: () => ({
+        details: {
+          modules: [
+            ...coreApiModuleKeys,
+            ...billingApiModuleKeys,
+            ...devkitApiModuleKeys,
+            ...ecommerceApiModuleKeys,
+            ...blogsApiModuleKeys,
+            appRegistryModule.key,
+            applicationSetupModule.key,
+            tenantUserModule.key,
+            tenantRoleModule.key,
+            tenantPermissionModule.key,
+            tenantUserRoleModule.key,
+            tenantRolePermissionModule.key,
+            industryModule.key,
+            accessControlModule.key,
+            platformActivityModule.key,
+            queueManagerModule.key,
+            credentialRecoveryModule.key,
+            storageManagerModule.key,
+            taskManagerModule.key,
+            appOrchestrationModule.key,
+            mailModule.key
+          ],
+          runtime: "platform-foundation"
+        },
+        status: "ok"
+      })
     }
-    request.log.error(error);
-    return reply.code(500).send({ error: { code: "INTERNAL_ERROR", message: "Something went wrong." } });
+  ];
+
+  registerRequestLogging(app);
+  registerHealthRoute(app, healthChecks);
+  app.get("/public/runtime-config", async () => ({
+    data: {
+      VITE_DEV_AUTO_TENANT_LOGIN: env.DEV_AUTO_TENANT_LOGIN,
+      VITE_PLATFORM_API_URL: "/api/platform",
+      VITE_TENANT_NAME: env.DEFAULT_TENANT_NAME
+    },
+    success: true
+  }));
+  console.info("[platform.routes] health ready");
+  await registerAuthRoutes(app);
+  console.info("[platform.routes] auth ready");
+  const industryService = new IndustryService();
+  await registerCoreApi(app, {
+    resolveIndustryName: (industryId) => industryService.resolveActiveIndustryName(industryId)
   });
-  await app.register(swagger, { openapi: { info: { title: "CXShop API", version: "1.1.0" }, servers: [{ url: config.API_URL }] } });
-  await app.register(scalar, { routePrefix: "/docs", configuration: { theme: "kepler", layout: "modern" } });
-  app.get("/openapi.json", async () => app.swagger());
-  const database = new DatabaseProvider(config.databaseUrl);
-  const identity = new IdentityService(new IdentityRepository(database.connection), config.authSecret, config);
-  registerIdentityRoutes(app, identity, {
-    name: config.LOGIN_COOKIE_NAME,
-    maxAge: config.LOGIN_SESSION_HOURS * 3_600,
-    secure: config.LOGIN_COOKIE_SECURE === "1",
-    sameSite: config.LOGIN_COOKIE_SAME_SITE
-  });
-  registerProjectRoutes(app, new ProjectRepository(database.connection), identity, config.LOGIN_COOKIE_NAME);
-  const catalog = new CatalogService(new CatalogRepository(database.connection));
-  registerCatalogRoutes(app, catalog, identity, config.LOGIN_COOKIE_NAME);
-  registerWalkInSalesRoutes(app, new WalkInSalesService(new WalkInSalesRepository(database.connection), config), identity, config.LOGIN_COOKIE_NAME);
-  registerGraphql(app, catalog, config.GRAPHQL_QUERY_MAX_BYTES);
-  const advisor = createBusinessAdvisor(config);
-  const businessAssist = new BusinessAssistService(new BusinessAssistRepository(database.connection, config.QUEUE_MAX_ATTEMPTS), advisor, config.OPENAI_MODEL);
-  registerBusinessAssistRoutes(app, businessAssist, identity, config.LOGIN_COOKIE_NAME);
-  app.get("/health", async () => { await sql`SELECT 1`.execute(database.connection); return { status: "ok", service: "cxshop-api" }; });
-  return { app, config };
+  console.info("[platform.routes] Core package ready");
+  await registerBillingApi(app);
+  console.info("[platform.routes] Billing package ready");
+  await registerEcommerceApi(app);
+  startCatalogMatchingOutboxRelay(app, (payload) => queueService.enqueue(payload));
+  console.info("[platform.routes] Ecommerce package ready");
+  await registerBlogsApi(app);
+  console.info("[platform.routes] Blogs package ready");
+  await registerModules(
+    [
+      appRegistryModule,
+      applicationSetupModule,
+      tenantUserModule,
+      tenantRoleModule,
+      tenantPermissionModule,
+      tenantUserRoleModule,
+      tenantRolePermissionModule,
+      industryModule,
+      accessControlModule,
+      platformActivityModule,
+      queueManagerModule,
+      credentialRecoveryModule,
+      storageManagerModule,
+      taskManagerModule,
+      appOrchestrationModule,
+      mailModule
+    ],
+    { app },
+    {
+      onRegister: (module) => console.info(`[module.register] ${module.key}`),
+      onReady: (module) => console.info(`[module.ready] ${module.key}`)
+    }
+  );
+  startQueueManagerWorker(app, queueService);
+  console.info("[platform.worker] queue manager ready");
+  console.info("[platform.boot] bootstrap completed");
+
+  return app;
 }
 
-function databaseUnavailable(error: unknown): boolean {
-  if (!error || typeof error !== "object") return false;
-  return ["ECONNREFUSED", "ETIMEDOUT", "PROTOCOL_CONNECTION_LOST"].includes(String((error as { code?: unknown }).code ?? ""));
+async function platformWebOrigins() {
+  const configuredOrigins = [env.PLATFORM_WEB_ORIGIN];
+  if (env.NODE_ENV !== "production") {
+    configuredOrigins.push(
+      `http://127.0.0.1:${env.PLATFORM_WEB_PORT}`,
+      `http://localhost:${env.PLATFORM_WEB_PORT}`
+    );
+  }
+
+  return Array.from(
+    new Set(
+      configuredOrigins
+        .map((origin) => origin.trim())
+        .filter(Boolean)
+        .flatMap(localOriginAliases)
+        .map((origin) => origin.trim().replace(/\/$/u, ""))
+    )
+  );
 }
 
-function registerGraphql(app: FastifyInstance, catalog: CatalogService, maxQueryBytes: number) {
-  const schema = buildSchema(`
-    type Query { service: Service!, categories: [Category!]!, products(category: String): [Product!]! }
-    type Service { name: String!, status: String! }
-    type Category { id: ID!, name: String!, slug: String!, description: String!, productCount: Int! }
-    type Product { id: ID!, key: String!, name: String!, slug: String!, summary: String!, category: String, imageUrl: String }
-  `);
-  app.post("/graphql", async (request, reply) => {
-    const source = (request.body as { query?: unknown } | undefined)?.query;
-    if (typeof source !== "string" || source.length > maxQueryBytes) return reply.code(400).send({ errors: [{ message: "invalid_query" }] });
-    return graphql({ schema, source, rootValue: {
-      service: () => ({ name: "cxshop-api", status: "ok" }),
-      categories: () => catalog.listStoreCategories(),
-      products: ({ category }: { category?: string }) => catalog.listStoreProducts(category)
-    } });
-  });
+function localOriginAliases(origin: string) {
+  const origins = [origin];
+  const url = new URL(origin);
+  if (url.hostname === "localhost") {
+    url.hostname = "127.0.0.1";
+    origins.push(url.origin);
+  } else if (url.hostname === "127.0.0.1") {
+    url.hostname = "localhost";
+    origins.push(url.origin);
+  }
+  return origins;
 }
 
-export function createBusinessAdvisor(config: ReturnType<typeof loadConfig>) {
-  if (config.OPENAI_ENABLED !== "1") return undefined;
-  if (!config.OPENAI_API_KEY) throw new Error("OPENAI_API_KEY is required when OpenAI is enabled");
-  return new OpenAiBusinessAdvisor({
-    apiKey: config.OPENAI_API_KEY,
-    baseURL: config.OPENAI_URL,
-    model: config.OPENAI_MODEL,
-    reasoningEffort: config.OPENAI_REASONING,
-    maxOutputTokens: config.OPENAI_OUTPUT_MAX_TOKENS
-  });
+async function mailContext(request: FastifyRequest) {
+  const context = tenantAccessContext(request);
+  const header = request.headers["x-company-id"];
+  const companyId = Number(Array.isArray(header) ? header[0] : header);
+  if (!Number.isInteger(companyId) || companyId <= 0) {
+    throw AppError.validation("x-company-id is required for Mail access.");
+  }
+  return { ...context, companyId, database: context.database as never };
 }
