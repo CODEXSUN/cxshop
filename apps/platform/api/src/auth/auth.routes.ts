@@ -45,8 +45,7 @@ export async function registerAuthRoutes(app: FastifyInstance) {
     await replaceCurrentSession(request);
     clearAllSessionCookies(reply);
     const result = await authService.login({
-      corporateId: "CODEXSUN",
-      desk: "tenant",
+      desk: "admin",
       domain: requestHost(request),
       email: env.DEFAULT_TENANT_ADMIN_EMAIL,
       password: env.DEFAULT_TENANT_ADMIN_PASSWORD
@@ -78,7 +77,6 @@ export async function registerAuthRoutes(app: FastifyInstance) {
     await replaceCurrentSession(request);
     clearAllSessionCookies(reply);
     const loginInput: {
-      corporateId?: string;
       desk: typeof body.desk;
       domain: string;
       email: string;
@@ -89,8 +87,6 @@ export async function registerAuthRoutes(app: FastifyInstance) {
       email: body.email,
       password: body.password
     };
-    const corporateId = body.corporateId ?? body.tenantCode;
-    if (corporateId) loginInput.corporateId = corporateId;
     const result = await authService.login(loginInput);
     if (!result) {
       await attempts.recordFailure(key);
@@ -150,11 +146,9 @@ export async function registerAuthRoutes(app: FastifyInstance) {
 
 const loginSchema = z
   .object({
-    corporateId: z.string().trim().min(1).max(120).optional(),
-    desk: z.enum(["tenant", "admin", "staff", "sa", "super_admin"]),
+    desk: z.enum(["admin", "sa"]),
     email: z.string().trim().email().max(180),
-    password: z.string().min(1).max(1024),
-    tenantCode: z.string().trim().min(1).max(120).optional()
+    password: z.string().min(1).max(1024)
   })
   .strict();
 

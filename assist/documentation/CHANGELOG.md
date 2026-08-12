@@ -2,11 +2,11 @@
 
 ## Version State
 
-Current version: 1.0.57
+Current version: 1.0.58
 
-Release tag: v-1.0.57
+Release tag: v-1.0.58
 
-Changelog label: v 1.0.57
+Changelog label: v 1.0.58
 
 This changelog starts fresh from the cleaned CODEXSUN foundation. Earlier copied application history was intentionally removed because it did not represent the current workspace.
 
@@ -20,7 +20,115 @@ Records schema, migration, seed, tenant provisioning, and data compatibility cha
 
 Records UI, API, service logic, tooling, packaging, and documentation changes.
 
+## v-1.0.58
+
+### [v 1.0.58] 2026-08-13 2:01 am - Piko commerce assistant and hybrid storefront
+
+#### Database Changes
+
+- Database update: Yes. Added the DevKit-owned Piko conversation, message, and durable agent-run
+  tables to the CXShop migration lifecycle.
+- Stored conversation ownership by application actor. Added active and archived thread states so
+  archive actions retain messages and run history.
+
+#### App Codebase Changes
+
+- Bumped workspace version to 1.0.58.
+- Replaced the visible Honey AI identity with Piko across the Application menu, workspace titles,
+  prompts, provider errors, and permission descriptions. Kept legacy internal database and route
+  names for existing data compatibility.
+- Added the Piko menu group with Agent Chat and Connection Setup workspaces.
+- Matched the Piko chat workspace to the TechMedia TEMA layout. Added a conversation rail, mode
+  switch, full-width message canvas, chat counters, a 90 percent auto-growing composer, microphone
+  input, draft clearing, and a centered empty-chat welcome.
+- Added a hover and keyboard-focus archive action to the conversation history. Archive actions keep
+  stored messages and open the next active conversation.
+- Added an actor-isolated Codex App Server connector with ChatGPT browser login, device-code login,
+  account status polling, login cancellation, logout, and local connection history.
+- Added the bundled `@openai/codex` runtime to the DevKit API package. Kept server API-key model
+  configuration as a separate Piko connector option.
+- Added the Ecommerce item workspace with Frappe Item lookup, populated storefront fields, Details,
+  Fulfilment, and Content and SEO tabs, and three storefront card previews.
+- Added the Piko item-editor handoff. It copies the current Frappe, storefront, fulfilment, and SEO
+  draft into a new Piko prompt without submitting the message.
+- Updated the storefront search, branding assets, responsive footer, card previews, and development
+  restart tooling to use the current CXShop interaction and identity rules.
+
 ## v-1.0.57
+
+### [v 1.0.57] 2026-08-12 - Bidirectional LogicX iShop catalog synchronization
+
+#### Database Changes
+
+- Database update: Yes. Added the immutable Ecommerce migration batch 3 for Frappe-aligned iShop
+  item fields, local iShop catalogs and child memberships, and synchronization run records.
+- Added deterministic `CXSHOP-DEMO-*` ERPNext Item, iShop Item, iShop Catalog, and Catalog Item data
+  through the LogicX iShop integration API and synchronized it into `cxshop_db`.
+
+#### App Codebase Changes
+
+- Added permission-aware LogicX iShop snapshot, pull, push, and demo-seed integration flows.
+- Added Ecommerce Data Source actions for pulling from Frappe, pushing to Frappe, and seeding the
+  integration catalog without exposing connection secrets to the browser.
+- Added backend bidirectional MariaDB/Frappe E2E coverage and Playwright storefront/search coverage.
+- Added root Playwright tooling and the Chromium test runtime while preserving the single root
+  dependency tree.
+- Expanded the frontend demo action to post 50 computer-related products with image URLs across 10
+  catalogs, then pull the resulting live Frappe records into the storefront.
+- Made seeded Item, iShop Item, and iShop Catalog descriptions provider-neutral while retaining
+  deterministic `CXSHOP-DEMO-*` integration keys, and labelled the explicit frontend seed action
+  as a Frappe operation.
+
+### [v 1.0.57] 2026-08-12 - LogicX iShop Frappe catalog contract
+
+#### Database Changes
+
+- Database update: No.
+- Kept Own Database selected after live Frappe validation found that the configured API user does
+  not have read permission for the installed iShop DocTypes.
+
+#### App Codebase Changes
+
+- Replaced the generic ERPNext Item mapping with the exact LogicX iShop contracts for `iShop Item`,
+  `iShop Catalog`, and the `Catalog Item` child table.
+- Mapped published iShop item codes, names, availability, groups, brands, descriptions, web price,
+  MRP, images, highlights, catalog membership, and display order into Ecommerce storefront products,
+  product detail, categories, brands, discovery, filters, and search.
+- Extended Ecommerce connection testing to verify iShop catalog read permission after Frappe login,
+  so an authenticated connection without DocType access is reported as unavailable.
+
+### [v 1.0.57] 2026-08-12 - Ecommerce catalog data-source switch
+
+#### Database Changes
+
+- Database update: No.
+- Reused the encrypted application-level data-source singleton in `cxshop_db`; Ecommerce does not
+  duplicate the configured Frappe URL, API key, or secret.
+
+#### App Codebase Changes
+
+- Added an Ecommerce Data Source settings workspace and side-menu entry for selecting Own Database
+  or Frappe Live and testing the active connection.
+- Added an Ecommerce-owned provider gateway that reads the local module-owned catalog tables for
+  Own Database and maps live Frappe Item API records for storefront products, categories, brands,
+  search, discovery, and product detail requests.
+- Kept credential resolution in the Platform data-source owner and injected only its server-side
+  public control contract into Ecommerce composition.
+
+### [v 1.0.57] 2026-08-12 - Ecommerce default landing application
+
+#### Database Changes
+
+- Database update: Yes (runtime setting only).
+- Updated the existing Default Company singleton in `cxshop_db` to use `ecommerce` as the active
+  landing application; no schema migration was required.
+
+#### App Codebase Changes
+
+- Aligned the Core Default Company landing-app validation with the composed application registry so
+  operators can save Ecommerce and Blogs in addition to the existing application desks.
+- Extended the organisation persistence E2E assertion to cover Ecommerce as the saved and restarted
+  Default Company landing application.
 
 ### [v 1.0.57] 2026-08-11 6:25 pm - Application branding and Frappe connection settings
 
@@ -48,6 +156,42 @@ Records UI, API, service logic, tooling, packaging, and documentation changes.
   company logo update while retaining public caching for unchanged images.
 - Extended composed MariaDB E2E coverage for public default-company branding, masked integration
   secrets, application-owned logo authorization, SVG validation, and the standalone runtime contract.
+
+### [v 1.0.57] 2026-08-12 - Back Office authentication finalization
+
+#### Database Changes
+
+- Database update: No.
+
+#### App Codebase Changes
+
+- Wired `/admin/login`, the `/admin` application desk, print routes, logout, session expiry, and
+  password recovery to the standalone Back Office application-user account flow.
+- Removed Corporate ID and tenant-code fields from the Back Office login API contract. Back Office
+  now signs in with email and password only against `app_users` in `cxshop_db`.
+- Kept `/sa/login` isolated for Super Admin and retained its platform credential flow.
+- Extended the composed MariaDB E2E test to authenticate through the public Back Office login API,
+  replace an existing session, load application setup, and enforce Super Admin route isolation.
+
+### [v 1.0.57] 2026-08-12 - Local Docker Frappe connectivity
+
+#### Database Changes
+
+- Database update: No schema change.
+- Corrected the data-source settings seed fingerprint to include provider, URL, API key, and API
+  secret. A changed environment connection now refreshes the encrypted MariaDB settings on the next
+  API boot and resets verification state until the new connection is tested.
+
+#### App Codebase Changes
+
+- Added the Frappe provider variables to the container deployment contract and required complete
+  credentials when `CXSHOP_DATA_SOURCE=frappe`.
+- Added the portable `host.docker.internal:host-gateway` mapping so CXShop containers can connect to
+  a Frappe service published on the Docker host.
+- Synchronized the local deployment to `http://host.docker.internal:8000`, rebuilt CXShop `1.0.57`,
+  and verified the deployed Super Admin Frappe endpoint against the live local Frappe container.
+- Fixed the Verify Connection action to send only the strict verification payload instead of
+  including save-only form fields that caused HTTP 400 validation responses.
 
 ## v-1.0.56
 

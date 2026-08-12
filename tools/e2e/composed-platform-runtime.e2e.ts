@@ -108,15 +108,27 @@ try {
   const loginResponse = await app.inject({
     headers: browserHeaders,
     method: "POST",
-    url: "/auth/development/application-login"
+    payload: {
+      desk: "admin",
+      email: process.env.DEFAULT_TENANT_ADMIN_EMAIL,
+      password: process.env.DEFAULT_TENANT_ADMIN_PASSWORD
+    },
+    url: "/auth/login"
   });
   assert.equal(loginResponse.statusCode, 200, loginResponse.body);
+  assert.equal(loginResponse.json().data?.userType, "tenant");
+  assert.equal(loginResponse.json().data?.tenantId, "application");
   const previousCookie = sessionCookie(loginResponse.cookies);
 
   const freshLoginResponse = await app.inject({
     headers: { ...browserHeaders, cookie: previousCookie },
     method: "POST",
-    url: "/auth/development/application-login"
+    payload: {
+      desk: "admin",
+      email: process.env.DEFAULT_TENANT_ADMIN_EMAIL,
+      password: process.env.DEFAULT_TENANT_ADMIN_PASSWORD
+    },
+    url: "/auth/login"
   });
   assert.equal(freshLoginResponse.statusCode, 200, freshLoginResponse.body);
   const freshCookie = sessionCookie(freshLoginResponse.cookies);

@@ -1,7 +1,7 @@
 import { AuthLayout, Button, Field } from "@cxshop/ui";
 import { ArrowLeft, Mail } from "lucide-react";
 import { type ChangeEvent, type FormEvent, useState } from "react";
-import { forgotPassword, type Desk } from "../../shared/api/platform-api";
+import { forgotPassword, type LoginDesk } from "../../shared/api/platform-api";
 import { usePublicCompanyBranding } from "../../modules/tenant-portal/tenant-portal.api";
 
 export function ForgotPasswordPage() {
@@ -68,13 +68,12 @@ export function ForgotPasswordPage() {
   );
 }
 
-function deskFromQuery(): Desk {
+function deskFromQuery(): LoginDesk {
   const desk = new URLSearchParams(window.location.search).get("desk");
-  return desk === "sa" || desk === "admin" ? desk : "tenant";
+  return desk === "sa" ? "sa" : "admin";
 }
 
-function loginPath(desk: Desk) {
+function loginPath(desk: LoginDesk) {
   if (desk === "sa") return "/sa/login";
-  if (desk === "admin") return "/admin/login";
   return "/admin/login";
 }

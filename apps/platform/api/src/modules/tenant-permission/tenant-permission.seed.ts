@@ -25,10 +25,15 @@ const seeds = [
   "role-permission.assign",
   "role-permission.update",
   "role-permission.remove",
+  "honey.access",
   "task-manager.access"
 ].map((key) => ({
   description:
-    key === "task-manager.access" ? "Allows access to the tenant-owned Task Manager." : undefined,
+    key === "task-manager.access"
+      ? "Allows access to the tenant-owned Task Manager."
+      : key === "honey.access"
+        ? "Allows access to the Piko AI assistant."
+        : undefined,
   key:
     key === "task-manager.access" ? "platform.task-manager.access" : `platform.application.${key}`,
   label: key

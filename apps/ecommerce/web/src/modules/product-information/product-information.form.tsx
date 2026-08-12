@@ -1,13 +1,25 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { Sparkles } from "lucide-react";
 import { Button } from "@cxshop/ui/components/button";
-import { Card } from "@cxshop/ui/components/card";
 import { Input } from "@cxshop/ui/components/input";
 import { Label } from "@cxshop/ui/components/label";
 import { Textarea } from "@cxshop/ui/components/textarea";
+import { WorkspaceLookup } from "@cxshop/ui/workspace/lookup";
+import { WorkspaceAnimatedTabs } from "@cxshop/ui/workspace/animated-tabs";
+import {
+  WorkspaceFormBanner,
+  WorkspaceFormPanel,
+  WorkspaceUpsertPage
+} from "@cxshop/ui/workspace/upsert";
+import { useFrappeItemOptions } from "./product-information.hooks";
+import { getFrappeItem } from "./product-information.services";
+import { ProductInformationPreview } from "./product-information.preview";
+import { buildPikoItemDraft } from "./product-information.ai";
 import { productInformationSchema } from "./product-information.schema";
 import type {
   CoreBrandOption,
   CoreProductOption,
+  FrappeItemOption,
   ProductInformationPayload,
   ProductInformationRecord,
   PublicationStatus
@@ -43,6 +55,7 @@ export function ProductInformationForm({
   brands,
   coreProducts,
   loading,
+  onOpenAi,
   onCancel,
   onSubmit,
   record
@@ -51,11 +64,28 @@ export function ProductInformationForm({
   coreProducts: CoreProductOption[];
   loading: boolean;
   onCancel: () => void;
+  onOpenAi: (draft: string) => void;
   onSubmit: (payload: ProductInformationPayload) => void;
   record: ProductInformationRecord | null;
 }) {
   const [value, setValue] = useState<ProductInformationPayload>(record ? toPayload(record) : empty);
   const [error, setError] = useState("");
+  const [frappeSearch, setFrappeSearch] = useState("");
+  const [frappeItemCode, setFrappeItemCode] = useState("");
+  const [frappeMessage, setFrappeMessage] = useState("");
+  const [selectedFrappeItem, setSelectedFrappeItem] = useState<FrappeItemOption | null>(null);
+  const [activeTab, setActiveTab] = useState("details");
+  const frappeItems = useFrappeItemOptions(frappeSearch);
+  const frappeOptions = useMemo(
+    () =>
+      (frappeItems.data ?? []).map((item) => ({
+        value: item.itemCode,
+        label: item.itemName,
+        description: item.itemCode,
+        meta: [item.itemGroup, item.brand].filter(Boolean).join(" · ")
+      })),
+    [frappeItems.data]
+  );
   useEffect(() => setValue(record ? toPayload(record) : empty), [record]);
   const update = <K extends keyof ProductInformationPayload>(
     key: K,
@@ -71,12 +101,173 @@ export function ProductInformationForm({
     setError("");
     onSubmit(parsed.data);
   };
+  const selectFrappeItem = async (itemCode: string) => {
+    setFrappeItemCode(itemCode);
+    if (!itemCode) {
+      setSelectedFrappeItem(null);
+      setFrappeMessage("");
+      return;
+    }
+    setFrappeMessage("Loading the latest item from Frappe…");
+    try {
+      const item = await getFrappeItem(itemCode);
+      setSelectedFrappeItem(item);
+      const product = coreProducts.find((candidate) =>
+        [item.itemCode, item.itemName].some(
+          (name) => candidate.name.trim().toLowerCase() === name.trim().toLowerCase()
+        )
+      );
+      const brand = brands.find(
+        (candidate) => candidate.name.trim().toLowerCase() === item.brand.trim().toLowerCase()
+      );
+      const description = plainText(item.description);
+      setValue((current) => ({
+        ...current,
+        brandId: brand?.id ?? current.brandId,
+        coreProductId: product?.id ?? 0,
+        description,
+        manufacturer: item.brand || current.manufacturer,
+        seoDescription: description.slice(0, 160),
+        seoTitle: item.itemName.slice(0, 70),
+        shortDescription: description.slice(0, 500),
+        slug: slugify(item.itemCode),
+        storefrontTitle: item.itemName,
+        subtitle: item.itemGroup
+      }));
+      setFrappeMessage(
+        product
+          ? `Filled from Frappe item ${item.itemCode}. Review the content before saving.`
+          : `Filled from Frappe, but no matching local product exists. Pull Items from Frappe in Data Source settings before saving.`
+      );
+    } catch (caught) {
+      setSelectedFrappeItem(null);
+      setFrappeMessage(
+        caught instanceof Error ? caught.message : "Could not load the Frappe item."
+      );
+    }
+  };
   return (
-    <Card
-      title={record ? "Edit product details" : "New product details"}
-      description="Storefront content and fulfilment details that extend a canonical Core product."
+    <WorkspaceUpsertPage
+      title={record ? "Edit item" : "New item"}
+      onBack={onCancel}
+      action={
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() =>
+            onOpenAi(
+              buildPikoItemDraft({ brands, coreProducts, frappeItem: selectedFrappeItem, value })
+            )
+          }
+        >
+          <Sparkles className="size-4" />
+          Ask Piko AI
+        </Button>
+      }
     >
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+      <WorkspaceFormPanel title="Item content">
+        {frappeMessage ? (
+          <WorkspaceFormBanner
+            title={value.coreProductId ? "Frappe item loaded" : "Local product link required"}
+            tone={value.coreProductId ? "info" : "warning"}
+          >
+            {frappeMessage}
+          </WorkspaceFormBanner>
+        ) : null}
+        <div className="mb-5 rounded-md border border-primary/20 bg-primary/5 p-4">
+          <Field label="Frappe Item lookup">
+            <WorkspaceLookup
+              allowTextValue={false}
+              loading={frappeItems.isLoading}
+              options={frappeOptions}
+              placeholder="Search item code or item name"
+              showAllOptionsOnFocus
+              value={frappeItemCode}
+              onTextChange={setFrappeSearch}
+              onValueChange={(itemCode) => void selectFrappeItem(itemCode)}
+            />
+          </Field>
+        </div>
+        <WorkspaceAnimatedTabs
+          keepMounted
+          value={activeTab}
+          onValueChange={setActiveTab}
+          tabs={[
+            {
+              value: "details",
+              label: "Details",
+              content: (
+                <DetailsTab
+                  brands={brands}
+                  coreProducts={coreProducts}
+                  frappeItem={selectedFrappeItem}
+                  value={value}
+                  update={update}
+                />
+              )
+            },
+            {
+              value: "fulfilment",
+              label: "Fulfilment",
+              content: (
+                <FulfilmentTab
+                  brands={brands}
+                  frappeItem={selectedFrappeItem}
+                  value={value}
+                  update={update}
+                  number={number}
+                />
+              )
+            },
+            {
+              value: "content",
+              label: "Content & SEO",
+              content: (
+                <ContentTab
+                  brands={brands}
+                  frappeItem={selectedFrappeItem}
+                  value={value}
+                  update={update}
+                />
+              )
+            }
+          ]}
+        />
+        {error ? <p className="mt-3 text-sm text-destructive">{error}</p> : null}
+        <div className="mt-5 flex justify-end gap-2">
+          <Button variant="outline" onClick={onCancel}>
+            Cancel
+          </Button>
+          <Button disabled={loading} onClick={submit}>
+            {loading ? "Saving..." : "Save"}
+          </Button>
+        </div>
+      </WorkspaceFormPanel>
+    </WorkspaceUpsertPage>
+  );
+}
+
+type UpdateProductInformation = <K extends keyof ProductInformationPayload>(
+  key: K,
+  value: ProductInformationPayload[K]
+) => void;
+
+function DetailsTab({
+  brands,
+  coreProducts,
+  frappeItem,
+  update,
+  value
+}: {
+  brands: CoreBrandOption[];
+  coreProducts: CoreProductOption[];
+  frappeItem: FrappeItemOption | null;
+  update: UpdateProductInformation;
+  value: ProductInformationPayload;
+}) {
+  return (
+    <div className="space-y-10">
+      <div className="grid gap-x-6 gap-y-5 md:grid-cols-2">
         <Field label="Core product">
           <Select
             value={value.coreProductId}
@@ -125,6 +316,11 @@ export function ProductInformationForm({
         />
         <TextField label="Slug" value={value.slug} onChange={(raw) => update("slug", raw)} />
         <TextField
+          label="Manufacturer"
+          value={value.manufacturer}
+          onChange={(raw) => update("manufacturer", raw)}
+        />
+        <TextField
           label="Material"
           value={value.material}
           onChange={(raw) => update("material", raw)}
@@ -134,11 +330,35 @@ export function ProductInformationForm({
           value={value.countryOfOrigin}
           onChange={(raw) => update("countryOfOrigin", raw)}
         />
-        <TextField
-          label="Manufacturer"
-          value={value.manufacturer}
-          onChange={(raw) => update("manufacturer", raw)}
-        />
+        <Field label="Short description">
+          <Textarea
+            className="min-h-28"
+            value={value.shortDescription}
+            onChange={(event) => update("shortDescription", event.target.value)}
+          />
+        </Field>
+      </div>
+      <ProductInformationPreview brands={brands} frappeItem={frappeItem} value={value} />
+    </div>
+  );
+}
+
+function FulfilmentTab({
+  brands,
+  frappeItem,
+  number,
+  update,
+  value
+}: {
+  brands: CoreBrandOption[];
+  frappeItem: FrappeItemOption | null;
+  number: (value: string) => number | null;
+  update: UpdateProductInformation;
+  value: ProductInformationPayload;
+}) {
+  return (
+    <div className="space-y-10">
+      <div className="grid gap-x-6 gap-y-5 md:grid-cols-2">
         <TextField
           label="Shipping class"
           value={value.shippingClass}
@@ -171,76 +391,80 @@ export function ProductInformationForm({
             onChange={(event) => update("maximumOrderQuantity", number(event.target.value))}
           />
         </Field>
-        <TextField
-          label="SEO title"
-          value={value.seoTitle}
-          onChange={(raw) => update("seoTitle", raw)}
-        />
-        <Field label="Short description">
-          <Textarea
-            value={value.shortDescription}
-            onChange={(event) => update("shortDescription", event.target.value)}
-          />
-        </Field>
-        <Field label="Full description">
-          <Textarea
-            value={value.description}
-            onChange={(event) => update("description", event.target.value)}
-          />
-        </Field>
-        <Field label="Selling points (one per line)">
-          <Textarea
-            value={value.bulletPoints.join("\n")}
-            onChange={(event) =>
-              update(
-                "bulletPoints",
-                event.target.value
-                  .split("\n")
-                  .map((item) => item.trim())
-                  .filter(Boolean)
-              )
-            }
-          />
-        </Field>
         <Field label="Warranty">
           <Textarea
+            className="min-h-28"
             value={value.warranty}
             onChange={(event) => update("warranty", event.target.value)}
           />
         </Field>
         <Field label="Return policy">
           <Textarea
+            className="min-h-28"
             value={value.returnPolicy}
             onChange={(event) => update("returnPolicy", event.target.value)}
           />
         </Field>
+      </div>
+      <ProductInformationPreview brands={brands} frappeItem={frappeItem} value={value} />
+    </div>
+  );
+}
+
+function ContentTab({
+  brands,
+  frappeItem,
+  update,
+  value
+}: {
+  brands: CoreBrandOption[];
+  frappeItem: FrappeItemOption | null;
+  update: UpdateProductInformation;
+  value: ProductInformationPayload;
+}) {
+  return (
+    <div className="space-y-10">
+      <div className="grid gap-x-6 gap-y-5 md:grid-cols-2">
+        <Field label="Full description">
+          <Textarea
+            className="min-h-52"
+            value={value.description}
+            onChange={(event) => update("description", event.target.value)}
+          />
+        </Field>
+        <Field label="Selling points (one per line)">
+          <Textarea
+            className="min-h-52"
+            value={value.bulletPoints.join("\n")}
+            onChange={(event) => update("bulletPoints", lines(event.target.value))}
+          />
+        </Field>
+        <TextField
+          label="SEO title"
+          value={value.seoTitle}
+          onChange={(raw) => update("seoTitle", raw)}
+        />
         <Field label="SEO description">
           <Textarea
+            className="min-h-28"
             value={value.seoDescription}
             onChange={(event) => update("seoDescription", event.target.value)}
           />
         </Field>
       </div>
-      <label className="mt-4 flex items-center gap-2 text-sm">
+      <label className="flex w-fit items-center gap-2 text-sm font-medium">
         <input
           checked={value.isFeatured}
           type="checkbox"
           onChange={(event) => update("isFeatured", event.target.checked)}
         />
-        Featured product
+        Feature this item on the storefront
       </label>
-      {error ? <p className="mt-3 text-sm text-destructive">{error}</p> : null}
-      <div className="mt-5 flex justify-end gap-2">
-        <Button variant="outline" onClick={onCancel}>
-          Cancel
-        </Button>
-        <Button disabled={loading} onClick={submit}>
-          {loading ? "Saving..." : "Save"}
-        </Button>
-      </div>
-    </Card>
+      <ProductInformationPreview brands={brands} frappeItem={frappeItem} value={value} />
+    </div>
   );
 }
+
 function Field({ children, label }: { children: ReactNode; label: string }) {
   return (
     <div className="space-y-2">
@@ -294,4 +518,25 @@ function toPayload(record: ProductInformationRecord): ProductInformationPayload 
     ...payload
   } = record;
   return payload;
+}
+
+function plainText(value: string) {
+  return value
+    .replace(/<[^>]+>/gu, " ")
+    .replace(/\s+/gu, " ")
+    .trim();
+}
+
+function slugify(value: string) {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/gu, "-")
+    .replace(/(^-|-$)/gu, "");
+}
+
+function lines(value: string) {
+  return value
+    .split("\n")
+    .map((item) => item.trim())
+    .filter(Boolean);
 }

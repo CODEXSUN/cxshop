@@ -26,6 +26,12 @@ export async function registerTaxonomyRoutes(app: FastifyInstance) {
     handler: ({ query }) => service.list(query.kind)
   });
   registerContractRoute(app, {
+    method: "GET",
+    url: "/public/blog-taxonomy",
+    schemas: { querystring: z.object({ kind: kind.optional() }), response: z.array(record) },
+    handler: ({ query }) => service.list(query.kind)
+  });
+  registerContractRoute(app, {
     method: "POST",
     url: "/blogs/taxonomy",
     schemas: { body: payload, response: record },

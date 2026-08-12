@@ -89,7 +89,7 @@ export class CredentialRecoveryRepository {
     passwordHash: string,
     tenantDatabase?: Kysely<TenantDatabase>
   ) {
-    if (request.desk === "tenant") {
+    if (request.desk === "admin" || request.desk === "tenant") {
       if (!tenantDatabase) return false;
       const result = await tenantDatabase
         .updateTable("app_users")

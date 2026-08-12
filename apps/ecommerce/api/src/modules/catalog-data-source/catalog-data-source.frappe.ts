@@ -1,0 +1,370 @@
+import { AppError } from "@cxshop/framework/errors";
+import type {
+  StorefrontCatalogFilters,
+  StorefrontDiscovery,
+  StorefrontProduct,
+  StorefrontProductDetail
+} from "../storefront/storefront.types.js";
+import type {
+  FrappeCatalogSnapshot,
+  FrappeCatalogCredentials,
+  FrappeErpItem,
+  FrappeIShopCatalog,
+  FrappeIShopItem,
+  StorefrontCatalogSource
+} from "./catalog-data-source.types.js";
+
+type CatalogItem = { display_order?: number; ishop_item?: string | null };
+type IShopItem = FrappeIShopItem & { name: string };
+type IShopCatalog = FrappeIShopCatalog & { catalog_items?: CatalogItem[]; name: string };
+type CatalogMembership = { category: string; displayOrder: number };
+type CatalogSnapshot = {
+  catalogs: IShopCatalog[];
+  items: IShopItem[];
+  memberships: Map<string, CatalogMembership[]>;
+};
+
+const itemFields = [
+  "name",
+  "item_code",
+  "item_name",
+  "erpnext_item",
+  "availability",
+  "item_group",
+  "brand",
+  "short_description",
+  "full_description",
+  "web_price",
+  "mrp",
+  "image",
+  "highlights",
+  "published"
+] as const;
+const catalogFields = [
+  "name",
+  "catalog_code",
+  "catalog_name",
+  "description",
+  "catalog_image",
+  "published"
+] as const;
+
+export class FrappeCatalogSource implements StorefrontCatalogSource {
+  constructor(private readonly resolveCredentials: () => Promise<FrappeCatalogCredentials>) {}
+
+  async catalog(filters: StorefrontCatalogFilters) {
+    const snapshot = await this.snapshot();
+    const products = snapshot.items.map((item) => this.toProduct(item, snapshot.memberships));
+    return sortProducts(
+      products.filter((product) => matches(product, filters)),
+      filters.sort
+    );
+  }
+
+  async categories() {
+    const snapshot = await this.snapshot();
+    return categoriesFrom(snapshot);
+  }
+
+  async discovery(): Promise<StorefrontDiscovery> {
+    const snapshot = await this.snapshot();
+    const products = snapshot.items.map((item) => this.toProduct(item, snapshot.memberships));
+    const prices = products.map((product) => product.price);
+    return {
+      brands: brandsFrom(products),
+      categories: categoriesFrom(snapshot),
+      priceRange: {
+        maximum: prices.length ? Math.max(...prices) : 0,
+        minimum: prices.length ? Math.min(...prices) : 0
+      }
+    };
+  }
+
+  async product(slug: string): Promise<StorefrontProductDetail | null> {
+    const snapshot = await this.snapshot();
+    const item = snapshot.items.find((candidate) => slugify(candidate.item_code) === slug);
+    if (!item) return null;
+    return {
+      ...this.toProduct(item, snapshot.memberships),
+      bulletPoints: highlights(item.highlights),
+      returnPolicy: "",
+      variants: [],
+      warranty: ""
+    };
+  }
+
+  async integrationSnapshot(): Promise<FrappeCatalogSnapshot> {
+    const credentials = await this.resolveCredentials();
+    return this.method<FrappeCatalogSnapshot>(credentials, "get_catalog_snapshot", "GET");
+  }
+
+  async upsert(snapshot: FrappeCatalogSnapshot) {
+    const credentials = await this.resolveCredentials();
+    return this.method<{ catalogs: number; erpnext_items: number; items: number }>(
+      credentials,
+      "upsert_catalog_snapshot",
+      "POST",
+      { payload: JSON.stringify(snapshot) }
+    );
+  }
+
+  async seedDemo() {
+    const credentials = await this.resolveCredentials();
+    return this.method<{ catalogs: number; erpnext_items: number; items: number }>(
+      credentials,
+      "seed_dummy_catalog",
+      "POST"
+    );
+  }
+
+  async itemLookup(search: string) {
+    const credentials = await this.resolveCredentials();
+    const url = resourceUrl(credentials.url, "Item");
+    url.searchParams.set(
+      "fields",
+      JSON.stringify([
+        "name",
+        "item_code",
+        "item_name",
+        "item_group",
+        "brand",
+        "description",
+        "image",
+        "stock_uom",
+        "standard_rate"
+      ])
+    );
+    if (search.trim()) {
+      url.searchParams.set(
+        "or_filters",
+        JSON.stringify([
+          ["item_code", "like", `%${search.trim()}%`],
+          ["item_name", "like", `%${search.trim()}%`]
+        ])
+      );
+    }
+    url.searchParams.set("filters", JSON.stringify([["disabled", "=", 0]]));
+    url.searchParams.set("limit_page_length", "30");
+    const body = await this.request<{ data?: FrappeErpItem[] }>(credentials, url);
+    return body.data ?? [];
+  }
+
+  async item(itemCode: string) {
+    const credentials = await this.resolveCredentials();
+    return this.document<FrappeErpItem>(credentials, "Item", itemCode);
+  }
+
+  private async snapshot(): Promise<CatalogSnapshot> {
+    const credentials = await this.resolveCredentials();
+    this.currentBaseUrl = credentials.url;
+    const [items, catalogRows] = await Promise.all([
+      this.list<IShopItem>(credentials, "iShop Item", itemFields),
+      this.list<IShopCatalog>(credentials, "iShop Catalog", catalogFields)
+    ]);
+    const catalogs = await Promise.all(
+      catalogRows.map((catalog) =>
+        this.document<IShopCatalog>(credentials, "iShop Catalog", catalog.name)
+      )
+    );
+    return { catalogs, items, memberships: membershipsFrom(catalogs) };
+  }
+
+  private list<T>(
+    credentials: FrappeCatalogCredentials,
+    doctype: string,
+    fields: readonly string[]
+  ) {
+    const url = resourceUrl(credentials.url, doctype);
+    url.searchParams.set("fields", JSON.stringify(fields));
+    url.searchParams.set("filters", JSON.stringify([["published", "=", 1]]));
+    url.searchParams.set("limit_page_length", "500");
+    return this.request<{ data?: T[] }>(credentials, url).then((body) => body.data ?? []);
+  }
+
+  private document<T>(credentials: FrappeCatalogCredentials, doctype: string, name: string) {
+    const url = resourceUrl(credentials.url, doctype, name);
+    return this.request<{ data?: T }>(credentials, url).then((body) => {
+      if (!body.data) throw frappeError("Frappe returned an empty catalog document.");
+      return body.data;
+    });
+  }
+
+  private async request<T>(credentials: FrappeCatalogCredentials, url: URL): Promise<T> {
+    const response = await fetch(url, {
+      headers: {
+        Accept: "application/json",
+        Authorization: `token ${credentials.apiKey}:${credentials.apiSecret}`
+      },
+      signal: AbortSignal.timeout(10_000)
+    });
+    if (!response.ok) {
+      const message = await frappeMessage(response);
+      throw frappeError(message || `Frappe catalog returned HTTP ${response.status}.`);
+    }
+    return (await response.json()) as T;
+  }
+
+  private async method<T>(
+    credentials: FrappeCatalogCredentials,
+    method: string,
+    httpMethod: "GET" | "POST",
+    body?: Record<string, string>
+  ): Promise<T> {
+    const url = new URL(`/api/method/logicx_ishop.api.catalog_sync.${method}`, credentials.url);
+    const request: RequestInit = {
+      method: httpMethod,
+      headers: {
+        Accept: "application/json",
+        Authorization: `token ${credentials.apiKey}:${credentials.apiSecret}`,
+        "Content-Type": "application/json"
+      },
+      signal: AbortSignal.timeout(httpMethod === "POST" ? 120_000 : 15_000)
+    };
+    if (body) request.body = JSON.stringify(body);
+    const response = await fetch(url, request);
+    if (!response.ok) {
+      const message = await frappeMessage(response);
+      throw frappeError(message || `Frappe catalog method returned HTTP ${response.status}.`);
+    }
+    const responseBody = (await response.json()) as { message?: T };
+    if (!responseBody.message) throw frappeError("Frappe returned an empty catalog response.");
+    return responseBody.message;
+  }
+
+  private toProduct(
+    item: IShopItem,
+    memberships: Map<string, CatalogMembership[]>
+  ): StorefrontProduct {
+    const price = Number(item.web_price ?? 0);
+    const mrp = Number(item.mrp ?? 0);
+    const category =
+      memberships.get(item.name)?.[0]?.category || item.item_group || "Uncategorised";
+    return {
+      brand: item.brand?.trim() || null,
+      category,
+      compareAtPrice: mrp > price ? mrp : null,
+      description: plainText(item.full_description),
+      featured: memberships.has(item.name),
+      imageAlt: item.item_name,
+      imageUrl: absoluteUrl(item.image, this.currentBaseUrl),
+      name: item.item_name,
+      price,
+      shortDescription: plainText(item.short_description),
+      slug: slugify(item.item_code),
+      subtitle: item.availability?.trim() || "",
+      variantCount: 0
+    };
+  }
+
+  private currentBaseUrl = "";
+}
+
+function membershipsFrom(catalogs: IShopCatalog[]) {
+  const memberships = new Map<string, CatalogMembership[]>();
+  for (const catalog of catalogs) {
+    for (const row of catalog.catalog_items ?? []) {
+      if (!row.ishop_item) continue;
+      const current = memberships.get(row.ishop_item) ?? [];
+      current.push({ category: catalog.catalog_name, displayOrder: row.display_order ?? 0 });
+      current.sort((left, right) => left.displayOrder - right.displayOrder);
+      memberships.set(row.ishop_item, current);
+    }
+  }
+  return memberships;
+}
+
+function categoriesFrom(snapshot: CatalogSnapshot) {
+  return snapshot.catalogs.map((catalog) => ({
+    name: catalog.catalog_name,
+    productCount: (catalog.catalog_items ?? []).filter((row) =>
+      snapshot.items.some((item) => item.name === row.ishop_item)
+    ).length
+  }));
+}
+
+function brandsFrom(products: StorefrontProduct[]) {
+  return counted(products.flatMap((product) => (product.brand ? [product.brand] : []))).map(
+    ([name, productCount]) => ({ logoAlt: `${name} logo`, logoUrl: "", name, productCount })
+  );
+}
+
+function matches(product: StorefrontProduct, filters: StorefrontCatalogFilters) {
+  const search = filters.search?.trim().toLowerCase() ?? "";
+  const searchable = [product.name, product.description, product.brand ?? "", product.category];
+  return (
+    (!filters.brand || product.brand?.toLowerCase() === filters.brand.toLowerCase()) &&
+    (!filters.category || product.category.toLowerCase() === filters.category.toLowerCase()) &&
+    product.price >= (filters.minPrice ?? 0) &&
+    product.price <= (filters.maxPrice ?? Number.MAX_SAFE_INTEGER) &&
+    (!search || searchable.some((value) => value.toLowerCase().includes(search)))
+  );
+}
+
+function sortProducts(products: StorefrontProduct[], sort: StorefrontCatalogFilters["sort"]) {
+  return [...products].sort((left, right) => {
+    if (sort === "price-asc") return left.price - right.price;
+    if (sort === "price-desc") return right.price - left.price;
+    if (sort === "featured" && left.featured !== right.featured) return left.featured ? -1 : 1;
+    return left.name.localeCompare(right.name);
+  });
+}
+
+function resourceUrl(baseUrl: string, doctype: string, name?: string) {
+  const path = ["api", "resource", doctype, name]
+    .filter((value): value is string => Boolean(value))
+    .map((value) => encodeURIComponent(value));
+  return new URL(`/${path.join("/")}`, baseUrl);
+}
+
+function absoluteUrl(value: string | null | undefined, baseUrl: string) {
+  if (!value) return "";
+  try {
+    return new URL(value, baseUrl).toString();
+  } catch {
+    return value;
+  }
+}
+
+async function frappeMessage(response: Response) {
+  try {
+    const body = (await response.json()) as { message?: string; exception?: string };
+    return body.message || body.exception || "";
+  } catch {
+    return "";
+  }
+}
+
+function frappeError(message: string) {
+  return new AppError({
+    code: "FRAPPE_CATALOG_UNAVAILABLE",
+    message: plainText(message),
+    statusCode: 502
+  });
+}
+
+function highlights(value: string | null | undefined) {
+  return (value ?? "")
+    .split(/[\n,|]+/u)
+    .map((entry) => entry.trim())
+    .filter(Boolean);
+}
+
+function plainText(value: string | null | undefined) {
+  return (value ?? "")
+    .replace(/<[^>]+>/gu, " ")
+    .replace(/\s+/gu, " ")
+    .trim();
+}
+
+function counted(values: string[]): Array<[string, number]> {
+  const counts = new Map<string, number>();
+  for (const value of values) counts.set(value, (counts.get(value) ?? 0) + 1);
+  return [...counts].sort(([left], [right]) => left.localeCompare(right));
+}
+
+function slugify(value: string) {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/gu, "-")
+    .replace(/(^-|-$)/gu, "");
+}

@@ -16,7 +16,7 @@ let interceptorInstalled = false;
 
 export function protectedDeskFromPathname(pathname: string): Desk | null {
   if (pathname === "/admin" || pathname.startsWith("/admin/")) {
-    return pathname === "/admin/login" ? null : "tenant";
+    return pathname === "/admin/login" ? null : "admin";
   }
   if (pathname === "/sa" || pathname.startsWith("/sa/")) {
     return pathname === "/sa/login" ? null : "sa";

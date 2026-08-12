@@ -2,6 +2,7 @@ import { requiredClientEnv } from "../env/client-env";
 
 const apiBaseUrl = requiredClientEnv("VITE_PLATFORM_API_URL");
 export type Desk = "sa" | "admin" | "tenant";
+export type LoginDesk = Extract<Desk, "admin" | "sa">;
 
 const LEGACY_TOKEN_KEYS = [
   "cxshop_session_admin",
@@ -193,21 +194,11 @@ function errorMessage(error: unknown) {
   return error instanceof Error ? error.message : "Request failed";
 }
 
-export async function login(input: {
-  corporateId?: string;
-  desk: Desk;
-  email: string;
-  password: string;
-  tenantCode?: string;
-}) {
+export async function login(input: { desk: LoginDesk; email: string; password: string }) {
   clearBrowserSession();
   try {
-    const data = await apiPost<
-      SessionData & {
-        corporateId?: string;
-      }
-    >("/auth/login", input);
-    if (input.desk === "tenant" && !data.tenantId) {
+    const data = await apiPost<SessionData>("/auth/login", input);
+    if (input.desk === "admin" && !data.tenantId) {
       throw new Error("Application login response is incomplete.");
     }
     writeSession(data);
@@ -240,7 +231,7 @@ export function getTenantLoginContext() {
   }>("/auth/application-context");
 }
 
-export function forgotPassword(input: { corporateId?: string; desk: Desk; email: string }) {
+export function forgotPassword(input: { desk: LoginDesk; email: string }) {
   return apiPost<{ accepted: true; message: string }>("/auth/password/forgot", input);
 }
 

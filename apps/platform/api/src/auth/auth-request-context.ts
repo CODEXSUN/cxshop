@@ -22,6 +22,7 @@ declare module "fastify" {
 const sessions = new AuthSessionRepository();
 const publicAuthPaths = new Set([
   "/public/runtime-config",
+  "/public/piko/chat",
   "/auth/login",
   "/auth/development/application-login",
   "/auth/session/reset",

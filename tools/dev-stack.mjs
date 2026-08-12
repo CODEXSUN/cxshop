@@ -24,7 +24,7 @@ for (const signal of ["SIGINT", "SIGTERM"]) {
 
 function startService(serviceName) {
   const service = services[serviceName];
-  const child = spawn(process.execPath, ["tools/preflight.mjs", service.preflight], {
+  const child = spawn(process.execPath, ["tools/dev-restart.mjs", service.preflight], {
     cwd: root,
     env: process.env,
     stdio: ["ignore", "pipe", "pipe"]
@@ -99,7 +99,7 @@ function monitorStackHealth() {
           target.failures += 1;
         }
 
-        if (target.failures >= 3) {
+        if (target.failures >= 15) {
           console.error(`  x ${target.label} became unavailable; stopping Platform runtime`);
           stopChildren();
           process.exit(1);

@@ -8,13 +8,13 @@ import { restoreSession, type Desk } from "../api/platform-api";
 import { redirectForExpiredSession } from "./session-expiry";
 
 const expectedUserType: Record<Desk, string> = {
-  admin: "staff",
+  admin: "tenant",
   sa: "super_admin",
   tenant: "tenant"
 };
 
 const deskLabels: Record<Desk, string> = {
-  admin: "admin",
+  admin: "back office",
   sa: "super admin",
   tenant: "app"
 };

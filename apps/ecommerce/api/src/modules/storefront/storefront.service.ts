@@ -1,10 +1,10 @@
-import { StorefrontRepository } from "./storefront.repository.js";
 import type { StorefrontCatalogFilters } from "./storefront.types.js";
+import type { StorefrontCatalogSource } from "../catalog-data-source/catalog-data-source.types.js";
 
 export class StorefrontService {
-  constructor(private readonly repository = new StorefrontRepository()) {}
+  constructor(private readonly source: StorefrontCatalogSource) {}
   catalog(filters: StorefrontCatalogFilters) {
-    return this.repository.list({
+    return this.source.catalog({
       ...filters,
       brand: filters.brand?.trim(),
       category: filters.category?.trim(),
@@ -12,13 +12,13 @@ export class StorefrontService {
     });
   }
   categories() {
-    return this.repository.categories();
+    return this.source.categories();
   }
   discovery() {
-    return this.repository.discovery();
+    return this.source.discovery();
   }
   product(slug: string) {
-    return this.repository.find(slug.trim().toLowerCase());
+    return this.source.product(slug.trim().toLowerCase());
   }
   siteNavigation() {
     return {

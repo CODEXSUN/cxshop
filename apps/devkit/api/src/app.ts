@@ -4,9 +4,14 @@ import type { Kysely } from "kysely";
 import { bootstrapDevkitDatabase, runWithDevkitDatabase } from "./database/index.js";
 import type { DevkitDatabase } from "./database/index.js";
 import { platformRegistryModule } from "./modules/platform-registry/index.js";
+import { honeyModule } from "./modules/honey/index.js";
 import { runWithDevkitActor, type DevkitActor } from "./request-context.js";
+export {
+  registerPikoPublicRoutes,
+  type PikoPublicHostAdapter
+} from "./modules/honey/piko-public.routes.js";
 
-export const devkitApiModuleKeys = [platformRegistryModule.key] as const;
+export const devkitApiModuleKeys = [platformRegistryModule.key, honeyModule.key] as const;
 
 export type DevkitHostRequestContext = {
   actor: DevkitActor;
@@ -40,6 +45,7 @@ export async function registerDevkitApiForHost(app: FastifyInstance, adapter: De
         await adapter.authorize?.({ context, request });
       });
       await platformRegistryModule.register({ app: devkitApp });
+      await honeyModule.register({ app: devkitApp });
     },
     { prefix: "/devkit" }
   );

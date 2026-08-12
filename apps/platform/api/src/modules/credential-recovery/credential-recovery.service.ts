@@ -29,7 +29,7 @@ export class CredentialRecoveryService {
   async request(input: PasswordRecoveryRequest) {
     const email = input.email.trim().toLowerCase();
     const target =
-      input.desk === "tenant"
+      input.desk === "admin" || input.desk === "tenant"
         ? await this.applicationTarget(email)
         : await this.platformTarget(input.desk, email);
     if (!target) return { accepted: true as const, message: acceptedMessage };
@@ -79,7 +79,9 @@ export class CredentialRecoveryService {
       throw AppError.validation("The password reset link is invalid or has expired.");
     }
     const tenantDatabase =
-      request.desk === "tenant" ? await this.resolveTrustedTenantDatabase(request) : undefined;
+      request.desk === "admin" || request.desk === "tenant"
+        ? await this.resolveTrustedTenantDatabase(request)
+        : undefined;
     if (
       !(await this.repository.updatePassword(request, hashPassword(input.password), tenantDatabase))
     ) {
@@ -124,10 +126,7 @@ export class CredentialRecoveryService {
     tenantDatabase: string | null;
     tenantId: string | null;
   }) {
-    if (
-      request.tenantId !== "application" ||
-      request.tenantDatabase !== env.DB_MASTER_NAME
-    ) {
+    if (request.tenantId !== "application" || request.tenantDatabase !== env.DB_MASTER_NAME) {
       return undefined;
     }
     return getTenantDatabaseByName(env.DB_MASTER_NAME);

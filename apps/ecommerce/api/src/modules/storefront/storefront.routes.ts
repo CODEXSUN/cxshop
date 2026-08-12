@@ -22,8 +22,7 @@ const product = z.object({
 const searchScope = z.enum(["all", "products", "brands", "categories"]);
 const sort = z.enum(["featured", "name", "price-asc", "price-desc", "discount"]);
 
-export async function registerStorefrontRoutes(app: FastifyInstance) {
-  const service = new StorefrontService();
+export async function registerStorefrontRoutes(app: FastifyInstance, service: StorefrontService) {
   registerContractRoute(app, {
     method: "GET",
     url: "/storefront/site-navigation",

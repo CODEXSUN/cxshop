@@ -1,6 +1,6 @@
 import type { SidemenuItem } from "@cxshop/ui/blocks/menu/sidemenu/sub/sidemenu-section";
 import type { TopMenuWorkspaceItem } from "@cxshop/ui/blocks/menu/sidemenu/top-menu";
-import { DatabaseIcon, WrenchIcon } from "lucide-react";
+import { BotIcon, CableIcon, DatabaseIcon, WrenchIcon } from "lucide-react";
 import { lazy, Suspense, type ComponentType, type LazyExoticComponent } from "react";
 import { GlobalLoader } from "@cxshop/ui/components/global-loader";
 
@@ -23,7 +23,15 @@ const workspace = (
   title
 });
 
+const PikoWorkspace = lazy(() =>
+  import("./modules/honey").then((module) => ({ default: module.HoneyWorkspace }))
+);
+
 const workspaces = Object.freeze([
+  workspace("honey-system", "Piko Configuration", "Development", () =>
+    import("./modules/honey").then((module) => ({ default: module.HoneySystemWorkspace }))
+  ),
+  { component: PikoWorkspace, group: "Development", id: "honey", title: "Piko AI" },
   workspace("registry", "Platform Registry", "Development", () =>
     import("./modules/platform-registry").then((module) => ({
       default: module.PlatformRegistryWorkspace
@@ -49,6 +57,18 @@ export const devkitWebBundle = Object.freeze({
   menuItems(activeWorkspaceId: string): SidemenuItem[] {
     return [
       {
+        icon: BotIcon,
+        isActive: activeWorkspaceId === "honey",
+        title: "Piko chat",
+        url: "/app/devkit/honey"
+      },
+      {
+        icon: CableIcon,
+        isActive: activeWorkspaceId === "honey-system",
+        title: "Piko connection",
+        url: "/app/devkit/honey-system"
+      },
+      {
         icon: DatabaseIcon,
         isActive: activeWorkspaceId === "registry",
         title: "Platform Registry",
@@ -63,9 +83,21 @@ export const devkitWebBundle = Object.freeze({
   }
 });
 
-export function DevkitWorkspaceHost({ workspaceId }: { workspaceId: string }) {
+export function DevkitWorkspaceHost({
+  initialPrompt,
+  workspaceId
+}: {
+  initialPrompt?: string;
+  workspaceId: string;
+}) {
   const contribution = workspaces.find((entry) => entry.id === workspaceId);
   if (!contribution) return null;
+  if (workspaceId === "honey")
+    return (
+      <Suspense fallback={<GlobalLoader className="min-h-[24rem]" fullScreen={false} />}>
+        <PikoWorkspace {...(initialPrompt === undefined ? {} : { initialPrompt })} />
+      </Suspense>
+    );
   const Workspace = contribution.component;
   return (
     <Suspense fallback={<GlobalLoader className="min-h-[24rem]" fullScreen={false} />}>

@@ -23,7 +23,7 @@ import type {
   ProductInformationRecord,
   PublicationStatus
 } from "./product-information.types";
-export function ProductInformationWorkspace() {
+export function ProductInformationWorkspace({ onOpenAi }: { onOpenAi: (draft: string) => void }) {
   const client = useQueryClient();
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<PublicationStatus | undefined>();
@@ -59,13 +59,14 @@ export function ProductInformationWorkspace() {
         loading={save.isPending}
         record={editing}
         onCancel={() => setEditing(undefined)}
+        onOpenAi={onOpenAi}
         onSubmit={(payload) => save.mutate(payload)}
       />
     );
   return (
     <WorkspacePage
-      title="Product Information"
-      description="Manage ecommerce content that extends canonical Core products."
+      title="Items"
+      description="Manage Frappe-linked items and their complete storefront content."
       actions={
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => void query.refetch()}>
@@ -74,7 +75,7 @@ export function ProductInformationWorkspace() {
           </Button>
           <Button onClick={() => setEditing(null)}>
             <Plus className="size-4" />
-            New
+            New item
           </Button>
         </div>
       }

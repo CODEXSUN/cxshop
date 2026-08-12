@@ -149,7 +149,7 @@ export function DataSourceSettingsForm({
             disabled={busy}
             onClick={() => {
               const result = parsed();
-              if (result) onVerify(result);
+              if (result) onVerify(toVerificationPayload(result));
             }}
             type="button"
             variant="outline"
@@ -165,6 +165,14 @@ export function DataSourceSettingsForm({
       </WorkspaceFormSurface>
     </form>
   );
+}
+
+function toVerificationPayload(value: FrappeConnectionPayload): FrappeVerificationPayload {
+  return {
+    url: value.url,
+    ...(value.apiKey ? { apiKey: value.apiKey } : {}),
+    ...(value.apiSecret ? { apiSecret: value.apiSecret } : {})
+  };
 }
 
 function fromSettings(settings?: DataSourceSettings): Value {

@@ -16,15 +16,18 @@ const apps = {
     envKey: "PLATFORM_API_PORT",
     host: "127.0.0.1",
     command: process.execPath,
-    args: [
-      nodePackageBin("tsx", "dist/cli.mjs"),
-      "watch",
-      "--include",
-      "../../../.env",
-      "--exclude",
-      "../../../dist/**/*",
-      "src/server.ts"
-    ]
+    args:
+      process.env.CXSHOP_DEV_SUPERVISED === "1"
+        ? [nodePackageBin("tsx", "dist/cli.mjs"), "src/server.ts"]
+        : [
+            nodePackageBin("tsx", "dist/cli.mjs"),
+            "watch",
+            "--include",
+            "../../../.env",
+            "--exclude",
+            "../../../dist/**/*",
+            "src/server.ts"
+          ]
   },
   "platform-web": {
     displayName: "web",

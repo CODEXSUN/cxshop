@@ -37,3 +37,13 @@ export type ProductInformationPayload = Omit<
 >;
 export type CoreProductOption = { id: number; name: string };
 export type CoreBrandOption = { id: number; name: string };
+export type FrappeItemOption = {
+  brand: string;
+  description: string;
+  image: string;
+  itemCode: string;
+  itemGroup: string;
+  itemName: string;
+  standardRate: number | null;
+  stockUom: string;
+};

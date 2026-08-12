@@ -10,10 +10,10 @@ import {
 } from "./session-expiry";
 
 test("maps protected routes to their owning login desk", () => {
-  assert.equal(protectedDeskFromPathname("/admin/billing"), "tenant");
+  assert.equal(protectedDeskFromPathname("/admin/billing"), "admin");
   assert.equal(protectedDeskFromPathname("/app/billing"), null);
   assert.equal(protectedDeskFromPathname("/sa/tenants"), "sa");
-  assert.equal(protectedDeskFromPathname("/admin"), "tenant");
+  assert.equal(protectedDeskFromPathname("/admin"), "admin");
 });
 
 test("does not treat login and public pages as protected routes", () => {

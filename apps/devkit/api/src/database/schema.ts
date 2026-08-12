@@ -7,10 +7,48 @@ export type TimestampColumn = ColumnType<
 >;
 
 export type DevkitDatabase = {
+  devkit_honey_messages: HoneyMessagesTable;
+  devkit_honey_runs: HoneyRunsTable;
+  devkit_honey_threads: HoneyThreadsTable;
   devkit_platform_registry_activity: PlatformRegistryActivityTable;
   devkit_platform_registry_groups: PlatformRegistryGroupsTable;
   devkit_platform_registry_modules: PlatformRegistryModulesTable;
   devkit_platform_registry_platforms: PlatformRegistryPlatformsTable;
+};
+
+export type HoneyThreadsTable = {
+  actor_id: string;
+  created_at: TimestampColumn;
+  id: Generated<number>;
+  status: string;
+  title: string;
+  updated_at: TimestampColumn;
+  uuid: string;
+};
+export type HoneyMessagesTable = {
+  actor_id: string;
+  body: string;
+  created_at: TimestampColumn;
+  id: Generated<number>;
+  role: string;
+  thread_uuid: string;
+  uuid: string;
+};
+export type HoneyRunsTable = {
+  actor_id: string;
+  created_at: TimestampColumn;
+  error_text: string | null;
+  id: Generated<number>;
+  input_text: string;
+  mode: string;
+  model: string;
+  provider: string;
+  result_text: string | null;
+  status: string;
+  steps_json: string;
+  thread_uuid: string;
+  updated_at: TimestampColumn;
+  uuid: string;
 };
 
 type RegistryColumns = {

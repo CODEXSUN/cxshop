@@ -30,11 +30,13 @@ test("development and deployment samples own independent runtime endpoints", asy
   assert.equal(development.CXSHOP_IMAGE_REGISTRY, undefined);
 
   assert.equal(deployment.NODE_ENV, "production");
-  assert.equal(deployment.PLATFORM_API_PORT, "17010");
-  assert.equal(deployment.PLATFORM_WEB_PORT, "17020");
-  assert.equal(deployment.DB_HOST, "cxshop-mariadb");
-  assert.equal(deployment.CXSHOP_QUEUE_BACKEND, "bullmq-redis");
+  assert.equal(deployment.PLATFORM_API_PORT, "18010");
+  assert.equal(deployment.PLATFORM_WEB_PORT, "18020");
+  assert.equal(deployment.DB_HOST, "cxapp-mariadb");
+  assert.equal(deployment.CXSHOP_QUEUE_BACKEND, "database");
   assert.equal(deployment.CXSHOP_IMAGE_REGISTRY, "cxshop");
+  assert.equal(deployment.CXSHOP_DATA_SOURCE, "own");
+  assert.equal(deployment.CXSHOP_FRAPPE_URL, "");
 });
 
 test("container tooling and Compose consume deploy.env only", async () => {
@@ -44,6 +46,7 @@ test("container tooling and Compose consume deploy.env only", async () => {
   assert.match(common, /DEPLOY_ENV=\$CONTAINER_DIR\/deploy\.env/u);
   assert.doesNotMatch(common, /DEPLOY_ENV=\$PROJECT_ROOT\/\.env/u);
   assert.match(compose, /\.\.\/deploy\.env/u);
+  assert.match(compose, /host\.docker\.internal:host-gateway/u);
   assert.doesNotMatch(compose, /\.\.\/\.\.\/\.env/u);
 });
 

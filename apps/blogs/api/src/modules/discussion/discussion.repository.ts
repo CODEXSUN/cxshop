@@ -31,7 +31,7 @@ export class DiscussionRepository {
   }
   async create(i: DiscussionSaveInput) {
     const r =
-      await sql`INSERT INTO blogs_discussions(uuid,article_id,kind,author_name,author_email,body,rating)VALUES(${randomBytes(4).toString("hex")},${i.articleId},${i.kind},${i.authorName},${i.authorEmail},${i.body},${i.rating})`.execute(
+      await sql`INSERT INTO blogs_discussions(uuid,article_id,parent_id,kind,author_name,author_email,body,rating)VALUES(${randomBytes(4).toString("hex")},${i.articleId},${i.parentId},${i.kind},${i.authorName},${i.authorEmail},${i.body},${i.rating})`.execute(
         getBlogsDatabase()
       );
     return this.find(Number(r.insertId));
@@ -54,6 +54,7 @@ function toRecord(r: Row): DiscussionRecord {
     id: Number(r.id),
     uuid: r.uuid,
     articleId: Number(r.article_id),
+    parentId: r.parent_id == null ? null : Number(r.parent_id),
     kind: r.kind,
     authorName: r.author_name,
     authorEmail: r.author_email,

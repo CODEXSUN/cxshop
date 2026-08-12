@@ -11,6 +11,8 @@ import {
 } from "../modules/platform-registry/platform-registry.migration.js";
 import { seedPlatformRegistryModule } from "../modules/platform-registry/platform-registry.seed.js";
 import type { DevkitDatabase } from "./schema.js";
+import { honeyMigration, migrateHoneyModule } from "../modules/honey/honey.migration.js";
+import { seedHoneyModule } from "../modules/honey/honey.seed.js";
 import {
   devkitSchemaStandardizationMigration,
   standardizeDevkitSchema
@@ -37,6 +39,11 @@ const requestDatabase = new Proxy({} as Kysely<DevkitDatabase>, {
 
 const migrationSteps = [
   {
+    description: honeyMigration.description,
+    migrate: migrateHoneyModule,
+    name: honeyMigration.key
+  },
+  {
     description: platformRegistryTableRenameMigration.description,
     migrate: renamePlatformRegistryTables,
     name: platformRegistryTableRenameMigration.key
@@ -58,7 +65,10 @@ const migrationSteps = [
   }
 ] as const;
 
-const seedSteps = [{ name: "devkit.platform-registry", seed: seedPlatformRegistryModule }] as const;
+const seedSteps = [
+  { name: "devkit.platform-registry", seed: seedPlatformRegistryModule },
+  { name: "devkit.honey", seed: seedHoneyModule }
+] as const;
 
 export const devkitMigrationBatch: MigrationBatch<DevkitDatabase> = {
   batch: 1,

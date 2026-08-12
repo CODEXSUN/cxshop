@@ -74,7 +74,7 @@ export function ResetPasswordPage() {
 }
 
 function normalizeDesk(value: string | null): Desk {
-  return value === "sa" || value === "admin" ? value : "tenant";
+  return value === "sa" ? "sa" : "admin";
 }
 
 function loginPath(desk: Desk) {

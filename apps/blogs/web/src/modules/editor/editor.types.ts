@@ -9,6 +9,9 @@ export type Article = {
   mdx: string;
   featuredImage: string;
   imageAlt: string;
+  authorName: string;
+  authorRole: string;
+  authorAvatar: string;
   categoryId: number | null;
   tagIds: number[];
   seoTitle: string;

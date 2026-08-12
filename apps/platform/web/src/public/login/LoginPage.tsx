@@ -2,7 +2,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { AuthLayout, Button, Field } from "@cxshop/ui";
 import { LogIn } from "lucide-react";
 import { type ChangeEvent, type FormEvent, useEffect, useMemo, useRef, useState } from "react";
-import { developmentTenantLogin, type Desk, login } from "../../shared/api/platform-api";
+import { developmentTenantLogin, type LoginDesk, login } from "../../shared/api/platform-api";
 import { requiredClientEnv } from "../../shared/env/client-env";
 import {
   hasSessionExpiredReason,
@@ -11,7 +11,7 @@ import {
 import { usePublicCompanyBranding } from "../../modules/tenant-portal/tenant-portal.api";
 
 type LoginPageProps = {
-  desk: Desk;
+  desk: LoginDesk;
   title: string;
 };
 
@@ -31,16 +31,12 @@ export function LoginPage({ desk, title }: LoginPageProps) {
       return "/sa/$";
     }
 
-    if (desk === "admin") {
-      return "/admin/$";
-    }
-
     return "/admin/$";
   }, [desk]);
 
   useEffect(() => {
     if (
-      desk !== "tenant" ||
+      desk !== "admin" ||
       requiredClientEnv("VITE_DEV_AUTO_TENANT_LOGIN") !== "1" ||
       autoLoginStarted.current
     ) {
@@ -79,9 +75,7 @@ export function LoginPage({ desk, title }: LoginPageProps) {
         return;
       }
 
-      if (desk === "tenant") {
-        // A tenant switch must start with a fresh query cache so records and
-        // runtime metadata from the previous tenant cannot survive navigation.
+      if (desk === "admin") {
         window.location.assign("/admin/");
         return;
       }

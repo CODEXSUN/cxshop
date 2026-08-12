@@ -53,13 +53,13 @@ export class ArticleRepository {
   }
   async create(input: ArticleSaveInput) {
     const result =
-      await sql`INSERT INTO blogs_articles (uuid,kind,title,slug,excerpt,mdx,featured_image,image_alt,category_id,tag_ids,seo_title,seo_description,canonical_url,status,published_at) VALUES (${randomBytes(4).toString("hex")},${input.kind},${input.title},${input.slug},${input.excerpt},${input.mdx},${input.featuredImage},${input.imageAlt},${input.categoryId},${JSON.stringify(input.tagIds)},${input.seoTitle},${input.seoDescription},${input.canonicalUrl},${input.status},${input.status === "published" ? new Date() : null})`.execute(
+      await sql`INSERT INTO blogs_articles (uuid,kind,title,slug,excerpt,mdx,featured_image,image_alt,author_name,author_role,author_avatar,category_id,tag_ids,seo_title,seo_description,canonical_url,status,published_at) VALUES (${randomBytes(4).toString("hex")},${input.kind},${input.title},${input.slug},${input.excerpt},${input.mdx},${input.featuredImage},${input.imageAlt},${input.authorName},${input.authorRole},${input.authorAvatar},${input.categoryId},${JSON.stringify(input.tagIds)},${input.seoTitle},${input.seoDescription},${input.canonicalUrl},${input.status},${input.status === "published" ? new Date() : null})`.execute(
         getBlogsDatabase()
       );
     return this.find(Number(result.insertId));
   }
   async update(id: number, input: ArticleSaveInput) {
-    await sql`UPDATE blogs_articles SET kind=${input.kind},title=${input.title},slug=${input.slug},excerpt=${input.excerpt},mdx=${input.mdx},featured_image=${input.featuredImage},image_alt=${input.imageAlt},category_id=${input.categoryId},tag_ids=${JSON.stringify(input.tagIds)},seo_title=${input.seoTitle},seo_description=${input.seoDescription},canonical_url=${input.canonicalUrl},status=${input.status},published_at=CASE WHEN ${input.status}='published' THEN COALESCE(published_at,CURRENT_TIMESTAMP) ELSE published_at END WHERE id=${id}`.execute(
+    await sql`UPDATE blogs_articles SET kind=${input.kind},title=${input.title},slug=${input.slug},excerpt=${input.excerpt},mdx=${input.mdx},featured_image=${input.featuredImage},image_alt=${input.imageAlt},author_name=${input.authorName},author_role=${input.authorRole},author_avatar=${input.authorAvatar},category_id=${input.categoryId},tag_ids=${JSON.stringify(input.tagIds)},seo_title=${input.seoTitle},seo_description=${input.seoDescription},canonical_url=${input.canonicalUrl},status=${input.status},published_at=CASE WHEN ${input.status}='published' THEN COALESCE(published_at,CURRENT_TIMESTAMP) ELSE published_at END WHERE id=${id}`.execute(
       getBlogsDatabase()
     );
     return this.find(id);
@@ -76,6 +76,9 @@ function toRecord(r: Row): ArticleRecord {
     mdx: r.mdx,
     featuredImage: String(r.featured_image ?? ""),
     imageAlt: String(r.image_alt ?? ""),
+    authorName: String(r.author_name ?? "CXShop Editorial Team"),
+    authorRole: String(r.author_role ?? "Technology Editor"),
+    authorAvatar: String(r.author_avatar ?? ""),
     categoryId: r.category_id == null ? null : Number(r.category_id),
     tagIds: Array.isArray(r.tag_ids)
       ? r.tag_ids.map(Number)

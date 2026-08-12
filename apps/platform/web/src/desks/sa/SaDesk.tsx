@@ -64,6 +64,8 @@ type SaPage =
   | "overview"
   | "app-operations"
   | "task-manager"
+  | "devkit-honey"
+  | "devkit-honey-system"
   | "devkit-registry"
   | "apps"
   | "industries"
@@ -122,6 +124,16 @@ export function SaDesk() {
       icon: FolderKanbanIcon,
       isActive: page.startsWith("devkit-"),
       items: [
+        {
+          title: "Piko AI",
+          isActive: page === "devkit-honey",
+          onSelect: () => selectPage("devkit-honey")
+        },
+        {
+          title: "Piko Configuration",
+          isActive: page === "devkit-honey-system",
+          onSelect: () => selectPage("devkit-honey-system")
+        },
         {
           title: "Platform Registry",
           isActive: page === "devkit-registry",
@@ -258,6 +270,8 @@ function pageFromUrl(): SaPage {
   const page = window.location.pathname.split("/")[2];
   return page === "app-operations" ||
     page === "task-manager" ||
+    page === "devkit-honey" ||
+    page === "devkit-honey-system" ||
     page === "devkit-registry" ||
     page === "apps" ||
     page === "industries" ||

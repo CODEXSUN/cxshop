@@ -3,6 +3,7 @@ export type DiscussionRecord = {
   id: number;
   uuid: string;
   articleId: number;
+  parentId: number | null;
   kind: DiscussionKind;
   authorName: string;
   authorEmail: string;
@@ -14,5 +15,5 @@ export type DiscussionRecord = {
 };
 export type DiscussionSaveInput = Pick<
   DiscussionRecord,
-  "articleId" | "kind" | "authorName" | "authorEmail" | "body" | "rating"
+  "articleId" | "parentId" | "kind" | "authorName" | "authorEmail" | "body" | "rating"
 >;

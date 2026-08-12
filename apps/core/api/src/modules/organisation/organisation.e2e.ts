@@ -46,11 +46,11 @@ export async function runOrganisationE2e() {
     assert.equal(initial.defaults[0]?.financial_year_id, initial.financialYears[0]?.id);
     assert.equal(initial.defaults[0]?.landing_app, "application");
 
-    const updatedDefault = await setDefaultCompanyLandingAppForDatabase(databaseName, "billing");
-    assert.equal(updatedDefault.landingApp, "billing");
+    const updatedDefault = await setDefaultCompanyLandingAppForDatabase(databaseName, "ecommerce");
+    assert.equal(updatedDefault.landingApp, "ecommerce");
     assert.equal(
       (await getDefaultCompanyForDatabase(databaseName))?.landingApp,
-      "billing",
+      "ecommerce",
       "Default Company must remain the startup landing source."
     );
 
@@ -67,7 +67,7 @@ export async function runOrganisationE2e() {
     assert.equal(restarted.defaults.length, 1);
     assert.equal(restarted.defaults[0]?.company_id, initial.companies[0]?.id);
     assert.equal(restarted.defaults[0]?.financial_year_id, initial.financialYears[0]?.id);
-    assert.equal(restarted.defaults[0]?.landing_app, "billing");
+    assert.equal(restarted.defaults[0]?.landing_app, "ecommerce");
 
     return {
       companyId: initial.companies[0]?.id,

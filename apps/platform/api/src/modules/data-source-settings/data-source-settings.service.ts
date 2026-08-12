@@ -46,6 +46,10 @@ export class DataSourceSettingsService {
     ).test();
   }
 
+  async frappeCredentials() {
+    return storedCredentials(await this.repository.get());
+  }
+
   async verifyFrappe(input: FrappeVerificationPayload) {
     const record = await this.repository.get();
     const saved = storedCredentials(record);

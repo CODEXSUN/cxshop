@@ -84,7 +84,6 @@ export class AuthService {
     return {
       accessToken,
       context,
-      corporateId: null,
       email: user.email,
       name: user.name,
       tenantCode: "CXSHOP",
@@ -153,7 +152,6 @@ export class AuthService {
 }
 
 type LoginInput = {
-  corporateId?: string;
   desk?: unknown;
   domain?: string;
   email?: string;
@@ -162,7 +160,7 @@ type LoginInput = {
 
 function normalizeDesk(value: unknown): AuthUserType {
   if (value === "sa" || value === "super_admin") return "super_admin";
-  if (value === "admin" || value === "staff") return "staff";
+  if (value === "staff") return "staff";
   return "tenant";
 }
 

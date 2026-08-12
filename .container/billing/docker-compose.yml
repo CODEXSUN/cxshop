@@ -9,6 +9,8 @@ x-api-service: &api-service
     - ../deploy.env:/app/.env:ro
   networks:
     - cxshop-network
+  extra_hosts:
+    - "host.docker.internal:host-gateway"
 
 x-web-service: &web-service
   image: ${CXSHOP_IMAGE_REGISTRY:?required}/web:${BILLING_STACK_WEB_IMAGE_TAG:?required}

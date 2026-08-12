@@ -6,6 +6,7 @@ const service = new DiscussionService(),
   kind = z.enum(["comment", "review"]),
   payload = z.object({
     articleId: z.number().int().positive(),
+    parentId: z.number().int().positive().nullable().default(null),
     kind,
     authorName: z.string().min(1).max(191),
     authorEmail: z.string().email().max(320),

@@ -8,6 +8,9 @@ export type PublicArticle = {
   mdx: string;
   featuredImage: string;
   imageAlt: string;
+  authorName: string;
+  authorRole: string;
+  authorAvatar: string;
   categoryId: number | null;
   tagIds: number[];
   seoTitle: string;
@@ -18,3 +21,6 @@ export type PublicArticle = {
   createdAt: string;
   updatedAt: string;
 };
+export type PublicTaxonomy = { id: number; kind: "category" | "tag"; name: string; slug: string; description: string; status: "active" | "inactive"; uuid: string; createdAt: string; updatedAt: string };
+export type PublicDiscussion = { id: number; uuid: string; articleId: number; parentId: number | null; kind: "comment" | "review"; authorName: string; authorEmail: string; body: string; rating: number | null; status: "pending" | "approved" | "rejected"; createdAt: string; updatedAt: string };
+export type EngagementSummary = { articleId: number; likes: number; stars: number; shares: number; averageStar: number };

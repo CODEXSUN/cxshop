@@ -13,6 +13,7 @@ import {
   LayoutDashboardIcon,
   ListChecksIcon,
   MailIcon,
+  MessageCircleIcon,
   RocketIcon,
   Settings2Icon,
   ShoppingBagIcon,
@@ -38,6 +39,7 @@ import {
 } from "../../app/app-registry";
 import { getApplicationSetup } from "../../modules/application-setup";
 import { useCompanyBranding } from "@cxshop/core-web/modules/organisation/company/branding";
+import { DevkitWorkspaceHost, PikoScreenPet } from "@cxshop/devkit-web";
 import { listCompanies } from "@cxshop/core-web/modules/organisation/company/services";
 import { defaultCompanyQueryKey } from "@cxshop/core-web/modules/organisation/default-company/hooks";
 import {
@@ -70,6 +72,7 @@ const loadProductInformationModule = () =>
   import("@cxshop/ecommerce-web/modules/product-information");
 const loadProductVariantModule = () => import("@cxshop/ecommerce-web/modules/product-variant");
 const loadProductImageModule = () => import("@cxshop/ecommerce-web/modules/product-image");
+const loadCatalogDataSourceModule = () => import("@cxshop/ecommerce-web");
 const loadBlogsEditorModule = () => import("@cxshop/blogs-web/modules/editor");
 
 const billingWorkspacePreloaders = [
@@ -97,6 +100,9 @@ const ProductVariantWorkspace = lazyWorkspace(() =>
 );
 const ProductImageWorkspace = lazyWorkspace(() =>
   loadProductImageModule().then((module) => module.ProductImageWorkspace)
+);
+const CatalogDataSourceWorkspace = lazyWorkspace(() =>
+  loadCatalogDataSourceModule().then((module) => module.CatalogDataSourceWorkspace)
 );
 const BlogsEditorWorkspace = lazyWorkspace(() =>
   loadBlogsEditorModule().then((module) => module.BlogsEditorWorkspace)
@@ -374,6 +380,7 @@ type AppPage =
   | "ecommerce.catalog.product-information"
   | "ecommerce.catalog.variants"
   | "ecommerce.catalog.images"
+  | "ecommerce.settings.data-source"
   | "blogs.editor"
   | "mail.inbox"
   | "mail.outbox"
@@ -384,6 +391,8 @@ type AppPage =
   | "mail.trash"
   | "task-manager.overview"
   | "task-manager.todos"
+  | "devkit.honey"
+  | "devkit.honey-system"
   | "core.common.location.countries"
   | "core.common.location.states"
   | "core.common.location.districts"
@@ -400,6 +409,7 @@ export function AppDesk() {
   const queryClient = useQueryClient();
   const signedInUser = signedInTenantUser();
   const [page, setPage] = useState<AppPage>(() => pageFromUrl(null));
+  const [pikoDraft, setPikoDraft] = useState("");
   const [shouldResolveLandingPath, setShouldResolveLandingPath] = useState(() => isAppRootPath());
   const setupQuery = useQuery({
     queryFn: getApplicationSetup,
@@ -461,13 +471,14 @@ export function AppDesk() {
     queryKey: ["billing", "settings", companyContextId],
     staleTime: 5 * 60 * 1_000
   });
-  const appSafePage = page.startsWith("devkit")
-    ? pageForApp(landingApp)
-    : (page.startsWith("billing") ||
-          (page.startsWith("core") && !page.startsWith("core.organisation"))) &&
-        !switchableApps.includes("billing")
+  const appSafePage =
+    page.startsWith("devkit") && !page.startsWith("devkit.honey")
       ? pageForApp(landingApp)
-      : page;
+      : (page.startsWith("billing") ||
+            (page.startsWith("core") && !page.startsWith("core.organisation"))) &&
+          !switchableApps.includes("billing")
+        ? pageForApp(landingApp)
+        : page;
   const safePage = resolveBillingFeaturePage(appSafePage, billingSettingsQuery.data?.features);
   const activePageTitle = titleForPage(safePage);
   const accountingYear = selectedFinancialYear?.name ?? "Accounting year";
@@ -549,15 +560,29 @@ export function AppDesk() {
     const landingPage = pageForApp(landingApp);
     setPage(landingPage);
     setShouldResolveLandingPath(false);
-    window.history.replaceState({ page: landingPage }, "", `/admin/${landingPage.replace(".", "/")}`);
+    window.history.replaceState(
+      { page: landingPage },
+      "",
+      `/admin/${landingPage.replace(".", "/")}`
+    );
     setPlatformDocumentTitle(titleForPage(landingPage));
   }, [defaultCompanyQuery.isFetched, landingApp, setupQuery.isLoading, shouldResolveLandingPath]);
 
   function selectPage(nextPage: AppPage) {
     const allowedPage = resolveBillingFeaturePage(nextPage, billingSettingsQuery.data?.features);
+    if (allowedPage !== "devkit.honey") setPikoDraft("");
     startTransition(() => setPage(allowedPage));
-    window.history.pushState({ page: allowedPage }, "", `/admin/${allowedPage.replaceAll(".", "/")}`);
+    window.history.pushState(
+      { page: allowedPage },
+      "",
+      `/admin/${allowedPage.replaceAll(".", "/")}`
+    );
     setPlatformDocumentTitle(titleForPage(allowedPage));
+  }
+
+  function openPiko(draft = "") {
+    setPikoDraft(draft);
+    selectPage("devkit.honey");
   }
 
   function selectBillingRecord(nextPage: AppPage, recordId: string) {
@@ -584,7 +609,7 @@ export function AppDesk() {
   }
 
   async function handleLogout() {
-    await logout("tenant");
+    await logout("admin");
     window.location.assign("/admin/login");
   }
 
@@ -666,7 +691,7 @@ export function AppDesk() {
 
   if (bootstrapError) {
     return (
-      <AuthGate desk="tenant">
+      <AuthGate desk="admin">
         <TenantBootstrapErrorScreen error={bootstrapError} />
       </AuthGate>
     );
@@ -674,14 +699,14 @@ export function AppDesk() {
 
   if (bootstrapLoading) {
     return (
-      <AuthGate desk="tenant">
+      <AuthGate desk="admin">
         <GlobalLoader />
       </AuthGate>
     );
   }
 
   return (
-    <AuthGate desk="tenant">
+    <AuthGate desk="admin">
       <ApplicationLayout
         brand={{
           href:
@@ -736,7 +761,10 @@ export function AppDesk() {
         <main className="mx-auto w-[calc(100%-2rem)] max-w-[92rem] space-y-5 py-4 lg:w-[calc(100%-3rem)] lg:py-5">
           <Suspense fallback={<GlobalLoader className="min-h-[32rem]" fullScreen={false} />}>
             {safePage === "application.overview" ? (
-              <ApplicationOverview signedInUser={signedInUser} />
+              <ApplicationOverview
+                onOpenHoney={() => selectPage("devkit.honey")}
+                signedInUser={signedInUser}
+              />
             ) : null}
             {safePage === "application.landing" ? (
               <LandingDesk
@@ -748,6 +776,12 @@ export function AppDesk() {
             ) : null}
             {safePage === "application.profile" ? <ApplicationProfile /> : null}
             {safePage === "application.settings" ? <ApplicationSettings /> : null}
+            {safePage === "devkit.honey" ? (
+              <DevkitWorkspaceHost initialPrompt={pikoDraft} workspaceId="honey" />
+            ) : null}
+            {safePage === "devkit.honey-system" ? (
+              <DevkitWorkspaceHost workspaceId="honey-system" />
+            ) : null}
             {safePage === "application.access.users" ? <TenantUserWorkspace /> : null}
             {safePage === "application.access.roles" ? <TenantRoleWorkspace /> : null}
             {safePage === "application.access.permissions" ? <TenantPermissionWorkspace /> : null}
@@ -790,13 +824,14 @@ export function AppDesk() {
             {safePage === "billing.document-settings" ? <DocumentSettingsWorkspace /> : null}
             {safePage === "ecommerce.overview" ? <EcommerceOverviewWorkspace /> : null}
             {safePage === "ecommerce.catalog.product-information" ? (
-              <ProductInformationWorkspace />
+              <ProductInformationWorkspace onOpenAi={openPiko} />
             ) : null}
             {safePage === "ecommerce.catalog.categories" ? <ProductCategoriesWorkspace /> : null}
             {safePage === "ecommerce.catalog.brands" ? <BrandsWorkspace /> : null}
             {safePage === "ecommerce.catalog.products" ? <ProductWorkspace /> : null}
             {safePage === "ecommerce.catalog.variants" ? <ProductVariantWorkspace /> : null}
             {safePage === "ecommerce.catalog.images" ? <ProductImageWorkspace /> : null}
+            {safePage === "ecommerce.settings.data-source" ? <CatalogDataSourceWorkspace /> : null}
             {safePage === "blogs.editor" ? <BlogsEditorWorkspace /> : null}
             {safePage.startsWith("mail.") ? (
               <MailWorkspace mailbox={mailboxForPage(safePage)} />
@@ -822,6 +857,7 @@ export function AppDesk() {
             {safePage === "core.master.work-order" ? <WorkOrderWorkspace key={safePage} /> : null}
           </Suspense>
         </main>
+        <PikoScreenPet onClick={() => openPiko()} />
       </ApplicationLayout>
     </AuthGate>
   );
@@ -869,6 +905,8 @@ function pageFromUrl(landingApp: PlatformAppId | null): AppPage {
     key === "application.access.permissions" ||
     key === "application.access.user-roles" ||
     key === "application.access.role-permissions" ||
+    key === "devkit.honey" ||
+    key === "devkit.honey-system" ||
     key === "billing.overview" ||
     key === "billing.quotation" ||
     key === "billing.quotation.print" ||
@@ -894,6 +932,7 @@ function pageFromUrl(landingApp: PlatformAppId | null): AppPage {
     key === "ecommerce.catalog.product-information" ||
     key === "ecommerce.catalog.variants" ||
     key === "ecommerce.catalog.images" ||
+    key === "ecommerce.settings.data-source" ||
     key === "blogs.editor" ||
     key === "mail.inbox" ||
     key === "mail.outbox" ||
@@ -1058,8 +1097,10 @@ function LandingDesk({
 }
 
 function ApplicationOverview({
+  onOpenHoney,
   signedInUser
 }: {
+  onOpenHoney: () => void;
   signedInUser: ReturnType<typeof signedInTenantUser>;
 }) {
   return (
@@ -1089,6 +1130,22 @@ function ApplicationOverview({
             </div>
           </div>
         </div>
+      </div>
+
+      <div className="flex flex-col gap-5 rounded-md border border-amber-200 bg-amber-50/60 p-5 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-4">
+          <div>
+            <p className="text-sm font-semibold text-sky-900">Piko is ready</p>
+            <h2 className="pt-1 text-xl font-semibold tracking-normal">Your CXShop AI companion</h2>
+            <p className="max-w-2xl pt-2 text-sm leading-6 text-slate-600">
+              Ask questions, plan commerce work, or coordinate the content-writer specialists.
+            </p>
+          </div>
+        </div>
+        <Button className="shrink-0" onClick={onOpenHoney}>
+          <MessageCircleIcon className="size-4" />
+          Chat with Piko
+        </Button>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -1356,6 +1413,8 @@ function titleForPage(page: AppPage) {
     "application.access.permissions": "Permissions",
     "application.access.user-roles": "User Roles",
     "application.access.role-permissions": "Role Permissions",
+    "devkit.honey": "Piko AI",
+    "devkit.honey-system": "Piko Connection",
     "billing.overview": "Overview",
     "billing.quotation": "Quotation",
     "billing.sales": "Sales",
@@ -1373,9 +1432,10 @@ function titleForPage(page: AppPage) {
     "ecommerce.catalog.categories": "Categories",
     "ecommerce.catalog.brands": "Brands",
     "ecommerce.catalog.products": "Products",
-    "ecommerce.catalog.product-information": "Product Details",
+    "ecommerce.catalog.product-information": "Items",
     "ecommerce.catalog.variants": "Product Variants",
     "ecommerce.catalog.images": "Product Images",
+    "ecommerce.settings.data-source": "Data Source",
     "mail.inbox": "Inbox",
     "mail.outbox": "Outbox",
     "mail.drafts": "Drafts",
@@ -1472,6 +1532,7 @@ function appFromPage(
   if (page.startsWith("blogs")) return enabledApps.includes("blogs") ? "blogs" : landingApp;
   if (page.startsWith("task-manager"))
     return enabledApps.includes("task-manager") ? "task-manager" : landingApp;
+  if (page.startsWith("devkit.honey")) return "application";
   if (page.startsWith("devkit")) return landingApp;
   if (page.startsWith("mail")) return enabledApps.includes("mail") ? "mail" : landingApp;
   return "application";

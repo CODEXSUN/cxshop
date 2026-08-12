@@ -1,6 +1,6 @@
 {
   "name": "@cxshop/ecommerce-web",
-  "version": "1.0.57",
+  "version": "1.0.58",
   "private": true,
   "type": "module",
   "exports": {
@@ -9,6 +9,7 @@
     "./modules/product-information": "./src/modules/product-information/index.ts",
     "./modules/product-variant": "./src/modules/product-variant/index.ts",
     "./modules/product-image": "./src/modules/product-image/index.ts",
+    "./modules/catalog-data-source": "./src/modules/catalog-data-source/index.ts",
     "./modules/storefront": "./src/modules/storefront/index.ts"
   },
   "scripts": {
@@ -17,7 +18,7 @@
     "lint": "eslint src --ext .ts,.tsx"
   },
   "dependencies": {
-    "@cxshop/ui": "^1.0.57",
+    "@cxshop/ui": "^1.0.58",
     "@tanstack/react-query": "^5.100.10",
     "lucide-react": "^1.22.0",
     "react": "^19.0.0",

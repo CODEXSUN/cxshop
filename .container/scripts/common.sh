@@ -86,6 +86,12 @@ validate_deploy_env() {
     fi
   fi
 
+  if [ "$(env_value CXSHOP_DATA_SOURCE)" = "frappe" ]; then
+    require_env_value CXSHOP_FRAPPE_URL
+    require_env_value CXSHOP_FRAPPE_API_KEY
+    require_env_value CXSHOP_FRAPPE_API_SECRET
+  fi
+
   if [ "$(env_value CXSHOP_SINGLE_TENANT)" = "1" ]; then
     [ "$(env_value ENABLE_DEFAULT_TENANT_SEED)" = "1" ] || {
       echo "CXSHOP_SINGLE_TENANT=1 requires ENABLE_DEFAULT_TENANT_SEED=1." >&2

@@ -127,6 +127,12 @@ const searchRoute = createRoute({
   path: "/search"
 });
 
+const cartRoute = createRoute({
+  component: StorefrontPage,
+  getParentRoute: () => rootRoute,
+  path: "/cart"
+});
+
 const shopCategoryRoute = createRoute({
   component: StorefrontPage,
   getParentRoute: () => rootRoute,
@@ -255,7 +261,7 @@ const saRefreshRoute = createRoute({
 });
 
 const adminLoginRoute = createRoute({
-  component: () => <LoginPage desk="tenant" title="Back Office Login" />,
+  component: () => <LoginPage desk="admin" title="Back Office Login" />,
   getParentRoute: () => rootRoute,
   path: "/admin/login"
 });
@@ -312,6 +318,7 @@ const routeTree = rootRoute.addChildren([
   homeRoute,
   shopRoute,
   searchRoute,
+  cartRoute,
   shopCategoryRoute,
   shopProductRoute,
   workspaceRoute,

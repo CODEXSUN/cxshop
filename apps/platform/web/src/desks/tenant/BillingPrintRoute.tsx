@@ -34,7 +34,7 @@ export function BillingPrintRoute({ document }: { document: BillingPrintDocument
   if (!autoPrint) return <AppDesk />;
 
   return (
-    <AuthGate desk="tenant">
+    <AuthGate desk="admin">
       <BillingPrintBootstrap document={document} />
     </AuthGate>
   );

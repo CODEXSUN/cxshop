@@ -21,7 +21,10 @@ import { IndustryService, industryModule } from "./modules/industry/index.js";
 import { accessControlModule } from "./modules/access-control/index.js";
 import { platformActivityModule } from "./modules/platform-activity/index.js";
 import { queueManagerModule } from "./modules/queue-manager/index.js";
-import { dataSourceSettingsModule } from "./modules/data-source-settings/index.js";
+import {
+  DataSourceSettingsService,
+  dataSourceSettingsModule
+} from "./modules/data-source-settings/index.js";
 import { storageManagerModule } from "./modules/storage-manager/index.js";
 import { taskManagerModule } from "./modules/task-manager/index.js";
 import { credentialRecoveryModule } from "./modules/credential-recovery/index.js";
@@ -152,7 +155,23 @@ export async function createApp() {
   console.info("[platform.routes] Core package ready");
   await registerBillingApi(app);
   console.info("[platform.routes] Billing package ready");
-  await registerEcommerceApi(app);
+  const dataSourceSettings = new DataSourceSettingsService();
+  await registerEcommerceApi(app, {
+    catalogDataSource: {
+      credentials: () => dataSourceSettings.frappeCredentials(),
+      settings: async () => {
+        const value = await dataSourceSettings.settings();
+        return {
+          frappeConfigured: value.frappeConfigured,
+          frappeUrl: value.frappeUrl,
+          lastVerifiedAt: value.lastVerifiedAt,
+          verificationStatus: value.verificationStatus
+        };
+      },
+      test: (provider) => dataSourceSettings.test(provider)
+    },
+    resolveActorEmail: (request) => request.authContext?.payload.email ?? "application-admin"
+  });
   startCatalogMatchingOutboxRelay(app, (payload) => queueService.enqueue(payload));
   console.info("[platform.routes] Ecommerce package ready");
   await registerBlogsApi(app);

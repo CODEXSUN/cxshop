@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { ArrowRightIcon } from "lucide-react";
 import {
   getStorefrontAnnouncement,
   getStorefrontBranding,
@@ -32,6 +33,9 @@ import type {
 } from "./storefront.types";
 import { money, whatsappLink } from "./storefront.formatters";
 import "./storefront.css";
+import { PikoStoreAssistant } from "./storefront.assistant";
+import { addStorefrontCartItem } from "./storefront.cart";
+import { StorefrontCartPage } from "./storefront.cart.page";
 
 const emptyDiscovery: StorefrontDiscovery = {
   brands: [],
@@ -43,11 +47,20 @@ export function StorefrontPage() {
   const path = window.location.pathname;
   const productSlug = path.startsWith("/shop/product/") ? decodeURIComponent(path.slice(14)) : "";
   const category = path.startsWith("/shop/category/") ? decodeURIComponent(path.slice(15)) : "";
-  if (productSlug) return <ProductPage slug={productSlug} />;
-  return path === "/search" || category ? (
+  const page = productSlug ? (
+    <ProductPage slug={productSlug} />
+  ) : path === "/cart" ? (
+    <StorefrontCartPage />
+  ) : path === "/search" || category ? (
     <CatalogPage category={category} searchPage />
   ) : (
     <CatalogPage category="" />
+  );
+  return (
+    <>
+      {page}
+      <PikoStoreAssistant />
+    </>
   );
 }
 
@@ -221,7 +234,9 @@ function ProductPage({ slug }: { slug: string }) {
             ))}
           </ul>
           <div className="cx-detail__actions">
-            <button>Add to basket</button>
+            <button onClick={() => addStorefrontCartItem(product)} type="button">
+              Add to basket
+            </button>
             <a href={enquiry} rel="noreferrer" target="_blank">
               Enquire on WhatsApp
             </a>
@@ -260,7 +275,10 @@ function ProductSection({
           <span>{label}</span>
           <h2>{title}</h2>
         </div>
-        <a href="/search?sort=featured">View and filter all</a>
+        <a href="/search?sort=featured">
+          <span>Browse and filter all</span>
+          <ArrowRightIcon aria-hidden="true" />
+        </a>
       </div>
       <div className="cx-store__grid">
         {products.map((product) => (

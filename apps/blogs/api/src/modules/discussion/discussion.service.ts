@@ -20,6 +20,11 @@ export class DiscussionService {
       throw AppError.validation("Reviews require a rating from 1 to 5.");
     if (!(await this.repository.articlePublished(value.articleId)))
       throw AppError.notFound("Published article was not found.");
+    if (value.parentId) {
+      const parent = await this.repository.find(value.parentId);
+      if (!parent || parent.articleId !== value.articleId)
+        throw AppError.validation("Reply parent must belong to the same article.");
+    }
     return this.repository.create(value);
   }
   moderate(id: number, status: "approved" | "rejected") {

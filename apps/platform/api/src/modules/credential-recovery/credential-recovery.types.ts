@@ -1,7 +1,6 @@
 export type RecoveryDesk = "admin" | "sa" | "tenant";
 
 export type PasswordRecoveryRequest = {
-  corporateId?: string;
   desk: RecoveryDesk;
   domain: string;
   email: string;

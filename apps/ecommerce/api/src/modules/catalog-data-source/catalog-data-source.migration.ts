@@ -1,0 +1,140 @@
+import { sql, type Kysely } from "kysely";
+import type { EcommerceDatabase } from "../../database/ecommerce-database.js";
+
+export const catalogDataSourceSyncMigration = {
+  description: "Frappe-aligned iShop catalog fields and bidirectional sync records.",
+  key: "ecommerce.catalog.data-source-sync"
+} as const;
+
+export async function migrateCatalogDataSourceSync(database: Kysely<EcommerceDatabase>) {
+  const columns = [
+    "ADD COLUMN IF NOT EXISTS frappe_item_code VARCHAR(191) NULL",
+    "ADD COLUMN IF NOT EXISTS erpnext_item VARCHAR(191) NOT NULL DEFAULT ''",
+    "ADD COLUMN IF NOT EXISTS availability VARCHAR(64) NOT NULL DEFAULT 'Immediately'",
+    "ADD COLUMN IF NOT EXISTS item_group VARCHAR(191) NOT NULL DEFAULT ''",
+    "ADD COLUMN IF NOT EXISTS web_price DECIMAL(14,2) NOT NULL DEFAULT 0",
+    "ADD COLUMN IF NOT EXISTS mrp DECIMAL(14,2) NOT NULL DEFAULT 0",
+    "ADD COLUMN IF NOT EXISTS frappe_image VARCHAR(1000) NOT NULL DEFAULT ''",
+    "ADD COLUMN IF NOT EXISTS highlights VARCHAR(1000) NOT NULL DEFAULT ''",
+    "ADD COLUMN IF NOT EXISTS published TINYINT(1) NOT NULL DEFAULT 0",
+    "ADD UNIQUE KEY IF NOT EXISTS ecommerce_product_information_frappe_item_unique (frappe_item_code)"
+  ];
+  for (const column of columns) {
+    await sql.raw(`ALTER TABLE ecommerce_product_information ${column}`).execute(database);
+  }
+  await sql
+    .raw(
+      `CREATE TABLE IF NOT EXISTS ecommerce_ishop_catalogs (
+        id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+        uuid CHAR(8) NOT NULL DEFAULT (LOWER(SUBSTRING(MD5(UUID()),1,8))) UNIQUE,
+        created_by VARCHAR(191) NOT NULL DEFAULT 'system:migration',
+        catalog_code VARCHAR(191) NOT NULL,
+        catalog_name VARCHAR(191) NOT NULL,
+        description VARCHAR(500) NOT NULL DEFAULT '',
+        catalog_image VARCHAR(1000) NOT NULL DEFAULT '',
+        published TINYINT(1) NOT NULL DEFAULT 0,
+        status VARCHAR(24) NOT NULL DEFAULT 'active',
+        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        UNIQUE KEY ecommerce_ishop_catalogs_code_unique (catalog_code)
+      ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`
+    )
+    .execute(database);
+  await sql
+    .raw(
+      `CREATE TABLE IF NOT EXISTS ecommerce_catalog_items (
+        id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+        uuid CHAR(8) NOT NULL DEFAULT (LOWER(SUBSTRING(MD5(UUID()),1,8))) UNIQUE,
+        created_by VARCHAR(191) NOT NULL DEFAULT 'system:migration',
+        catalog_id INT NOT NULL,
+        product_information_id INT NOT NULL,
+        ishop_item VARCHAR(191) NOT NULL,
+        display_order INT NOT NULL DEFAULT 0,
+        status VARCHAR(24) NOT NULL DEFAULT 'active',
+        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        UNIQUE KEY ecommerce_catalog_items_membership_unique (catalog_id,product_information_id),
+        CONSTRAINT ecommerce_catalog_items_catalog_fk FOREIGN KEY (catalog_id) REFERENCES ecommerce_ishop_catalogs(id) ON DELETE CASCADE,
+        CONSTRAINT ecommerce_catalog_items_product_fk FOREIGN KEY (product_information_id) REFERENCES ecommerce_product_information(id) ON DELETE CASCADE
+      ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`
+    )
+    .execute(database);
+  await sql
+    .raw(
+      `CREATE TABLE IF NOT EXISTS ecommerce_catalog_sync_runs (
+        id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+        uuid CHAR(8) NOT NULL DEFAULT (LOWER(SUBSTRING(MD5(UUID()),1,8))) UNIQUE,
+        created_by VARCHAR(191) NOT NULL DEFAULT 'system:migration',
+        direction VARCHAR(32) NOT NULL,
+        status VARCHAR(24) NOT NULL,
+        item_count INT NOT NULL DEFAULT 0,
+        catalog_count INT NOT NULL DEFAULT 0,
+        details_json TEXT NOT NULL,
+        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        INDEX ecommerce_catalog_sync_runs_created (created_at)
+      ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`
+    )
+    .execute(database);
+}
+
+export const catalogDataSourceAuditMigration = {
+  description: "Add standard audit fields to catalog synchronization tables.",
+  key: "ecommerce.catalog.data-source-sync-audit"
+} as const;
+
+export async function upgradeCatalogDataSourceAudit(database: Kysely<EcommerceDatabase>) {
+  for (const table of ["ecommerce_ishop_catalogs", "ecommerce_catalog_items"]) {
+    await sql
+      .raw(
+        `ALTER TABLE ${table}
+          ADD COLUMN IF NOT EXISTS uuid CHAR(8) NOT NULL DEFAULT (LOWER(SUBSTRING(MD5(UUID()),1,8))) UNIQUE AFTER id,
+          ADD COLUMN IF NOT EXISTS created_by VARCHAR(191) NOT NULL DEFAULT 'system:migration' AFTER uuid,
+          ADD COLUMN IF NOT EXISTS status VARCHAR(24) NOT NULL DEFAULT 'active'`
+      )
+      .execute(database);
+  }
+  await sql
+    .raw(
+      `ALTER TABLE ecommerce_catalog_sync_runs
+        MODIFY COLUMN id INT NOT NULL AUTO_INCREMENT,
+        ADD COLUMN IF NOT EXISTS uuid CHAR(8) NOT NULL DEFAULT (LOWER(SUBSTRING(MD5(UUID()),1,8))) UNIQUE AFTER id,
+        ADD COLUMN IF NOT EXISTS created_by VARCHAR(191) NOT NULL DEFAULT 'system:migration' AFTER uuid,
+        ADD COLUMN IF NOT EXISTS updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP`
+    )
+    .execute(database);
+}
+
+export const catalogModuleDataSourceMigration = {
+  description: "Persist the preferred read provider for each Ecommerce catalog module.",
+  key: "ecommerce.catalog.module-data-source"
+} as const;
+
+export async function migrateCatalogModuleDataSources(database: Kysely<EcommerceDatabase>) {
+  await sql
+    .raw(
+      `CREATE TABLE IF NOT EXISTS ecommerce_catalog_module_data_sources (
+    id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    uuid CHAR(8) NOT NULL DEFAULT (LOWER(SUBSTRING(MD5(UUID()),1,8))) UNIQUE,
+    module_key VARCHAR(64) NOT NULL,
+    provider VARCHAR(24) NOT NULL DEFAULT 'own',
+    updated_by VARCHAR(191) NOT NULL DEFAULT 'system:migration',
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY ecommerce_catalog_module_source_key_unique (module_key),
+    CONSTRAINT ecommerce_catalog_module_source_provider_check CHECK (provider IN ('own','frappe'))
+  ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`
+    )
+    .execute(database);
+  for (const moduleKey of [
+    "categories",
+    "brands",
+    "products",
+    "product-details",
+    "variants",
+    "product-images"
+  ]) {
+    await sql`INSERT IGNORE INTO ecommerce_catalog_module_data_sources
+      (module_key,provider,updated_by) VALUES (${moduleKey},'own','system:seed')`.execute(database);
+  }
+}

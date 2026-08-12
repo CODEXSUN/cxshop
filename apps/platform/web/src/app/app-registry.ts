@@ -1,6 +1,7 @@
 import {
   AlertTriangleIcon,
   ArchiveIcon,
+  BotIcon,
   BarChart3Icon,
   Building2Icon,
   CircleGaugeIcon,
@@ -415,6 +416,11 @@ export function appMenuItemsFor(
         title: "Catalog",
         items: [
           {
+            title: "Items",
+            isActive: activePage === "ecommerce.catalog.product-information",
+            onSelect: () => onSelect("ecommerce.catalog.product-information")
+          },
+          {
             title: "Categories",
             isActive: activePage === "ecommerce.catalog.categories",
             onSelect: () => onSelect("ecommerce.catalog.categories")
@@ -430,11 +436,6 @@ export function appMenuItemsFor(
             onSelect: () => onSelect("ecommerce.catalog.products")
           },
           {
-            title: "Product Details",
-            isActive: activePage === "ecommerce.catalog.product-information",
-            onSelect: () => onSelect("ecommerce.catalog.product-information")
-          },
-          {
             title: "Variants",
             isActive: activePage === "ecommerce.catalog.variants",
             onSelect: () => onSelect("ecommerce.catalog.variants")
@@ -445,6 +446,12 @@ export function appMenuItemsFor(
             onSelect: () => onSelect("ecommerce.catalog.images")
           }
         ]
+      },
+      {
+        icon: Settings2Icon,
+        isActive: activePage === "ecommerce.settings.data-source",
+        onSelect: () => onSelect("ecommerce.settings.data-source"),
+        title: "Settings"
       }
     ];
   }
@@ -682,6 +689,23 @@ export function appMenuItemsFor(
   }
 
   return [
+    {
+      icon: BotIcon,
+      isActive: activePage.startsWith("devkit.honey"),
+      title: "Piko AI",
+      items: [
+        {
+          title: "Agent chat",
+          isActive: activePage === "devkit.honey",
+          onSelect: () => onSelect("devkit.honey")
+        },
+        {
+          title: "Connection setup",
+          isActive: activePage === "devkit.honey-system",
+          onSelect: () => onSelect("devkit.honey-system")
+        }
+      ]
+    },
     {
       icon: CircleGaugeIcon,
       isActive: activePage === "application.overview",

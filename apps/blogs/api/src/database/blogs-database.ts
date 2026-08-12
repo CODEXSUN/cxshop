@@ -17,6 +17,10 @@ import {
 } from "../modules/taxonomy/taxonomy.migration.js";
 import { seedTaxonomyModule } from "../modules/taxonomy/taxonomy.seed.js";
 import { seedArticleModule } from "../modules/article/article.seed.js";
+import {
+  blogsExperienceMigration,
+  migrateBlogsExperience
+} from "./blogs-experience.migration.js";
 
 export type BlogsDatabase = Record<string, unknown>;
 let database: Kysely<BlogsDatabase> | undefined;
@@ -31,7 +35,14 @@ export const blogsMigrationBatch: MigrationBatch<BlogsDatabase> = {
     step(taxonomyMigration, migrateTaxonomyModule),
     step(articleMigration, migrateArticleModule),
     step(discussionMigration, migrateDiscussionModule),
-    step(engagementMigration, migrateEngagementModule)
+    step(engagementMigration, migrateEngagementModule),
+    {
+      checksum: `${blogsExperienceMigration.key}:v1`,
+      description: blogsExperienceMigration.description,
+      name: blogsExperienceMigration.key,
+      up: migrateBlogsExperience,
+      version: 2
+    }
   ]
 };
 

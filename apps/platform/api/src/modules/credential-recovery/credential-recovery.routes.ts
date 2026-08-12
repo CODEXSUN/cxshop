@@ -3,10 +3,9 @@ import { z } from "zod";
 import { registerContractRoute } from "@cxshop/framework/http";
 import { CredentialRecoveryService } from "./credential-recovery.service.js";
 
-const desk = z.enum(["admin", "sa", "tenant"]);
+const desk = z.enum(["admin", "sa"]);
 const requestPayload = z
   .object({
-    corporateId: z.string().trim().max(120).optional(),
     desk,
     email: z.string().email().max(190)
   })
@@ -34,8 +33,7 @@ export async function registerCredentialRecoveryRoutes(app: FastifyInstance) {
       new CredentialRecoveryService().request({
         desk: body.desk,
         domain: requestDomain(request.headers),
-        email: body.email,
-        ...(body.corporateId !== undefined ? { corporateId: body.corporateId } : {})
+        email: body.email
       })
   });
   registerContractRoute(app, {
