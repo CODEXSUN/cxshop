@@ -7,7 +7,7 @@ export const SESSION_REFRESHED_REASON = "session-refreshed";
 const loginPaths: Record<Desk, string> = {
   admin: "/admin/login",
   sa: "/sa/login",
-  tenant: "/login"
+  tenant: "/admin/login"
 };
 
 let clearSession: () => void = () => undefined;
@@ -16,13 +16,10 @@ let interceptorInstalled = false;
 
 export function protectedDeskFromPathname(pathname: string): Desk | null {
   if (pathname === "/admin" || pathname.startsWith("/admin/")) {
-    return pathname === "/admin/login" ? null : "admin";
+    return pathname === "/admin/login" ? null : "tenant";
   }
   if (pathname === "/sa" || pathname.startsWith("/sa/")) {
     return pathname === "/sa/login" ? null : "sa";
-  }
-  if (pathname === "/app" || pathname.startsWith("/app/")) {
-    return "tenant";
   }
   return null;
 }

@@ -1297,7 +1297,7 @@ function parsePortalContent(value: string, includeHref = false) {
       return [
         {
           description,
-          ...(includeHref ? { href: href || "/login" } : {}),
+          ...(includeHref ? { href: href || "/admin/login" } : {}),
           label: label || (includeHref ? "Update" : "Workspace"),
           title
         }

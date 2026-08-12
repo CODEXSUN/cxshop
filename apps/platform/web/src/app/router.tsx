@@ -2,13 +2,10 @@ import { createRootRoute, createRoute, createRouter, useParams } from "@tanstack
 import { lazy } from "react";
 import { TenantSiteTemplate } from "../public/tenant-site/templates/tenant-site.template";
 
-const AdminDesk = lazy(() =>
-  import("../desks/admin/AdminDesk").then((module) => ({ default: module.AdminDesk }))
-);
 const SaDesk = lazy(() =>
   import("../desks/sa/SaDesk").then((module) => ({ default: module.SaDesk }))
 );
-const AppDesk = lazy(() =>
+const BackOfficeDesk = lazy(() =>
   import("../desks/tenant/AppDesk").then((module) => ({ default: module.AppDesk }))
 );
 const BillingPrintRoute = lazy(() =>
@@ -245,12 +242,6 @@ const healthRoute = createRoute({
   path: "/status"
 });
 
-const tenantLoginRoute = createRoute({
-  component: () => <LoginPage desk="tenant" title="App Login" />,
-  getParentRoute: () => rootRoute,
-  path: "/login"
-});
-
 const saLoginRoute = createRoute({
   component: () => <LoginPage desk="sa" title="Super Admin Login" />,
   getParentRoute: () => rootRoute,
@@ -264,7 +255,7 @@ const saRefreshRoute = createRoute({
 });
 
 const adminLoginRoute = createRoute({
-  component: () => <LoginPage desk="admin" title="Staff Admin Login" />,
+  component: () => <LoginPage desk="tenant" title="Back Office Login" />,
   getParentRoute: () => rootRoute,
   path: "/admin/login"
 });
@@ -288,39 +279,33 @@ const saSplatRoute = createRoute({
 });
 
 const adminRoute = createRoute({
-  component: AdminDesk,
+  component: BackOfficeDesk,
   getParentRoute: () => rootRoute,
-  path: "/admin"
+  path: "/admin/$"
 });
 
 const quotationPrintRoute = createRoute({
   component: () => <BillingPrintRoute document="quotation" />,
   getParentRoute: () => rootRoute,
-  path: "/app/billing/quotation/print"
+  path: "/admin/billing/quotation/print"
 });
 
 const salesPrintRoute = createRoute({
   component: () => <BillingPrintRoute document="sales" />,
   getParentRoute: () => rootRoute,
-  path: "/app/billing/sales/print"
+  path: "/admin/billing/sales/print"
 });
 
 const purchasePrintRoute = createRoute({
   component: () => <BillingPrintRoute document="purchase" />,
   getParentRoute: () => rootRoute,
-  path: "/app/billing/purchase/print"
+  path: "/admin/billing/purchase/print"
 });
 
 const exportSalesPrintRoute = createRoute({
   component: () => <BillingPrintRoute document="export-sales" />,
   getParentRoute: () => rootRoute,
-  path: "/app/billing/export-sales/print"
-});
-
-const appSplatRoute = createRoute({
-  component: AppDesk,
-  getParentRoute: () => rootRoute,
-  path: "/app/$"
+  path: "/admin/billing/export-sales/print"
 });
 
 const routeTree = rootRoute.addChildren([
@@ -344,7 +329,6 @@ const routeTree = rootRoute.addChildren([
   privacyRoute,
   termsRoute,
   healthRoute,
-  tenantLoginRoute,
   saLoginRoute,
   saRefreshRoute,
   adminLoginRoute,
@@ -355,8 +339,7 @@ const routeTree = rootRoute.addChildren([
   quotationPrintRoute,
   salesPrintRoute,
   purchasePrintRoute,
-  exportSalesPrintRoute,
-  appSplatRoute
+  exportSalesPrintRoute
 ]);
 
 export const router = createRouter({ routeTree });

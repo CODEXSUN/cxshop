@@ -2,17 +2,13 @@ import { useNavigate } from "@tanstack/react-router";
 import { AuthLayout, Button, Field } from "@cxshop/ui";
 import { LogIn } from "lucide-react";
 import { type ChangeEvent, type FormEvent, useEffect, useMemo, useRef, useState } from "react";
-import {
-  developmentTenantLogin,
-  type Desk,
-  getTenantLoginContext,
-  login
-} from "../../shared/api/platform-api";
+import { developmentTenantLogin, type Desk, login } from "../../shared/api/platform-api";
 import { requiredClientEnv } from "../../shared/env/client-env";
 import {
   hasSessionExpiredReason,
   hasSessionRefreshedReason
 } from "../../shared/auth/session-expiry";
+import { usePublicCompanyBranding } from "../../modules/tenant-portal/tenant-portal.api";
 
 type LoginPageProps = {
   desk: Desk;
@@ -20,17 +16,12 @@ type LoginPageProps = {
 };
 
 export function LoginPage({ desk, title }: LoginPageProps) {
+  const branding = usePublicCompanyBranding();
   const navigate = useNavigate();
-  const [corporateId, setCorporateId] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
-  const [tenantContext, setTenantContext] = useState<{
-    corporateIdRequired: boolean;
-    mode: "custom_domain" | "shared_domain" | "unknown";
-    tenantName: string | null;
-  } | null>(null);
   const autoLoginStarted = useRef(false);
   const sessionExpired = hasSessionExpiredReason(window.location.search);
   const sessionRefreshed = hasSessionRefreshedReason(window.location.search);
@@ -41,17 +32,10 @@ export function LoginPage({ desk, title }: LoginPageProps) {
     }
 
     if (desk === "admin") {
-      return "/admin";
+      return "/admin/$";
     }
 
-    return "/app/$";
-  }, [desk]);
-
-  useEffect(() => {
-    if (desk !== "tenant") return;
-    void getTenantLoginContext()
-      .then(setTenantContext)
-      .catch(() => setMessage("Unable to verify this application domain."));
+    return "/admin/$";
   }, [desk]);
 
   useEffect(() => {
@@ -72,7 +56,7 @@ export function LoginPage({ desk, title }: LoginPageProps) {
           setMessage(result.error.message);
           return;
         }
-        window.location.assign("/app/");
+        window.location.assign("/admin/");
       })
       .catch(() => setMessage("Development auto-login failed."))
       .finally(() => setLoading(false));
@@ -80,26 +64,11 @@ export function LoginPage({ desk, title }: LoginPageProps) {
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (desk === "tenant") {
-      if (!tenantContext) {
-        setMessage("Unable to verify this application domain.");
-        return;
-      }
-      if (tenantContext.mode === "unknown") {
-        setMessage("This domain is not mapped to an active tenant.");
-        return;
-      }
-      if (!corporateId.trim()) {
-        setMessage("Corporate ID is required to select your workspace.");
-        return;
-      }
-    }
     setLoading(true);
     setMessage("");
 
     try {
       const result = await login({
-        ...(desk === "tenant" ? { corporateId: corporateId.trim() } : {}),
         desk,
         email,
         password
@@ -113,7 +82,7 @@ export function LoginPage({ desk, title }: LoginPageProps) {
       if (desk === "tenant") {
         // A tenant switch must start with a fresh query cache so records and
         // runtime metadata from the previous tenant cannot survive navigation.
-        window.location.assign("/app/");
+        window.location.assign("/admin/");
         return;
       }
 
@@ -127,6 +96,9 @@ export function LoginPage({ desk, title }: LoginPageProps) {
 
   return (
     <AuthLayout
+      brandName={branding.data?.brandName}
+      logoDarkSrc={branding.data?.logoDarkUrl}
+      logoSrc={branding.data?.logoUrl}
       afterCard={
         sessionExpired || sessionRefreshed ? (
           <p className="auth-session-badge" role="status">
@@ -140,21 +112,6 @@ export function LoginPage({ desk, title }: LoginPageProps) {
       title={title}
     >
       <form className="auth-form" onSubmit={submit}>
-        {desk === "tenant" && tenantContext?.tenantName ? (
-          <p className="auth-workspace">{tenantContext.tenantName}</p>
-        ) : null}
-        {desk === "tenant" ? (
-          <Field
-            autoComplete="organization"
-            className="auth-field"
-            label="Corporate ID"
-            name="corporateId"
-            disabled={loading}
-            onChange={(event: ChangeEvent<HTMLInputElement>) => setCorporateId(event.target.value)}
-            required
-            value={corporateId}
-          />
-        ) : null}
         <Field
           autoComplete="email"
           className="auth-field"
@@ -184,13 +141,7 @@ export function LoginPage({ desk, title }: LoginPageProps) {
           Forgot password?
         </Button>
         {message ? <p className="form-error">{message}</p> : null}
-        <Button
-          disabled={
-            loading || (desk === "tenant" && (!tenantContext || tenantContext.mode === "unknown"))
-          }
-          icon={<LogIn size={16} />}
-          type="submit"
-        >
+        <Button disabled={loading} icon={<LogIn size={16} />} type="submit">
           {loading ? "Signing in..." : "Sign in"}
         </Button>
       </form>

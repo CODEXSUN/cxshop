@@ -9,16 +9,22 @@ import {
 import { ArrowRightIcon, UserRoundIcon } from "lucide-react";
 import type { ReactNode } from "react";
 import { StorefrontSearch } from "./storefront.search";
-import type { StorefrontDiscovery, StorefrontFilters } from "./storefront.types";
+import type {
+  StorefrontBranding,
+  StorefrontDiscovery,
+  StorefrontFilters
+} from "./storefront.types";
 import type { StorefrontAnnouncement } from "./storefront.types";
 import { StorefrontAnnouncementBanner } from "./storefront.announcement";
 
 export function StoreHeader({
   announcement,
+  branding,
   discovery,
   filters
 }: {
   announcement: StorefrontAnnouncement | null;
+  branding: StorefrontBranding | null;
   discovery: StorefrontDiscovery;
   filters: StorefrontFilters;
 }) {
@@ -27,11 +33,16 @@ export function StoreHeader({
       <StorefrontAnnouncementBanner announcement={announcement} />
       <header className="cx-store__header">
         <a className="cx-store__brand" href="/">
-          <img alt="" aria-hidden="true" className="cx-store__brand-mark" src="/icons/logo.svg" />
-          <strong>CXShop</strong>
+          <img
+            alt=""
+            aria-hidden="true"
+            className="cx-store__brand-mark"
+            src={branding?.logoUrl ?? "/icons/logo.svg"}
+          />
+          <strong>{branding?.brandName ?? "CXShop"}</strong>
         </a>
-        <StoreNavigation discovery={discovery} />
-        <StorefrontSearch discovery={discovery} filters={filters} />
+        <StoreNavigation branding={branding} discovery={discovery} />
+        <StorefrontSearch branding={branding} discovery={discovery} filters={filters} />
         <a className="cx-store__account" href="/login">
           <UserRoundIcon size={17} /> Portal
         </a>
@@ -40,7 +51,14 @@ export function StoreHeader({
   );
 }
 
-function StoreNavigation({ discovery }: { discovery: StorefrontDiscovery }) {
+function StoreNavigation({
+  branding,
+  discovery
+}: {
+  branding: StorefrontBranding | null;
+  discovery: StorefrontDiscovery;
+}) {
+  const brandName = branding?.brandName ?? "CXShop";
   return (
     <NavigationMenu className="cx-store__primary-nav" aria-label="Store navigation">
       <NavigationMenuList>
@@ -87,8 +105,8 @@ function StoreNavigation({ discovery }: { discovery: StorefrontDiscovery }) {
         </StoreMenu>
         <StoreMenu label="Company">
           <MenuFeature
-            description="Meet the team and learn how CXShop helps customers make durable technology decisions."
-            eyebrow="About CXShop"
+            description={`Meet the team and learn how ${brandName} helps customers make durable technology decisions.`}
+            eyebrow={`About ${brandName}`}
             href="/about"
             title="Technology with useful support"
           />

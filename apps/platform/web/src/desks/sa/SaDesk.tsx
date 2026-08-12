@@ -6,6 +6,7 @@ import {
   FolderKanbanIcon,
   ListChecksIcon,
   PaletteIcon,
+  Settings2Icon,
   ShieldCheckIcon,
   WorkflowIcon
 } from "lucide-react";
@@ -17,6 +18,7 @@ import type { OrchestratedAppId } from "../../modules/app-orchestration";
 import { logout } from "../../shared/api/platform-api";
 import { AuthGate } from "../../shared/auth/AuthGate";
 import { DevkitWorkspaceHost } from "@cxshop/devkit-web";
+import { usePublicCompanyBranding } from "../../modules/tenant-portal/tenant-portal.api";
 
 function lazyWorkspace<Props>(loader: () => Promise<ComponentType<Props>>) {
   return lazy(async () => ({ default: await loader() }));
@@ -39,6 +41,9 @@ const PlatformActivityWorkspace = lazyWorkspace(() =>
 );
 const MasterDatabaseWorkspace = lazyWorkspace(() =>
   import("../../modules/master-database").then((module) => module.MasterDatabaseWorkspace)
+);
+const DataSourceSettingsWorkspace = lazyWorkspace(() =>
+  import("../../modules/data-source-settings").then((module) => module.DataSourceSettingsWorkspace)
 );
 const QueueManagementWorkspace = lazyWorkspace(() =>
   import("../../modules/queue-management").then((module) => module.QueueManagementWorkspace)
@@ -63,6 +68,7 @@ type SaPage =
   | "apps"
   | "industries"
   | "master-database"
+  | "data-source-settings"
   | "queue-management"
   | "storage-manager"
   | "access"
@@ -70,6 +76,7 @@ type SaPage =
   | "design-system";
 
 export function SaDesk() {
+  const branding = usePublicCompanyBranding();
   const [page, setPage] = useState<SaPage>(pageFromUrl());
   const [selectedAppId, setSelectedAppId] = useState<OrchestratedAppId>(() => appIdFromUrl());
 
@@ -161,6 +168,18 @@ export function SaDesk() {
       ]
     },
     {
+      title: "Settings",
+      icon: Settings2Icon,
+      isActive: page === "data-source-settings",
+      items: [
+        {
+          title: "Frappe Connection",
+          isActive: page === "data-source-settings",
+          onSelect: () => selectPage("data-source-settings")
+        }
+      ]
+    },
+    {
       title: "Database",
       icon: DatabaseIcon,
       isActive: page === "master-database" || page === "storage-manager",
@@ -194,6 +213,14 @@ export function SaDesk() {
   return (
     <AuthGate desk="sa">
       <SuperLayout
+        brand={{
+          href: "/sa",
+          title: branding.data?.brandName ?? "CXShop",
+          ...(branding.data?.logoUrl ? { logoSrc: branding.data.logoUrl } : {}),
+          ...(branding.data?.logoDarkUrl ? { logoDarkSrc: branding.data.logoDarkUrl } : {}),
+          logoAlt: `${branding.data?.brandName ?? "CXShop"} logo`,
+          subtitle: "super-admin"
+        }}
         homeHref="/"
         menuItems={menuItems}
         onLogout={handleLogout}
@@ -215,6 +242,7 @@ export function SaDesk() {
           {page === "apps" ? <AppRegistryWorkspace /> : null}
           {page === "industries" ? <IndustryWorkspace /> : null}
           {page === "master-database" ? <MasterDatabaseWorkspace /> : null}
+          {page === "data-source-settings" ? <DataSourceSettingsWorkspace /> : null}
           {page === "queue-management" ? <QueueManagementWorkspace /> : null}
           {page === "storage-manager" ? <StorageManagerWorkspace /> : null}
           {page === "access" ? <AccessControlWorkspace /> : null}
@@ -234,6 +262,7 @@ function pageFromUrl(): SaPage {
     page === "apps" ||
     page === "industries" ||
     page === "master-database" ||
+    page === "data-source-settings" ||
     page === "queue-management" ||
     page === "storage-manager" ||
     page === "access" ||

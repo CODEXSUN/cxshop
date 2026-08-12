@@ -18,9 +18,8 @@ Usage: bash setup.sh [--clean] [--reinstall] [--yes] [billing]
 Interactive CODEXSUN container installation from the repository root.
 
 The installer requires an already prepared .container/deploy.env, validates it,
-verifies Docker resource ownership and the runtime toolchain, starts MariaDB,
-Redis, and File Browser, then deploys Billing, Core, Mail, and Platform through
-the Billing application stack.
+verifies the shared CXApp MariaDB, Redis, Media, and Docker network, provisions
+the isolated cxshop_db database, and deploys the CXShop application stack.
 
 --reinstall cleanly replaces CODEXSUN containers and images, then runs safe
 forward migrations. Named volumes, databases, credentials, and uploads remain.
@@ -65,13 +64,14 @@ fi
 prepare_deploy_env
 validate_deploy_env
 require_docker
+migrate_legacy_application_project
 validate_container_ownership
 
 echo
 echo "CODEXSUN deployment plan"
 echo "  Runtime and deployment configuration: $DEPLOY_ENV"
-echo "  Infrastructure: MariaDB, Redis, and File Browser"
-echo "  Application: Framework + UI + Platform + Core + Billing + Mail"
+echo "  Shared infrastructure: cxapp-mariadb, cxapp-redis, cxapp-media, cxapp-network"
+echo "  Application: Framework + UI + Platform + Core + Billing + Mail + Ecommerce + Blogs"
 echo "  Persistent data: named volumes are preserved"
 echo "  Container ownership: verified before Docker changes"
 if [ "$ASSUME_YES" != true ]; then
@@ -86,57 +86,15 @@ if [ "$ASSUME_YES" != true ]; then
 fi
 ensure_network
 
-infrastructure_image() {
-  stack="$1"
-  registry=$(env_value CXSHOP_IMAGE_REGISTRY)
-  case "$stack" in
-    mariadb) tag=$(env_value MARIADB_IMAGE_TAG) ;;
-    redis) tag=$(env_value REDIS_IMAGE_TAG) ;;
-    media) tag=$(env_value MEDIA_IMAGE_TAG) ;;
-    *) echo "Unknown infrastructure image: $stack" >&2; exit 64 ;;
-  esac
-  printf '%s/%s:%s' "$registry" "$stack" "$tag"
-}
-
-remove_infrastructure_images() {
-  for stack in mariadb redis media; do
-    image=$(infrastructure_image "$stack")
-    if docker image inspect "$image" >/dev/null 2>&1; then
-      docker image rm "$image" >/dev/null || {
-        echo "Failed to remove infrastructure image: $image" >&2
-        exit 74
-      }
-      echo "Removed infrastructure image: $image"
-    fi
-  done
-}
-
-stop_all_containers() {
-  bash "$CONTAINER_DIR/deploy.sh" billing down >/dev/null 2>&1 || true
-  stack_compose media down --remove-orphans
-  stack_compose database/redis down --remove-orphans
-  stack_compose database/mariadb down --remove-orphans
-}
-
-build_option=()
-if [ "$MODE" = reinstall ]; then
-  echo "Clean reinstall requested. Named volumes and databases will be preserved."
-  stop_all_containers
-  remove_infrastructure_images
-  build_option=(--pull --no-cache)
-fi
-
-stack_compose database/mariadb build "${build_option[@]}"
-stack_compose database/mariadb up -d --no-build --wait --wait-timeout 180
-MSYS_NO_PATHCONV=1 docker exec cxshop-mariadb \
-  bash /docker-entrypoint-initdb.d/10-cxshop-grants.sh >/dev/null
-echo "MariaDB application grants reconciled. Host access: $(env_value CXSHOP_BIND_ADDRESS):$(env_value MARIADB_HOST_PORT)."
-
-stack_compose database/redis build "${build_option[@]}"
-stack_compose database/redis up -d --no-build --wait --wait-timeout 120
-
-stack_compose media build "${build_option[@]}"
-bash "$CONTAINER_DIR/setup-media.sh"
+require_shared_infrastructure
+ensure_application_volume
+MSYS_NO_PATHCONV=1 docker exec -i \
+  -e "MARIADB_ROOT_PASSWORD=$(env_value MARIADB_ROOT_PASSWORD)" \
+  -e "CXSHOP_DB_USER=$(env_value DB_USER)" \
+  -e "CXSHOP_DB_PASSWORD=$(env_value DB_PASSWORD)" \
+  -e "CXSHOP_DB_NAME=$(env_value DB_MASTER_NAME)" \
+  cxapp-mariadb bash -s <"$CONTAINER_DIR/database/mariadb/10-cxshop-grants.sh"
+echo "CXShop database and restricted application grants reconciled in shared MariaDB."
 bash "$CONTAINER_DIR/update-runtime.sh"
 
 deploy_target() {

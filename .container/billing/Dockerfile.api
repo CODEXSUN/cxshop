@@ -11,18 +11,24 @@ COPY apps/platform/api ./apps/platform/api
 COPY apps/core/api ./apps/core/api
 COPY apps/billing/api ./apps/billing/api
 COPY apps/mail/api ./apps/mail/api
+COPY apps/devkit/api ./apps/devkit/api
+COPY apps/ecommerce/api ./apps/ecommerce/api
+COPY apps/blogs/api ./apps/blogs/api
 
 RUN npm ci \
   && npm run build -w @cxshop/framework \
   && npm run build -w @cxshop/core-api \
   && npm run build -w @cxshop/billing-api \
   && npm run build -w @cxshop/mail-api \
+  && npm run build -w @cxshop/devkit-api \
+  && npm run build -w @cxshop/ecommerce-api \
+  && npm run build -w @cxshop/blogs-api \
   && npm run build -w @cxshop/platform-api \
   && npm run dependencies:check
 
 FROM build AS migrations
 ARG CXSHOP_VERSION
-LABEL org.opencontainers.image.title="CODEXSUN Billing Stack Migrations" \
+LABEL org.opencontainers.image.title="CXShop Migrations" \
       org.opencontainers.image.version="$CXSHOP_VERSION"
 ENV NODE_ENV=production
 CMD ["npm", "run", "db:migrations:run"]
@@ -35,7 +41,7 @@ FROM node:${NODE_RUNTIME_VERSION}-bookworm-slim AS runtime
 ARG CXSHOP_VERSION
 ARG NPM_RUNTIME_VERSION
 ARG PLATFORM_API_PORT
-LABEL org.opencontainers.image.title="CODEXSUN Billing Stack API" \
+LABEL org.opencontainers.image.title="CXShop API" \
       org.opencontainers.image.version="$CXSHOP_VERSION"
 
 WORKDIR /app
@@ -54,9 +60,15 @@ COPY --from=build /app/apps/platform/api/package.json ./apps/platform/api/packag
 COPY --from=build /app/apps/core/api/package.json ./apps/core/api/package.json
 COPY --from=build /app/apps/billing/api/package.json ./apps/billing/api/package.json
 COPY --from=build /app/apps/mail/api/package.json ./apps/mail/api/package.json
+COPY --from=build /app/apps/devkit/api/package.json ./apps/devkit/api/package.json
+COPY --from=build /app/apps/ecommerce/api/package.json ./apps/ecommerce/api/package.json
+COPY --from=build /app/apps/blogs/api/package.json ./apps/blogs/api/package.json
 COPY --from=build /app/dist/apps/core/api ./apps/core/api/dist
 COPY --from=build /app/dist/apps/billing/api ./apps/billing/api/dist
 COPY --from=build /app/dist/apps/mail/api ./apps/mail/api/dist
+COPY --from=build /app/dist/apps/devkit/api ./apps/devkit/api/dist
+COPY --from=build /app/dist/apps/ecommerce/api ./apps/ecommerce/api/dist
+COPY --from=build /app/dist/apps/blogs/api ./apps/blogs/api/dist
 COPY --from=build /app/dist ./dist
 COPY .container/scripts/api-entrypoint.sh /usr/local/bin/cxshop-api-entrypoint
 
@@ -64,6 +76,9 @@ RUN sed -i 's#\./src/index\.ts#./dist/index.js#g; s#\./src/modules/mail/index\.t
       /app/apps/core/api/package.json \
       /app/apps/billing/api/package.json \
       /app/apps/mail/api/package.json \
+      /app/apps/devkit/api/package.json \
+      /app/apps/ecommerce/api/package.json \
+      /app/apps/blogs/api/package.json \
   && chmod +x /usr/local/bin/cxshop-api-entrypoint
 ENV NODE_ENV=production
 USER node

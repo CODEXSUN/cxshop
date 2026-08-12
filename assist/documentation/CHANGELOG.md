@@ -2,11 +2,11 @@
 
 ## Version State
 
-Current version: 1.0.56
+Current version: 1.0.57
 
-Release tag: v-1.0.56
+Release tag: v-1.0.57
 
-Changelog label: v 1.0.56
+Changelog label: v 1.0.57
 
 This changelog starts fresh from the cleaned CODEXSUN foundation. Earlier copied application history was intentionally removed because it did not represent the current workspace.
 
@@ -19,6 +19,35 @@ Records schema, migration, seed, tenant provisioning, and data compatibility cha
 #### App Codebase Changes
 
 Records UI, API, service logic, tooling, packaging, and documentation changes.
+
+## v-1.0.57
+
+### [v 1.0.57] 2026-08-11 6:25 pm - Application branding and Frappe connection settings
+
+#### Database Changes
+
+- Database update: Yes (manual).
+- Added the immutable `platform.data-source-settings.frappe-connection-v2` migration for encrypted
+  application-level Frappe credentials, verification state, and environment synchronization state
+  in the standalone `cxshop_db` database.
+- Seeded existing `CXSHOP_FRAPPE_*` environment configuration into the module-owned connection
+  record without replacing credentials already saved by an operator.
+
+#### App Codebase Changes
+
+- Bumped workspace version to 1.0.57.
+- Added the Super Admin Frappe Connection workspace with masked secrets, database persistence,
+  optional root `.env` synchronization, provider switching, live verification, and audit activity.
+- Made the active default Core Company the application branding source. The legal name is preferred,
+  with the company name and then `CXShop` used as controlled fallbacks.
+- Wired company branding into the storefront header, full-catalog search, editorial and enquiry copy,
+  footer, public portal, login and password recovery pages, status page, Back Office, and Super Admin.
+- Fixed company-logo upload authorization to use the validated standalone application session instead
+  of the retired tenant-runtime guard, and return clear validation responses for unsafe or oversized SVGs.
+- Added company update versions to public logo URLs so browser caches refresh immediately after a
+  company logo update while retaining public caching for unchanged images.
+- Extended composed MariaDB E2E coverage for public default-company branding, masked integration
+  secrets, application-owned logo authorization, SVG validation, and the standalone runtime contract.
 
 ## v-1.0.56
 
@@ -57,6 +86,9 @@ Records UI, API, service logic, tooling, packaging, and documentation changes.
   and hover movement for a balanced desktop presentation.
 - Applied the public header, complete menu, and ecommerce footer to Blog, article, company, support,
   shipping, returns, privacy, terms, cookie, and status pages.
+- Fixed Company logo reads for the standalone application storage scope.
+- Used the Default Company legal name and uploaded public logo in the application desk, storefront,
+  Blog, and public page branding.
 
 ## v-1.0.55
 

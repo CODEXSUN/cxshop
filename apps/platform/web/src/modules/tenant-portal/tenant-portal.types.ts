@@ -18,7 +18,9 @@ export type TenantPublicPortal = {
   features: TenantPortalContent[];
   footerText: string;
   headline: string;
-  loginPath: "/login";
+  loginPath: "/admin/login";
+  logoDarkUrl: string | null;
+  logoUrl: string | null;
   posts: TenantPortalPost[];
   publicSiteUrl: string | null;
   slides: TenantPortalContent[];
@@ -26,3 +28,8 @@ export type TenantPublicPortal = {
   tenantCode: string | null;
   theme: TenantPortalTheme;
 };
+
+export type PublicCompanyBranding = Pick<
+  TenantPublicPortal,
+  "brandName" | "logoDarkUrl" | "logoUrl"
+>;

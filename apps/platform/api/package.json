@@ -1,6 +1,6 @@
 {
   "name": "@cxshop/platform-api",
-  "version": "1.0.56",
+  "version": "1.0.57",
   "private": true,
   "type": "module",
   "scripts": {
@@ -9,13 +9,13 @@
     "lint": "eslint src --ext .ts"
   },
   "dependencies": {
-    "@cxshop/billing-api": "^1.0.56",
-    "@cxshop/blogs-api": "^1.0.56",
-    "@cxshop/core-api": "^1.0.56",
-    "@cxshop/devkit-api": "^1.0.56",
-    "@cxshop/ecommerce-api": "^1.0.56",
-    "@cxshop/framework": "^1.0.56",
-    "@cxshop/mail-api": "^1.0.56",
+    "@cxshop/billing-api": "^1.0.57",
+    "@cxshop/blogs-api": "^1.0.57",
+    "@cxshop/core-api": "^1.0.57",
+    "@cxshop/devkit-api": "^1.0.57",
+    "@cxshop/ecommerce-api": "^1.0.57",
+    "@cxshop/framework": "^1.0.57",
+    "@cxshop/mail-api": "^1.0.57",
     "bullmq": "^5.79.3",
     "fastify": "^5.2.1",
     "kysely": "^0.29.0",

@@ -26,12 +26,12 @@ export class StorageManagerService {
     return this.repository.upload(input);
   }
 
-  uploadCompanyLogo(tenantId: string, input: CompanyLogoUploadPayload) {
-    return this.repository.uploadCompanyLogo(tenantId, input);
+  uploadCompanyLogo(input: CompanyLogoUploadPayload) {
+    return this.repository.uploadCompanyLogo(input);
   }
 
-  readCompanyLogo(tenantId: string, variant: "logo" | "logo-dark") {
-    return this.repository.readCompanyLogo(tenantId, variant);
+  readCompanyLogo(variant: "logo" | "logo-dark") {
+    return this.repository.readCompanyLogo(variant);
   }
 
   download(input: StorageDownloadInput) {

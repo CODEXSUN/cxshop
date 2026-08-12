@@ -26,7 +26,7 @@ export function TenantSiteFooter() {
           <a href="/#promotions">Promotions</a>
           <a href="/#brands">Brands</a>
           <Link to="/blog">Buying guides</Link>
-          <a href={authenticated ? "/app/" : portal.loginPath}>
+          <a href={authenticated ? "/admin/" : portal.loginPath}>
             {authenticated ? "Dashboard" : "Log in"}
           </a>
         </section>

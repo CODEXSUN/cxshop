@@ -1,4 +1,6 @@
 import { resolveEnabledApps, resolveLandingApp } from "../app-registry/app-registry.service.js";
+import { getDefaultCompanyBrandingForDatabase } from "@cxshop/core-api";
+import { env } from "../../env.js";
 import { ApplicationSetupRepository } from "./application-setup.repository.js";
 
 export class ApplicationSetupService {
@@ -25,4 +27,23 @@ export class ApplicationSetupService {
       defaultLandingApp
     };
   }
+
+  async publicBranding() {
+    const company = await getDefaultCompanyBrandingForDatabase(env.DB_MASTER_NAME);
+    const version = company?.updatedAt ? `?v=${encodeURIComponent(company.updatedAt)}` : "";
+    const logoUrl = hasStoredLogo(company?.logoPath)
+      ? `/api/platform/public/company-logo/logo${version}`
+      : null;
+    return {
+      brandName: company?.legalName?.trim() || company?.name.trim() || "CXShop",
+      logoDarkUrl: hasStoredLogo(company?.logoDarkPath)
+        ? `/api/platform/public/company-logo/logo-dark${version}`
+        : logoUrl,
+      logoUrl
+    };
+  }
+}
+
+function hasStoredLogo(path: string | null | undefined) {
+  return path?.startsWith("storage/") ?? false;
 }

@@ -2,6 +2,7 @@ import { Button, Card, StatusBadge, WebLayout } from "@cxshop/ui";
 import { RefreshCw } from "lucide-react";
 import { useEffect, useState } from "react";
 import { apiGet } from "../../shared/api/platform-api";
+import { usePublicCompanyBranding } from "../../modules/tenant-portal/tenant-portal.api";
 
 type HealthResponse = {
   checks: {
@@ -17,6 +18,7 @@ type HealthResponse = {
 };
 
 export function HealthPage() {
+  const branding = usePublicCompanyBranding();
   const [health, setHealth] = useState<HealthResponse | undefined>();
   const [loading, setLoading] = useState(false);
 
@@ -36,7 +38,7 @@ export function HealthPage() {
   const platformApi = health?.checks["platform-api"];
 
   return (
-    <WebLayout>
+    <WebLayout brandName={branding.data?.brandName} logoSrc={branding.data?.logoUrl}>
       <section className="simple-page">
         <Card
           action={

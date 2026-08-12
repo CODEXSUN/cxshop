@@ -34,6 +34,11 @@ import { migrateDatabaseMaintenanceModule } from "../modules/database-maintenanc
 import { seedDatabaseMaintenanceModule } from "../modules/database-maintenance/database-maintenance.seed.js";
 import { migrateQueueManagerModule } from "../modules/queue-manager/queue-manager.migration.js";
 import { seedQueueManagerModule } from "../modules/queue-manager/queue-manager.seed.js";
+import {
+  migrateDataSourceConnectionModule,
+  migrateDataSourceSettingsModule
+} from "../modules/data-source-settings/data-source-settings.migration.js";
+import { seedDataSourceSettingsModule } from "../modules/data-source-settings/data-source-settings.seed.js";
 import { migrateStorageManagerModule } from "../modules/storage-manager/storage-manager.migration.js";
 import { seedStorageManagerModule } from "../modules/storage-manager/storage-manager.seed.js";
 import { migrateAppOrchestrationModule } from "../modules/app-orchestration/app-orchestration.migration.js";
@@ -85,6 +90,16 @@ const platformMasterMigrationSteps = [
     description: "Platform tenant registry and audit foundation.",
     migrate: migrateTenantRegistryModule,
     name: tenantMigration.key
+  },
+  {
+    description: "Runtime data-source provider selection.",
+    migrate: migrateDataSourceSettingsModule,
+    name: "platform.data-source-settings.foundation"
+  },
+  {
+    description: "Encrypted Frappe application connection settings.",
+    migrate: migrateDataSourceConnectionModule,
+    name: "platform.data-source-settings.frappe-connection-v2"
   },
   {
     description: "Tenant domain registry.",
@@ -256,6 +271,7 @@ const platformMasterSeedSteps = [
   { name: "platform.activity", seed: seedPlatformActivityModule },
   { name: "platform.database-maintenance", seed: seedDatabaseMaintenanceModule },
   { name: "platform.queue-manager", seed: seedQueueManagerModule },
+  { name: "platform.data-source-settings", seed: seedDataSourceSettingsModule },
   { name: "platform.credential-recovery", seed: seedCredentialRecoveryModule },
   { name: "platform.storage-manager", seed: seedStorageManagerModule },
   {

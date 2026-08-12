@@ -1,7 +1,7 @@
-name: cxshop-billing
+name: cxshop
 
 x-api-service: &api-service
-  image: ${CXSHOP_IMAGE_REGISTRY:?required}/billing-stack-api:${BILLING_STACK_API_IMAGE_TAG:?required}
+  image: ${CXSHOP_IMAGE_REGISTRY:?required}/api:${BILLING_STACK_API_IMAGE_TAG:?required}
   restart: unless-stopped
   volumes:
     - billing-stack-data:/storage
@@ -11,14 +11,14 @@ x-api-service: &api-service
     - cxshop-network
 
 x-web-service: &web-service
-  image: ${CXSHOP_IMAGE_REGISTRY:?required}/billing-stack-web:${BILLING_STACK_WEB_IMAGE_TAG:?required}
+  image: ${CXSHOP_IMAGE_REGISTRY:?required}/web:${BILLING_STACK_WEB_IMAGE_TAG:?required}
   restart: unless-stopped
   networks:
     - cxshop-network
 
 services:
   storage-init:
-    image: ${CXSHOP_IMAGE_REGISTRY:?required}/billing-stack-api:${BILLING_STACK_API_IMAGE_TAG:?required}
+    image: ${CXSHOP_IMAGE_REGISTRY:?required}/api:${BILLING_STACK_API_IMAGE_TAG:?required}
     user: "0:0"
     entrypoint: ["/bin/sh", "-c"]
     command:
@@ -99,7 +99,7 @@ services:
         CXSHOP_VERSION: ${CXSHOP_VERSION:?required}
         NODE_RUNTIME_VERSION: ${NODE_RUNTIME_VERSION:?required}
         NPM_RUNTIME_VERSION: ${NPM_RUNTIME_VERSION:?required}
-    image: ${CXSHOP_IMAGE_REGISTRY:?required}/billing-stack-migrations:${BILLING_STACK_MIGRATIONS_IMAGE_TAG:?required}
+    image: ${CXSHOP_IMAGE_REGISTRY:?required}/migrations:${BILLING_STACK_MIGRATIONS_IMAGE_TAG:?required}
     profiles:
       - tools
     env_file:
@@ -114,6 +114,7 @@ services:
 volumes:
   billing-stack-data:
     name: ${BILLING_STACK_DATA_VOLUME:?required}
+    external: true
   media-data:
     name: ${MEDIA_DATA_VOLUME:?required}
     external: true

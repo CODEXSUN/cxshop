@@ -140,9 +140,9 @@ done
 
 registry=$(env_value CXSHOP_IMAGE_REGISTRY)
 app_repositories=(
-  "$registry/billing-stack-api"
-  "$registry/billing-stack-web"
-  "$registry/billing-stack-migrations"
+  "$registry/api"
+  "$registry/web"
+  "$registry/migrations"
 )
 infrastructure_repositories=(
   "$registry/mariadb"
@@ -264,7 +264,7 @@ if [ "$SCOPE" = host ]; then
     echo "Removed all local Docker images."
   fi
 else
-  remove_project_containers cxshop-billing
+  remove_project_containers cxshop
   for repository in "${app_repositories[@]}"; do
     remove_repository_images "$repository"
   done

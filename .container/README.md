@@ -6,7 +6,7 @@ This directory provides one persistent infrastructure layer and the composed COD
 | -------- | ------------------------------------------------- | ------------------------- |
 | CODEXSUN | Framework + UI + Platform + Core + Billing + Mail | Platform API/Platform Web |
 
-MariaDB, Redis, and Media are installed once. Product deployment commands never recreate them and never delete their named volumes. Normal upgrades replace only versioned application containers, so databases, credentials, uploads, and application storage remain stable.
+CXShop reuses the healthy CXApp MariaDB, Redis, Media, and `cxapp-network` resources. CXApp must be installed first. CXShop setup provisions only the isolated `cxshop_db` schema and the restricted CXShop database user, then builds its application containers. CXShop commands never recreate, stop, or remove CXApp infrastructure.
 
 ## First installation
 
@@ -48,7 +48,7 @@ After infrastructure installation and before starting the application images, re
 bash .container/update-runtime.sh
 ```
 
-`setup.sh` runs this command automatically. It updates `NODE_RUNTIME_VERSION` and `NPM_RUNTIME_VERSION` from `package.json`, pulls the matching Node base image, and verifies npm before the application build starts.
+`setup.sh` runs this command automatically. It updates `NODE_RUNTIME_VERSION` and `NPM_RUNTIME_VERSION` from `package.json`, pulls the matching Node base image, and verifies npm before the application build starts. Docker Desktop groups the application under the `cxshop` Compose project. Its images are `cxshop/api`, `cxshop/web`, and `cxshop/migrations`.
 
 The ignored root `.env` is development-only. The ignored
 `.container/deploy.env` is the only container deployment source, and
@@ -80,7 +80,7 @@ company Mail settings continue to take priority over this deployment fallback.
 
 Platform Web sends `Permissions-Policy: unload=*` in development and from the runtime nginx container. This temporarily permits legacy `unload` listeners, including browser-extension injected frames, during Chromium's staged deprecation. No other browser permission is widened.
 
-MariaDB listens inside Docker on `3306` and is exposed to the host at `127.0.0.1:3307` by default. Applications use the private `cxshop-mariadb:3306` address.
+Shared MariaDB listens inside Docker on `3306` and is exposed by CXApp at `127.0.0.1:3307` by default. CXShop uses `cxapp-mariadb:3306`, `cxapp-redis:6379/2`, and `cxapp-network`.
 
 ## Clean installation
 
@@ -260,10 +260,10 @@ Only the explicit `--reinstall --wipe-media` combination removes media data; the
 
 All published ports bind to `127.0.0.1` unless `CXSHOP_BIND_ADDRESS` is changed.
 
-| Service                 |                Host port |
-| ----------------------- | -----------------------: |
-| MariaDB / Redis / Media | `3307` / `6379` / `7090` |
-| Platform API/Web        |        `17010` / `17020` |
+| Service                        |                Host port |
+| ------------------------------ | -----------------------: |
+| Shared MariaDB / Redis / Media | `3307` / `6379` / `7090` |
+| CXShop Platform API/Web        |        `18010` / `18020` |
 
 ## Verification
 

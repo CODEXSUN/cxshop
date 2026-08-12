@@ -9,6 +9,7 @@ import {
 
 import { AppLayout } from "./app-layout";
 import type { SidemenuItem } from "../blocks/menu/sidemenu/sub/sidemenu-section";
+import type { SidebarBrand } from "../blocks/menu/sidemenu/app-sidebar";
 
 type SuperLayoutProps = {
   actions?: ReactNode;
@@ -20,6 +21,7 @@ type SuperLayoutProps = {
   title?: ReactNode;
   versionLabel?: string;
   workspace?: "platform" | "task-manager";
+  brand?: SidebarBrand;
 };
 
 const superMenuItems: SidemenuItem[] = [
@@ -35,7 +37,7 @@ const superMenuItems: SidemenuItem[] = [
       },
       {
         title: "Application",
-        url: "/app"
+        url: "/admin"
       },
       {
         title: "Domain",
@@ -93,14 +95,16 @@ export function SuperLayout({
   subtitle,
   title,
   versionLabel,
-  workspace = "platform"
+  workspace = "platform",
+  brand
 }: SuperLayoutProps) {
   return (
     <AppLayout
       brand={{
+        ...brand,
         href: "/sa",
         subtitle: "super-admin",
-        title: "Super Admin Desk"
+        title: brand?.title ?? "Super Admin Desk"
       }}
       headerTitle="Super Admin Desk"
       showPageTitle={false}

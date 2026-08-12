@@ -7,7 +7,6 @@ import {
 import { Kysely, MysqlDialect, type Generated } from "kysely";
 import { createPool, type PoolOptions } from "mysql2";
 import { createConnection } from "mysql2/promise";
-import { AppError } from "@cxshop/framework/errors";
 import { seedBillingTenantPermissions } from "../auth/tenant-permission.seed.js";
 import { env } from "../env.js";
 import {

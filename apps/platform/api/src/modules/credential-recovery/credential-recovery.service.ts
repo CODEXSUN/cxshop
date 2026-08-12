@@ -2,9 +2,8 @@ import { createHash, randomBytes } from "node:crypto";
 import { AppError } from "@cxshop/framework/errors";
 import { env } from "../../env.js";
 import { hashPassword } from "../../auth/password-hash.js";
-import { getTenantDatabase } from "../../database/tenant-database.js";
+import { getTenantDatabaseByName } from "../../database/tenant-database.js";
 import { QueueManagerService } from "../queue-manager/queue-manager.service.js";
-import { TenantRepository } from "../tenant/tenant.repository.js";
 import { PlatformActivityService } from "../platform-activity/index.js";
 import { CredentialRecoveryRepository } from "./credential-recovery.repository.js";
 import { credentialRecoveryEvents } from "./credential-recovery.events.js";
@@ -23,7 +22,6 @@ type RecoveryTarget = {
 export class CredentialRecoveryService {
   constructor(
     private readonly repository = new CredentialRecoveryRepository(),
-    private readonly tenants = new TenantRepository(),
     private readonly queue = new QueueManagerService(),
     private readonly activity = new PlatformActivityService()
   ) {}
@@ -32,7 +30,7 @@ export class CredentialRecoveryService {
     const email = input.email.trim().toLowerCase();
     const target =
       input.desk === "tenant"
-        ? await this.tenantTarget(input, email)
+        ? await this.applicationTarget(email)
         : await this.platformTarget(input.desk, email);
     if (!target) return { accepted: true as const, message: acceptedMessage };
 
@@ -98,26 +96,17 @@ export class CredentialRecoveryService {
     return { reset: true as const };
   }
 
-  private async tenantTarget(
-    input: PasswordRecoveryRequest,
-    email: string
-  ): Promise<RecoveryTarget | null> {
-    const corporateId = input.corporateId?.trim() ?? "";
-    if (!corporateId) return null;
-    const domainTenant = await this.tenants.findByDomain(input.domain);
-    const corporateTenant = await this.tenants.findByCorporateId(corporateId);
-    const tenant = domainTenant ?? corporateTenant;
-    if (
-      !tenant ||
-      !corporateTenant ||
-      corporateTenant.uuid !== tenant.uuid ||
-      tenant.status !== "active"
-    ) {
-      return null;
-    }
-    const user = await this.tenants.findTenantUserByEmail(tenant, email);
+  private async applicationTarget(email: string): Promise<RecoveryTarget | null> {
+    const user = await this.repository.findApplicationUser(
+      getTenantDatabaseByName(env.DB_MASTER_NAME),
+      email
+    );
     if (!user || user.status !== "active") return null;
-    return { tenantDatabase: tenant.dbName, tenantId: tenant.uuid, userUuid: user.uuid };
+    return {
+      tenantDatabase: env.DB_MASTER_NAME,
+      tenantId: "application",
+      userUuid: user.uuid
+    };
   }
 
   private async platformTarget(
@@ -135,12 +124,13 @@ export class CredentialRecoveryService {
     tenantDatabase: string | null;
     tenantId: string | null;
   }) {
-    if (!request.tenantId || !request.tenantDatabase) return undefined;
-    const tenant = await this.tenants.findByIdOrCode(request.tenantId);
-    if (!tenant || tenant.status !== "active" || tenant.dbName !== request.tenantDatabase) {
+    if (
+      request.tenantId !== "application" ||
+      request.tenantDatabase !== env.DB_MASTER_NAME
+    ) {
       return undefined;
     }
-    return getTenantDatabase(tenant);
+    return getTenantDatabaseByName(env.DB_MASTER_NAME);
   }
 }
 

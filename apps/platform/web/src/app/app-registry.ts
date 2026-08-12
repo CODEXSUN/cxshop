@@ -778,7 +778,7 @@ export function appWorkspaceItems(enabledApps: PlatformAppId[], activeApp: Platf
       description: app.description,
       icon: app.icon,
       title: app.label,
-      url: `/app/${app.id}/overview`
+      url: `/admin/${app.id}/overview`
     }));
 }
 

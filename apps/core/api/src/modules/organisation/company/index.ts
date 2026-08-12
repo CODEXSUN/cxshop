@@ -1,9 +1,11 @@
 export { companyModule } from "./company.module.js";
 export { migrateCompanyModule } from "./company.migration.js";
 export { seedCompanyModule } from "./company.seed.js";
+export { getDefaultCompanyBrandingForDatabase } from "./company.service.js";
 export type {
   CompanyAddress,
   CompanyBankAccount,
+  CompanyBranding,
   CompanyEmail,
   CompanyIndustryNameResolver,
   CompanyPhone,

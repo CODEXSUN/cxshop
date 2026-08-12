@@ -2,7 +2,7 @@
   --ink: #111827;
   --muted: #667085;
   --line: #e5e7eb;
-  background: #fafaf8;
+  background: #fff;
   color: var(--ink);
   font-family: Geist, Arial, sans-serif;
   min-height: 100vh;
@@ -628,11 +628,11 @@
   z-index: 2;
 }
 .cx-store__brand-marquee::before {
-  background: linear-gradient(90deg, #fafaf8, transparent);
+  background: linear-gradient(90deg, #fff, transparent);
   left: 0;
 }
 .cx-store__brand-marquee::after {
-  background: linear-gradient(270deg, #fafaf8, transparent);
+  background: linear-gradient(270deg, #fff, transparent);
   right: 0;
 }
 .cx-store__brands a {

@@ -136,22 +136,86 @@ require_compose_container_ownership() {
 }
 
 validate_container_ownership() {
-  require_compose_container_ownership cxshop-mariadb cxshop-mariadb mariadb
-  require_compose_container_ownership cxshop-redis cxshop-redis redis
-  require_compose_container_ownership cxshop-media cxshop-media media
-  require_compose_container_ownership cxshop-api cxshop-billing platform-api
-  require_compose_container_ownership cxshop-web cxshop-billing platform-web
+  require_compose_container_ownership cxshop-api cxshop platform-api
+  require_compose_container_ownership cxshop-web cxshop platform-web
+}
+
+migrate_legacy_application_project() {
+  legacy_found=false
+  for specification in "cxshop-api:platform-api" "cxshop-web:platform-web"; do
+    container=${specification%%:*}
+    service=${specification#*:}
+    docker container inspect "$container" >/dev/null 2>&1 || continue
+    container_is_compose_service "$container" cxshop-billing "$service" || continue
+    legacy_found=true
+  done
+  [ "$legacy_found" = true ] || return 0
+
+  for specification in "cxshop-api:platform-api" "cxshop-web:platform-web"; do
+    container=${specification%%:*}
+    service=${specification#*:}
+    container_is_compose_service "$container" cxshop-billing "$service" || {
+      echo "Cannot migrate a partially owned legacy CXShop Compose project." >&2
+      exit 78
+    }
+  done
+
+  echo "Migrating Docker Compose project cxshop-billing to cxshop. Persistent volumes are preserved."
+  docker compose --env-file "$DEPLOY_ENV" \
+    --project-name cxshop-billing \
+    -f "$CONTAINER_DIR/billing/docker-compose.yml" \
+    down --remove-orphans
+}
+
+require_shared_container() {
+  container="$1"
+  project="$2"
+  service="$3"
+  container_is_compose_service "$container" "$project" "$service" || {
+    echo "Required shared CXApp service is missing or has unexpected ownership: $container" >&2
+    echo "Run CXApp setup.sh before installing CXShop." >&2
+    exit 69
+  }
+  health=$(docker inspect "$container" \
+    --format '{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}')
+  [ "$health" = "healthy" ] || {
+    echo "Required shared CXApp service is not healthy: $container ($health)" >&2
+    exit 69
+  }
+}
+
+require_shared_infrastructure() {
+  network=$(env_value CXSHOP_DOCKER_NETWORK)
+  [ "$network" = "cxapp-network" ] || {
+    echo "CXSHOP_DOCKER_NETWORK must be cxapp-network; received: $network" >&2
+    exit 78
+  }
+  docker network inspect "$network" >/dev/null 2>&1 || {
+    echo "Required shared Docker network is missing: $network" >&2
+    exit 69
+  }
+  require_shared_container cxapp-mariadb cxapp-mariadb mariadb
+  require_shared_container cxapp-redis cxapp-redis redis
+  require_shared_container cxapp-media cxapp-media media
 }
 
 ensure_network() {
   network=$(env_value CXSHOP_DOCKER_NETWORK)
-  docker network inspect "$network" >/dev/null 2>&1 || docker network create "$network" >/dev/null
+  docker network inspect "$network" >/dev/null 2>&1 || {
+    echo "Required shared Docker network is missing: $network" >&2
+    exit 69
+  }
 }
 
 ensure_media_volumes() {
   for volume in "$(env_value MEDIA_DATA_VOLUME)" "$(env_value MEDIA_DB_VOLUME)"; do
     docker volume inspect "$volume" >/dev/null 2>&1 || docker volume create "$volume" >/dev/null
   done
+}
+
+ensure_application_volume() {
+  volume=$(env_value BILLING_STACK_DATA_VOLUME)
+  docker volume inspect "$volume" >/dev/null 2>&1 || docker volume create "$volume" >/dev/null
 }
 
 stack_compose() {
@@ -165,5 +229,5 @@ run_preflight() {
   validate_deploy_env
   require_docker
   validate_container_ownership
-  ensure_network
+  require_shared_infrastructure
 }

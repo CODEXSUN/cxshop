@@ -23,6 +23,12 @@ COPY apps/billing/api ./apps/billing/api
 COPY apps/billing/web ./apps/billing/web
 COPY apps/mail/api ./apps/mail/api
 COPY apps/mail/web ./apps/mail/web
+COPY apps/devkit/api ./apps/devkit/api
+COPY apps/devkit/web ./apps/devkit/web
+COPY apps/ecommerce/api ./apps/ecommerce/api
+COPY apps/ecommerce/web ./apps/ecommerce/web
+COPY apps/blogs/api ./apps/blogs/api
+COPY apps/blogs/web ./apps/blogs/web
 
 RUN rm -rf apps/platform/web/public/storage \
   && mkdir -p apps/platform/web/public/storage \
@@ -34,13 +40,16 @@ RUN npm run build -w @cxshop/framework \
   && npm run build -w @cxshop/core-web \
   && npm run build -w @cxshop/billing-web \
   && npm run build -w @cxshop/mail-web \
+  && npm run build -w @cxshop/devkit-web \
+  && npm run build -w @cxshop/ecommerce-web \
+  && npm run build -w @cxshop/blogs-web \
   && npm run build -w @cxshop/platform-web \
   && npm run dependencies:check
 
 FROM ${NGINX_BASE_IMAGE} AS runtime
 
 ARG CXSHOP_VERSION
-LABEL org.opencontainers.image.title="CODEXSUN Billing Stack Web" \
+LABEL org.opencontainers.image.title="CXShop Web" \
       org.opencontainers.image.version="$CXSHOP_VERSION"
 
 COPY .container/scripts/nginx-spa.conf /etc/nginx/conf.d/default.conf

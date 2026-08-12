@@ -40,6 +40,7 @@ const requiredBackendRoles = [
 ];
 const reducedPlatformBackendModules = new Set([
   "application-setup",
+  "data-source-settings",
   "tenant-user",
   "tenant-role",
   "tenant-permission",

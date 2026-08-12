@@ -3,6 +3,31 @@ import { getCoreDatabase } from "../../../database/core-database.js";
 import type { CompanyRecord, CompanySaveInput } from "./company.types.js";
 type Row = Record<string, unknown>;
 export class CompanyRepository {
+  async findDefaultBranding() {
+    const rows = await sql<{
+      legal_name: string | null;
+      logo_dark_path: string | null;
+      logo_path: string | null;
+      name: string;
+      updated_at: Date | string;
+    }>`SELECT c.name,c.legal_name,c.logo_path,c.logo_dark_path,c.updated_at FROM core_default_company_settings d INNER JOIN core_companies c ON c.id=d.company_id WHERE d.singleton_key=1 AND d.status='active' AND c.status='active' LIMIT 1`.execute(
+      getCoreDatabase()
+    );
+    const row = rows.rows[0];
+    return row
+      ? {
+          legalName: row.legal_name,
+          logoDarkPath: row.logo_dark_path,
+          logoPath: row.logo_path,
+          name: row.name,
+          updatedAt:
+            row.updated_at instanceof Date
+              ? row.updated_at.toISOString()
+              : new Date(row.updated_at).toISOString()
+        }
+      : null;
+  }
+
   async list(search = "") {
     const term = search.trim().toLowerCase();
     const rows =
@@ -12,9 +37,10 @@ export class CompanyRepository {
     return rows.rows.map(map);
   }
   async find(id: string | number) {
-    const rows = await sql<Row>`SELECT * FROM core_companies WHERE id=${Number(id)} LIMIT 1`.execute(
-      getCoreDatabase()
-    );
+    const rows =
+      await sql<Row>`SELECT * FROM core_companies WHERE id=${Number(id)} LIMIT 1`.execute(
+        getCoreDatabase()
+      );
     return rows.rows[0] ? map(rows.rows[0]) : null;
   }
   async create(input: CompanySaveInput) {

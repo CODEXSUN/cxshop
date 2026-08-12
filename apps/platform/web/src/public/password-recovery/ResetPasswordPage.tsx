@@ -2,8 +2,10 @@ import { AuthLayout, Button, Field } from "@cxshop/ui";
 import { KeyRound } from "lucide-react";
 import { type ChangeEvent, type FormEvent, useState } from "react";
 import { resetPassword, type Desk } from "../../shared/api/platform-api";
+import { usePublicCompanyBranding } from "../../modules/tenant-portal/tenant-portal.api";
 
 export function ResetPasswordPage() {
+  const branding = usePublicCompanyBranding();
   const query = new URLSearchParams(window.location.search);
   const desk = normalizeDesk(query.get("desk"));
   const token = query.get("token") ?? "";
@@ -31,7 +33,13 @@ export function ResetPasswordPage() {
   }
 
   return (
-    <AuthLayout surface={desk} title="Reset password">
+    <AuthLayout
+      brandName={branding.data?.brandName}
+      logoDarkSrc={branding.data?.logoDarkUrl}
+      logoSrc={branding.data?.logoUrl}
+      surface={desk}
+      title="Reset password"
+    >
       <form className="auth-form" onSubmit={submit}>
         <Field
           autoComplete="new-password"
@@ -72,5 +80,5 @@ function normalizeDesk(value: string | null): Desk {
 function loginPath(desk: Desk) {
   if (desk === "sa") return "/sa/login";
   if (desk === "admin") return "/admin/login";
-  return "/login";
+  return "/admin/login";
 }

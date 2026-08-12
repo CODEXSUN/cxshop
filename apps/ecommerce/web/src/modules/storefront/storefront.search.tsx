@@ -13,6 +13,7 @@ import type {
   StorefrontProduct,
   StorefrontSearchScope
 } from "./storefront.types";
+import type { StorefrontBranding } from "./storefront.types";
 
 const scopes: Array<{
   label: string;
@@ -25,9 +26,11 @@ const scopes: Array<{
 ];
 
 export function StorefrontSearch({
+  branding,
   discovery,
   filters
 }: {
+  branding: StorefrontBranding | null;
   discovery: StorefrontDiscovery;
   filters: StorefrontFilters;
 }) {
@@ -109,9 +112,13 @@ export function StorefrontSearch({
           role="dialog"
         >
           <div className="cx-store-search__top">
-            <a className="cx-store-search__wordmark" href="/" aria-label="CXShop home">
-              <img alt="" aria-hidden="true" src="/icons/logo.svg" />
-              <span>CXShop</span>
+            <a
+              className="cx-store-search__wordmark"
+              href="/"
+              aria-label={`${branding?.brandName ?? "CXShop"} home`}
+            >
+              <img alt="" aria-hidden="true" src={branding?.logoUrl ?? "/icons/logo.svg"} />
+              <span>{branding?.brandName ?? "CXShop"}</span>
             </a>
             <button aria-label="Close search" onClick={() => setOpen(false)} type="button">
               <XIcon />

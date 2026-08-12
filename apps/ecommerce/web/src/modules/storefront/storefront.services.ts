@@ -8,6 +8,7 @@ import type {
 import type { StorefrontBlogPost } from "./storefront.types";
 import type { StorefrontSiteNavigation } from "./storefront.types";
 import type { StorefrontAnnouncement } from "./storefront.types";
+import type { StorefrontBranding } from "./storefront.types";
 type Envelope<T> = { data: T; success: true } | { error: { message: string }; success: false };
 async function get<T>(path: string) {
   const response = await fetch(`/api/platform${path}`, { headers: { Accept: "application/json" } });
@@ -37,3 +38,4 @@ export const getStorefrontSiteNavigation = () =>
   get<StorefrontSiteNavigation>("/storefront/site-navigation");
 export const getStorefrontAnnouncement = () =>
   get<StorefrontAnnouncement | null>("/storefront/announcement");
+export const getStorefrontBranding = () => get<StorefrontBranding>("/public/company-branding");

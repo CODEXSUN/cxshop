@@ -21,6 +21,24 @@ Local testing and cloud deployment should follow the same strict rules and servi
 - File storage.
 - Integration services.
 
+## CXShop Data Source Selection
+
+CXShop keeps one application runtime and one MariaDB database, `cxshop_db`. Super Admin can select the active commerce data source without changing the browser API contract:
+
+- `own` uses the module-owned repositories in `cxshop_db`.
+- `frappe` uses live Frappe REST adapters implemented by each owning module.
+- Super Admin `Settings -> Frappe Connection` persists the application connection in the
+  module-owned `data_source_settings` record. API credentials use AES-256-GCM encryption derived
+  from `JWT_SECRET`; responses expose only configured flags. Operators may also synchronize the
+  four `CXSHOP_DATA_SOURCE` and `CXSHOP_FRAPPE_*` values to the configured root `.env`. A read-only
+  deployment mount rejects environment synchronization before changing the database.
+
+`CXSHOP_DATA_SOURCE` defines the desired provider at API startup. The API stores the effective provider and the environment fingerprint in `data_source_settings`. A changed environment value becomes effective on the next API boot. A Super Admin selection remains effective across restarts while the environment value is unchanged.
+
+Frappe connectivity uses `CXSHOP_FRAPPE_URL`, `CXSHOP_FRAPPE_API_KEY`, and `CXSHOP_FRAPPE_API_SECRET`. These values remain server-side. The web application receives only the effective provider, the configured state, the safe base URL, and connection-test results. It must not read, write, or expose `.env` credentials.
+
+Each business module must provide equivalent own-database and Frappe repository contracts for the data it owns. The provider setting and connection transport are shared infrastructure; business mapping, validation, migrations, services, routes, seeds, and tests remain inside the owning module.
+
 ## Multi-Port And Multi-Container Direction
 
 Different runtime parts may run on different ports and containers:
@@ -81,7 +99,7 @@ framework + platform + core + billing = billing stack
 ```
 
 The executable container layout lives under `.container/`. MariaDB, Redis, and Media form one
-persistent infrastructure layer alongside the independent Billing Compose project. A normal product upgrade pulls
+persistent infrastructure layer alongside the independent `cxshop` Compose project. A normal product upgrade pulls
 versioned images, applies only Billing's forward migrations, and replaces only its application containers. It must
 preserve the deployment input, credentials, named volumes, databases, and uploads.
 

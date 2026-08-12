@@ -2,6 +2,7 @@ import { createHash, randomBytes } from "node:crypto";
 import { mkdir, readdir, readFile, stat, writeFile } from "node:fs/promises";
 import { extname, join } from "node:path";
 import { sql } from "kysely";
+import { AppError } from "@cxshop/framework/errors";
 import { getPlatformDatabase } from "../../database/platform-database.js";
 import { TenantRepository } from "../tenant/tenant.repository.js";
 import {
@@ -132,22 +133,20 @@ export class StorageManagerRepository {
     return this.list({ ...input, path: context.currentPath });
   }
 
-  async uploadCompanyLogo(tenantId: string, input: CompanyLogoUploadPayload) {
-    const tenant = await this.tenants.findByIdOrCode(tenantId);
-    if (!tenant) throw new Error("Tenant was not found for storage.");
-
-    const tenantKey = tenant.slug || tenant.tenantCode;
+  async uploadCompanyLogo(input: CompanyLogoUploadPayload) {
     const fileName = input.variant === "logo-dark" ? "logo-dark.svg" : "logo.svg";
     const relativePath = `logo/${fileName}`;
-    const base = tenantPublicStorageRoot(tenantKey);
+    const base = appPublicStorageRoot();
     const filePath = resolveInsideStorage(base, relativePath);
     const buffer = Buffer.from(input.contentBase64, "base64");
 
     if (!isSafeSvg(buffer)) {
-      throw new Error("Company logos must be safe SVG files without scripts or external content.");
+      throw AppError.validation(
+        "Company logos must be safe SVG files without scripts or external content."
+      );
     }
     if (buffer.byteLength > 640 * 1024) {
-      throw new Error("Company logos must be 640 KB or smaller.");
+      throw AppError.validation("Company logos must be 640 KB or smaller.");
     }
 
     await mkdir(resolveInsideStorage(base, "logo"), { recursive: true });
@@ -158,22 +157,18 @@ export class StorageManagerRepository {
       mimeType: "image/svg+xml",
       objectType: "file",
       relativePath,
-      scope: "tenant",
+      scope: "app",
       sizeBytes: buffer.byteLength,
-      tenantId: tenant.id,
+      tenantId: null,
       visibility: "public"
     });
 
-    return { path: `storage/${tenantKey}/public/${relativePath}`, variant: input.variant };
+    return { path: `storage/${relativePath}`, variant: input.variant };
   }
 
-  async readCompanyLogo(tenantId: string, variant: "logo" | "logo-dark") {
-    const tenant = await this.tenants.findByIdOrCode(tenantId);
-    if (!tenant) throw new Error("Tenant was not found for storage.");
-
-    const tenantKey = tenant.slug || tenant.tenantCode;
+  async readCompanyLogo(variant: "logo" | "logo-dark") {
     const fileName = variant === "logo-dark" ? "logo-dark.svg" : "logo.svg";
-    const filePath = resolveInsideStorage(tenantPublicStorageRoot(tenantKey), `logo/${fileName}`);
+    const filePath = resolveInsideStorage(appPublicStorageRoot(), `logo/${fileName}`);
     let info;
     try {
       info = await stat(filePath);

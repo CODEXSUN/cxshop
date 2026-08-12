@@ -21,13 +21,14 @@ import { IndustryService, industryModule } from "./modules/industry/index.js";
 import { accessControlModule } from "./modules/access-control/index.js";
 import { platformActivityModule } from "./modules/platform-activity/index.js";
 import { queueManagerModule } from "./modules/queue-manager/index.js";
+import { dataSourceSettingsModule } from "./modules/data-source-settings/index.js";
 import { storageManagerModule } from "./modules/storage-manager/index.js";
 import { taskManagerModule } from "./modules/task-manager/index.js";
 import { credentialRecoveryModule } from "./modules/credential-recovery/index.js";
 import { appOrchestrationModule } from "./modules/app-orchestration/index.js";
 import { startQueueManagerWorker } from "./modules/queue-manager/queue-manager.runtime.js";
 import { QueueManagerService } from "./modules/queue-manager/queue-manager.service.js";
-import { tenantAccessContext } from "./auth/tenant-access-context.js";
+import { applicationAccessContext } from "./auth/application-access-context.js";
 import { env } from "./env.js";
 import { bootstrapPlatformDatabase, closePlatformDatabase } from "./database/platform-database.js";
 import { closeAllTenantDatabases } from "./database/tenant-database.js";
@@ -117,6 +118,7 @@ export async function createApp() {
             accessControlModule.key,
             platformActivityModule.key,
             queueManagerModule.key,
+            dataSourceSettingsModule.key,
             credentialRecoveryModule.key,
             storageManagerModule.key,
             taskManagerModule.key,
@@ -168,6 +170,7 @@ export async function createApp() {
       accessControlModule,
       platformActivityModule,
       queueManagerModule,
+      dataSourceSettingsModule,
       credentialRecoveryModule,
       storageManagerModule,
       taskManagerModule,
@@ -221,11 +224,18 @@ function localOriginAliases(origin: string) {
 }
 
 async function mailContext(request: FastifyRequest) {
-  const context = tenantAccessContext(request);
+  const context = applicationAccessContext(request);
   const header = request.headers["x-company-id"];
   const companyId = Number(Array.isArray(header) ? header[0] : header);
   if (!Number.isInteger(companyId) || companyId <= 0) {
     throw AppError.validation("x-company-id is required for Mail access.");
   }
-  return { ...context, companyId, database: context.database as never };
+  return {
+    actorEmail: context.actorEmail,
+    authorize: context.authorize,
+    companyId,
+    database: context.database as never,
+    tenantDatabase: context.databaseName,
+    tenantId: "application"
+  };
 }

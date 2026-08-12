@@ -38,9 +38,20 @@ const response = z.object({
   ),
   defaultLandingApp: appId
 });
+const publicBrandingResponse = z.object({
+  brandName: z.string(),
+  logoDarkUrl: z.string().nullable(),
+  logoUrl: z.string().nullable()
+});
 
 export async function registerApplicationSetupRoutes(app: FastifyInstance) {
   const service = new ApplicationSetupService();
+  registerContractRoute(app, {
+    handler: () => service.publicBranding(),
+    method: "GET",
+    schemas: { response: publicBrandingResponse },
+    url: "/public/company-branding"
+  });
   registerContractRoute(app, {
     method: "GET",
     url: "/application/setup",

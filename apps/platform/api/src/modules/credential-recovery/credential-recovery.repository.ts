@@ -9,6 +9,14 @@ import type {
 } from "./credential-recovery.types.js";
 
 export class CredentialRecoveryRepository {
+  async findApplicationUser(database: Kysely<TenantDatabase>, email: string) {
+    return database
+      .selectFrom("app_users")
+      .select(["status", "uuid"])
+      .where("email", "=", normalizeEmail(email))
+      .executeTakeFirst();
+  }
+
   async findPlatformCredential(userType: "staff" | "super_admin", email: string) {
     const row = await getPlatformDatabase()
       .selectFrom("platform_auth_users")

@@ -29,7 +29,7 @@ export function TenantSiteHeader({ activePage }: { activePage: TenantPublicPageK
       <div className="tenant-portal-session-actions">
         {authenticated ? (
           <>
-            <a className="tenant-portal-login" href="/app/">
+            <a className="tenant-portal-login" href="/admin/">
               Dashboard <ArrowRight />
             </a>
             <button className="tenant-portal-logout" type="button" onClick={() => void signOut()}>

@@ -8,11 +8,9 @@ export function setPlatformDocumentTitle(pageTitle: string) {
 }
 
 const pageTitles: Record<string, string> = {
-  "/": "App Portal",
-  "/admin": "Admin Desk",
-  "/admin/login": "Staff Admin Login",
-  "/app": "Application Desk",
-  "/login": "App Login",
+  "/": "Storefront",
+  "/admin": "Back Office",
+  "/admin/login": "Back Office Login",
   "/sa": "Super Admin Desk",
   "/sa/login": "Super Admin Login",
   "/status": "Status",
@@ -23,8 +21,8 @@ function resolvePageTitle(pathname: string) {
   if (pathname.startsWith("/sa/") && pathname !== "/sa/login") {
     return pathname === "/sa/task-manager" ? "Task Manager" : "Super Admin Desk";
   }
-  if (pathname.startsWith("/app/")) {
-    return "Application Desk";
+  if (pathname.startsWith("/admin/")) {
+    return "Back Office";
   }
   return pageTitles[pathname] ?? "Dashboard";
 }
@@ -32,7 +30,12 @@ function resolvePageTitle(pathname: string) {
 export function PageTitle() {
   useEffect(() => {
     const updateTitle = () => {
-      if (window.location.pathname.startsWith("/app/")) return;
+      if (
+        window.location.pathname.startsWith("/admin/") &&
+        window.location.pathname !== "/admin/login"
+      ) {
+        return;
+      }
       setPlatformDocumentTitle(resolvePageTitle(window.location.pathname));
     };
 

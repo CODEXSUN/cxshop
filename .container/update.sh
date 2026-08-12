@@ -11,6 +11,8 @@ CHECK_ONLY=false
 ALLOW_DIRTY=false
 BACKUP_DIR="$SCRIPT_DIR/backups"
 LOCK_FILE="${TMPDIR:-/tmp}/cxshop-update.lock"
+LOCK_DIR="${LOCK_FILE}.d"
+lock_directory_acquired=false
 backup_file="not-created"
 backup_temp=""
 backup_checksum="not-created"
@@ -23,6 +25,7 @@ source_version="unknown"
 cleanup_partial_files() {
   [ -z "$backup_temp" ] || rm -f -- "$backup_temp" || true
   [ "$metadata_file" = "not-created" ] || rm -f -- "${metadata_file}.partial" || true
+  [ "$lock_directory_acquired" != true ] || rmdir -- "$LOCK_DIR" 2>/dev/null || true
 }
 trap cleanup_partial_files EXIT
 
@@ -80,15 +83,19 @@ while (($# > 0)); do
 done
 
 if [ "$CHECK_ONLY" != true ]; then
-  command -v flock >/dev/null 2>&1 || {
-    echo "flock is required to serialize CXShop deployment updates." >&2
-    exit 69
-  }
-  exec 9>"$LOCK_FILE"
-  flock -n 9 || {
-    echo "Another CXShop update is already running (lock: $LOCK_FILE)." >&2
-    exit 75
-  }
+  if command -v flock >/dev/null 2>&1; then
+    exec 9>"$LOCK_FILE"
+    flock -n 9 || {
+      echo "Another CXShop update is already running (lock: $LOCK_FILE)." >&2
+      exit 75
+    }
+  else
+    mkdir "$LOCK_DIR" 2>/dev/null || {
+      echo "Another CXShop update is already running (lock: $LOCK_DIR)." >&2
+      exit 75
+    }
+    lock_directory_acquired=true
+  fi
 fi
 
 positive_integer() {
@@ -175,6 +182,27 @@ require_free_space() {
   echo "  Disk space for $label: ${available_mb} MB available (${required_mb} MB minimum)"
 }
 
+require_docker_free_space() {
+  docker_root="$1"
+  required_mb="$2"
+  if [ -d "$docker_root" ]; then
+    require_free_space "$docker_root" "$required_mb" "Docker build storage"
+    return
+  fi
+  available_mb=$(MSYS_NO_PATHCONV=1 docker run --rm --mount \
+    "type=bind,source=$docker_root,target=/docker-root,readonly" \
+    alpine:3.20 sh -c "df -Pm /docker-root | awk 'NR == 2 { print \$4 }'")
+  positive_integer "$available_mb" || {
+    echo "Could not determine free space for Docker storage at $docker_root." >&2
+    exit 74
+  }
+  [ "$available_mb" -ge "$required_mb" ] || {
+    echo "Insufficient Docker build storage: ${available_mb} MB available, ${required_mb} MB required." >&2
+    exit 74
+  }
+  echo "  Disk space for Docker build storage: ${available_mb} MB available (${required_mb} MB minimum)"
+}
+
 write_deployment_metadata() {
   status="$1"
   api_digest="$2"
@@ -208,14 +236,14 @@ prune_old_backups() {
     count=$((count + 1))
     if [ "$count" -gt "$retention" ]; then
       backup_name=${old_backup##*/}
-      backup_timestamp=${backup_name#cxshop-all-databases-}
+      backup_timestamp=${backup_name#cxshop-database-}
       backup_timestamp=${backup_timestamp%.sql}
       rm -f -- "$old_backup" "${old_backup}.sha256"
       rm -f -- "$resolved_backup_dir/cxshop-deployment-$backup_timestamp.json"
       echo "Removed expired backup: $old_backup"
     fi
   done < <(find "$resolved_backup_dir" -maxdepth 1 -type f \
-    -name 'cxshop-all-databases-*.sql' -printf '%T@ %p\n' | sort -nr | cut -d' ' -f2-)
+    -name 'cxshop-database-*.sql' -printf '%T@ %p\n' | sort -nr | cut -d' ' -f2-)
 }
 
 container_is_running() {
@@ -245,7 +273,7 @@ stack_image() {
     web) tag=$(env_value BILLING_STACK_WEB_IMAGE_TAG) ;;
     *) echo "Unknown application image role: $role" >&2; exit 64 ;;
   esac
-  printf '%s/billing-stack-%s:%s' "$registry" "$role" "$tag"
+  printf '%s/%s:%s' "$registry" "$role" "$tag"
 }
 
 rollback_application() {
@@ -311,20 +339,18 @@ resolved_backup_dir="$(cd "$BACKUP_DIR" && pwd -P)"
   exit 78
 }
 docker_root=$(docker info --format '{{.DockerRootDir}}')
-[ -n "$docker_root" ] && [ -d "$docker_root" ] || {
-  echo "Docker did not report a readable storage root: ${docker_root:-unset}" >&2
+[ -n "$docker_root" ] || {
+  echo "Docker did not report its storage root." >&2
   exit 69
 }
 require_free_space "$resolved_backup_dir" "$minimum_backup_mb" "MariaDB backup"
-require_free_space "$docker_root" "$minimum_docker_mb" "Docker build storage"
+require_docker_free_space "$docker_root" "$minimum_docker_mb"
 
-require_existing_service cxshop-mariadb cxshop-mariadb mariadb
-require_existing_service cxshop-redis cxshop-redis redis
-require_existing_service cxshop-media cxshop-media media
-require_existing_service cxshop-api cxshop-billing platform-api
-require_existing_service cxshop-web cxshop-billing platform-web
+require_shared_infrastructure
+require_existing_service cxshop-api cxshop platform-api
+require_existing_service cxshop-web cxshop platform-web
 
-for container in cxshop-mariadb cxshop-redis cxshop-media cxshop-api cxshop-web; do
+for container in cxapp-mariadb cxapp-redis cxapp-media cxshop-api cxshop-web; do
   container_is_running "$container" || {
     echo "Existing CODEXSUN container is not running: $container" >&2
     exit 69
@@ -345,7 +371,7 @@ echo "  Preflight: environment, Docker health, and Compose ownership"
 echo "  Release: source and image tags locked to $source_version"
 echo "  Source commit: $source_commit (dirty: $source_dirty)"
 echo "  Build: current API, Web, and migration images"
-echo "  Backup: SHA-256 verified full MariaDB dump; retain newest $backup_retention"
+echo "  Backup: SHA-256 verified cxshop_db dump; retain newest $backup_retention"
 echo "  Database: version-approved backward-compatible forward migrations"
 echo "  Audit: deployment metadata beside the retained backup"
 echo "  Verification: container health and complete deployment smoke test"
@@ -378,17 +404,18 @@ built_web_image=$(docker image inspect --format '{{.Id}}' "$(stack_image web)")
 
 chmod 700 "$resolved_backup_dir" 2>/dev/null || true
 timestamp=$(date -u +%Y%m%dT%H%M%SZ)
-backup_file="$resolved_backup_dir/cxshop-all-databases-$timestamp.sql"
+backup_file="$resolved_backup_dir/cxshop-database-$timestamp.sql"
 backup_temp="${backup_file}.partial"
 metadata_file="$resolved_backup_dir/cxshop-deployment-$timestamp.json"
 
-echo "Creating MariaDB backup: $backup_file"
+echo "Creating CXShop MariaDB backup: $backup_file"
 if ! MSYS_NO_PATHCONV=1 docker exec \
   -e MYSQL_PWD="$(env_value DB_PASSWORD)" \
-  cxshop-mariadb \
+  cxapp-mariadb \
   mariadb-dump \
+  --no-defaults \
   --user="$(env_value DB_USER)" \
-  --all-databases \
+  "$(env_value DB_MASTER_NAME)" \
   --single-transaction \
   --quick \
   --routines \

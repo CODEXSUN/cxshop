@@ -1,6 +1,11 @@
 import { apiGet } from "../../shared/api/platform-api";
-import type { TenantPublicPortal } from "./tenant-portal.types";
+import type { PublicCompanyBranding } from "./tenant-portal.types";
+import { useQuery } from "@tanstack/react-query";
 
-export function getTenantPublicPortal() {
-  return apiGet<TenantPublicPortal>("/public/app-portal");
+export function getPublicCompanyBranding() {
+  return apiGet<PublicCompanyBranding>("/public/company-branding");
+}
+
+export function usePublicCompanyBranding() {
+  return useQuery({ queryFn: getPublicCompanyBranding, queryKey: ["public", "company-branding"] });
 }

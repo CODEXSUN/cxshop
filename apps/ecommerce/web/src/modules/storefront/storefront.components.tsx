@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import type {
   StorefrontDiscovery,
+  StorefrontBranding,
   StorefrontFilters,
   StorefrontProduct,
   StorefrontBlogPost,
@@ -138,14 +139,20 @@ export function BrandsSection({ brands }: { brands: StorefrontDiscovery["brands"
   );
 }
 
-export function BlogSolutionsSection({ posts }: { posts: StorefrontBlogPost[] }) {
+export function BlogSolutionsSection({
+  brandName = "CXShop",
+  posts
+}: {
+  brandName?: string | undefined;
+  posts: StorefrontBlogPost[];
+}) {
   if (!posts.length) return null;
   return (
     <section className="cx-store__blog-solutions" id="solutions">
       <div className="cx-store__latest-heading">
         <div>
           <h2>Latest Posts</h2>
-          <p>Practical computer guides from the CXShop editorial team</p>
+          <p>Practical computer guides from the {brandName} editorial team</p>
         </div>
         <a href="/blog">View all posts</a>
       </div>
@@ -156,7 +163,7 @@ export function BlogSolutionsSection({ posts }: { posts: StorefrontBlogPost[] })
               {post.featuredImage ? (
                 <img src={post.featuredImage} alt={post.imageAlt} loading="lazy" />
               ) : (
-                <span>CXShop Journal</span>
+                <span>{brandName} Journal</span>
               )}
               <span className="cx-store__blog-solution-arrow" aria-hidden="true">
                 <ArrowUpRightIcon />
@@ -173,7 +180,7 @@ export function BlogSolutionsSection({ posts }: { posts: StorefrontBlogPost[] })
               <span className="cx-store__blog-author">
                 <span>CX</span>
                 <span>
-                  <b>CXShop Editorial</b>
+                  <b>{brandName} Editorial</b>
                   <small>
                     {post.publishedAt
                       ? new Date(post.publishedAt).toLocaleDateString(undefined, {
@@ -293,7 +300,13 @@ export function CatalogFilters({ discovery, filters, onFilters }: FilterProps) {
   );
 }
 
-export function ProductCard({ product }: { product: StorefrontProduct }) {
+export function ProductCard({
+  brandName = "CXShop",
+  product
+}: {
+  brandName?: string | undefined;
+  product: StorefrontProduct;
+}) {
   return (
     <article className="cx-product-card">
       <a href={`/shop/product/${product.slug}`}>
@@ -315,7 +328,7 @@ export function ProductCard({ product }: { product: StorefrontProduct }) {
       </a>
       <a
         className="cx-product-card__enquiry"
-        href={whatsappLink(`Hello CXShop, please share details for ${product.name}.`)}
+        href={whatsappLink(`Hello ${brandName}, please share details for ${product.name}.`)}
         rel="noreferrer"
         target="_blank"
       >
@@ -361,7 +374,13 @@ export function BackToTopButton() {
   );
 }
 
-export function StoreFooter({ navigation }: { navigation: StorefrontSiteNavigation | null }) {
+export function StoreFooter({
+  branding,
+  navigation
+}: {
+  branding: StorefrontBranding | null;
+  navigation: StorefrontSiteNavigation | null;
+}) {
   const groups = navigation?.groups ?? defaultFooterGroups;
   const [menuOpen, setMenuOpen] = useState(false);
   return (
@@ -369,8 +388,8 @@ export function StoreFooter({ navigation }: { navigation: StorefrontSiteNavigati
       <div className="cx-store__footer-main">
         <section className="cx-store__footer-brand">
           <a className="cx-store__footer-logo" href="/">
-            <StoreBrandMark dark />
-            <strong>CXShop</strong>
+            <StoreBrandMark branding={branding} dark />
+            <strong>{branding?.brandName ?? "CXShop"}</strong>
           </a>
           <p>
             {navigation?.about ??
@@ -429,7 +448,9 @@ export function StoreFooter({ navigation }: { navigation: StorefrontSiteNavigati
           <HeadphonesIcon size={17} /> Support
         </a>
         <a
-          href={whatsappLink("Hello CXShop, I need help choosing a product.")}
+          href={whatsappLink(
+            `Hello ${branding?.brandName ?? "CXShop"}, I need help choosing a product.`
+          )}
           rel="noreferrer"
           target="_blank"
         >
@@ -438,8 +459,8 @@ export function StoreFooter({ navigation }: { navigation: StorefrontSiteNavigati
       </div>
       <div className="cx-store__footer-bottom">
         <span>
-          © {new Date().getFullYear()} {navigation?.copyrightOwner ?? "CXShop"}. All rights
-          reserved.
+          © {new Date().getFullYear()}{" "}
+          {branding?.brandName ?? navigation?.copyrightOwner ?? "CXShop"}. All rights reserved.
         </span>
         <span>Secure commerce powered by CODEXSUN</span>
       </div>
@@ -447,13 +468,23 @@ export function StoreFooter({ navigation }: { navigation: StorefrontSiteNavigati
   );
 }
 
-function StoreBrandMark({ dark = false }: { dark?: boolean }) {
+function StoreBrandMark({
+  branding,
+  dark = false
+}: {
+  branding: StorefrontBranding | null;
+  dark?: boolean;
+}) {
   return (
     <img
       alt=""
       aria-hidden="true"
       className="cx-store__brand-mark"
-      src={dark ? "/icons/logo-dark.svg" : "/icons/logo.svg"}
+      src={
+        dark
+          ? (branding?.logoDarkUrl ?? branding?.logoUrl ?? "/icons/logo-dark.svg")
+          : (branding?.logoUrl ?? "/icons/logo.svg")
+      }
     />
   );
 }

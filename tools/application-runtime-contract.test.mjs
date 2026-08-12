@@ -61,6 +61,19 @@ test("Billing reads the standalone application company context", async () => {
   assert.doesNotMatch(api, /x-tenant-(?:id|db)/u);
 });
 
+test("Mail reads standalone application context without tenant routing headers", async () => {
+  const sources = await Promise.all(
+    [
+      "apps/mail/web/src/modules/mail/mail.services.ts",
+      "apps/mail/web/src/modules/mail/mail.settings.tsx"
+    ].map((path) => readFile(path, "utf8"))
+  );
+  for (const source of sources) {
+    assert.doesNotMatch(source, /cxshop\.tenant\.|x-tenant-(?:id|db)/u);
+  }
+  assert.match(sources.join("\n"), /cxshop\.application\.company-id/u);
+});
+
 test("Core organisation bootstrap uses the standalone session cookie", async () => {
   const sources = await Promise.all(
     ["company", "financial-year", "default-company"].map((owner) =>
@@ -71,4 +84,40 @@ test("Core organisation bootstrap uses the standalone session cookie", async () 
     assert.match(source, /credentials:\s*"include"/u);
     assert.doesNotMatch(source, /x-tenant-(?:id|db)|Authorization/u);
   }
+});
+
+test("back-office authentication does not request tenant selection", async () => {
+  const sources = await Promise.all(
+    [
+      "apps/platform/web/src/public/login/LoginPage.tsx",
+      "apps/platform/web/src/public/password-recovery/ForgotPasswordPage.tsx"
+    ].map((path) => readFile(path, "utf8"))
+  );
+  for (const source of sources) {
+    assert.doesNotMatch(source, /Corporate ID|getTenantLoginContext|corporateId\.trim/u);
+  }
+});
+
+test("the shared back-office layout does not navigate to retired app routes", async () => {
+  const layouts = await Promise.all(
+    ["application-layout.tsx", "super-layout.tsx", "web-layout.tsx"].map((name) =>
+      readFile(`packages/ui/src/layouts/${name}`, "utf8")
+    )
+  );
+  assert.match(layouts[0], /\/admin\/application\/overview/u);
+  assert.match(layouts[0], /\/admin\/login/u);
+  for (const layout of layouts) {
+    assert.doesNotMatch(layout, /["`]\/app(?:\/|["`])/u);
+    assert.doesNotMatch(layout, /["`]\/login["`]/u);
+  }
+});
+
+test("application password recovery resolves the server-selected database", async () => {
+  const service = await readFile(
+    "apps/platform/api/src/modules/credential-recovery/credential-recovery.service.ts",
+    "utf8"
+  );
+  assert.match(service, /findApplicationUser/u);
+  assert.match(service, /getTenantDatabaseByName\(env\.DB_MASTER_NAME\)/u);
+  assert.doesNotMatch(service, /TenantRepository|findByCorporateId|findByDomain/u);
 });

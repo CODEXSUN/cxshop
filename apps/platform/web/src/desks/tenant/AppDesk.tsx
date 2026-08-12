@@ -520,7 +520,7 @@ export function AppDesk() {
     window.history.replaceState(
       { page: fallbackPage },
       "",
-      `/app/${fallbackPage.replaceAll(".", "/")}`
+      `/admin/${fallbackPage.replaceAll(".", "/")}`
     );
   }, [billingSettingsQuery.data?.features, page]);
 
@@ -549,14 +549,14 @@ export function AppDesk() {
     const landingPage = pageForApp(landingApp);
     setPage(landingPage);
     setShouldResolveLandingPath(false);
-    window.history.replaceState({ page: landingPage }, "", `/app/${landingPage.replace(".", "/")}`);
+    window.history.replaceState({ page: landingPage }, "", `/admin/${landingPage.replace(".", "/")}`);
     setPlatformDocumentTitle(titleForPage(landingPage));
   }, [defaultCompanyQuery.isFetched, landingApp, setupQuery.isLoading, shouldResolveLandingPath]);
 
   function selectPage(nextPage: AppPage) {
     const allowedPage = resolveBillingFeaturePage(nextPage, billingSettingsQuery.data?.features);
     startTransition(() => setPage(allowedPage));
-    window.history.pushState({ page: allowedPage }, "", `/app/${allowedPage.replaceAll(".", "/")}`);
+    window.history.pushState({ page: allowedPage }, "", `/admin/${allowedPage.replaceAll(".", "/")}`);
     setPlatformDocumentTitle(titleForPage(allowedPage));
   }
 
@@ -567,8 +567,8 @@ export function AppDesk() {
       { page: allowedPage, recordId },
       "",
       allowedPage === nextPage
-        ? `/app/${allowedPage.replaceAll(".", "/")}?record=${encodeURIComponent(recordId)}`
-        : `/app/${allowedPage.replaceAll(".", "/")}`
+        ? `/admin/${allowedPage.replaceAll(".", "/")}?record=${encodeURIComponent(recordId)}`
+        : `/admin/${allowedPage.replaceAll(".", "/")}`
     );
     setPlatformDocumentTitle(titleForPage(allowedPage));
   }
@@ -585,7 +585,7 @@ export function AppDesk() {
 
   async function handleLogout() {
     await logout("tenant");
-    window.location.assign("/login");
+    window.location.assign("/admin/login");
   }
 
   function updateGlobalDefault(companyId: number, financialYearId: number) {
@@ -629,14 +629,14 @@ export function AppDesk() {
       ),
     url:
       item.title === "Application"
-        ? "/app/application/overview"
+        ? "/admin/application/overview"
         : item.title === "Billing"
-          ? "/app/billing/overview"
+          ? "/admin/billing/overview"
           : item.title === "Ecommerce"
-            ? "/app/ecommerce/overview"
+            ? "/admin/ecommerce/overview"
             : item.title === "Mail"
-              ? "/app/mail/inbox"
-              : "/app/task-manager/overview"
+              ? "/admin/mail/inbox"
+              : "/admin/task-manager/overview"
   }));
 
   const contextError =
@@ -686,19 +686,19 @@ export function AppDesk() {
         brand={{
           href:
             activeApp === "billing"
-              ? "/app/billing/overview"
+              ? "/admin/billing/overview"
               : activeApp === "mail"
-                ? "/app/mail/inbox"
+                ? "/admin/mail/inbox"
                 : activeApp === "task-manager"
-                  ? "/app/task-manager/overview"
-                  : "/app/application/overview",
+                  ? "/admin/task-manager/overview"
+                  : "/admin/application/overview",
           ...(companyBranding.lightLogoUrl ? { logoSrc: companyBranding.lightLogoUrl } : {}),
           ...(companyBranding.darkLogoUrl ? { logoDarkSrc: companyBranding.darkLogoUrl } : {}),
-          logoAlt: `${selectedCompany?.name ?? "Company"} logo`,
+          logoAlt: `${selectedCompany?.legalName ?? selectedCompany?.name ?? "Company"} logo`,
           options: activeCompanies.map((company) => ({
             id: String(company.id),
             subtitle: accountingYear,
-            title: company.name
+            title: company.legalName ?? company.name
           })),
           optionsLabel: "Company",
           onOptionSelect: (id) => {
@@ -721,7 +721,7 @@ export function AppDesk() {
           subtitle: selectedFinancialYear
             ? selectedFinancialYear.name
             : `${activeWorkspaceTitle.toLowerCase()} workspace`,
-          title: selectedCompany?.name ?? activeWorkspaceTitle
+          title: selectedCompany?.legalName ?? selectedCompany?.name ?? activeWorkspaceTitle
         }}
         headerTitle={activePageTitle}
         homeHref="/"
@@ -1074,10 +1074,10 @@ function ApplicationOverview({
               </span>
               <div>
                 <p className="text-sm font-semibold uppercase text-muted-foreground">Application</p>
-                <h1 className="mt-1 text-3xl font-semibold tracking-normal">Application Desk</h1>
+                <h1 className="mt-1 text-3xl font-semibold tracking-normal">Back Office</h1>
                 <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
-                  Tenant application workspace for landing setup, platform profile, settings, users,
-                  and access.
+                  Standalone back-office workspace for setup, company profile, settings, users, and
+                  access.
                 </p>
               </div>
             </div>
@@ -1101,7 +1101,7 @@ function ApplicationOverview({
           value="Configured"
         />
         <ApplicationDetailCard
-          caption="Tenant identity and context"
+          caption="Application identity and context"
           icon={Building2Icon}
           iconClassName="bg-sky-600 text-white"
           statusTone="green"
@@ -1499,5 +1499,5 @@ function pageForApp(app: PlatformAppId): AppPage {
 }
 
 function isAppRootPath() {
-  return window.location.pathname === "/app" || window.location.pathname === "/app/";
+  return window.location.pathname === "/admin" || window.location.pathname === "/admin/";
 }

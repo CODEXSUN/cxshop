@@ -84,6 +84,14 @@ export type CompanyRecord = {
   updatedAt: string;
 };
 
+export type CompanyBranding = {
+  legalName: string | null;
+  logoDarkPath: string | null;
+  logoPath: string | null;
+  name: string;
+  updatedAt: string;
+};
+
 export type CompanySaveInput = {
   code?: string | undefined;
   name: string;

@@ -40,6 +40,11 @@ const optionalEmpty = new Set([
   "GSP_CLIENT_ID",
   "GSP_CLIENT_SECRET",
   "GSP_GSTIN",
+  "CXSHOP_DEVKIT_SYNC_INSTANCE_ID",
+  "CXSHOP_DEVKIT_SYNC_TOKEN_PEPPER",
+  "CXSHOP_DEVKIT_SYNC_ENCRYPTION_KEY",
+  "CXSHOP_DEVKIT_SYNC_TEST_CLOUD_URL",
+  "CXSHOP_DEVKIT_WORKSPACE_ROOT",
   "CXSHOP_BACKUP_VERIFY_ID"
 ]);
 const retiredKeys = new Set([
@@ -104,7 +109,7 @@ if (!checkOnly) {
 
   if (deployment) {
     current.set("NODE_ENV", "production");
-    current.set("DB_HOST", "cxshop-mariadb");
+    current.set("DB_HOST", "cxapp-mariadb");
     current.set("DB_PORT", "3306");
     current.set("CXSHOP_QUEUE_BACKEND", "database");
     if (current.get("CXSHOP_SINGLE_TENANT") === "1") {
@@ -150,7 +155,7 @@ if (!checkOnly) {
     current.set(
       "CXSHOP_REDIS_URL",
       deployment
-        ? `redis://:${encodeURIComponent(redisPassword)}@cxshop-redis:6379/0`
+        ? `redis://:${encodeURIComponent(redisPassword)}@cxapp-redis:6379/2`
         : `redis://:${encodeURIComponent(redisPassword)}@127.0.0.1:6379/0`
     );
   }
@@ -194,9 +199,9 @@ function validate(values, validateDeployment) {
   }
   if (
     validateDeployment &&
-    (values.get("DB_HOST") !== "cxshop-mariadb" || values.get("DB_PORT") !== "3306")
+    (values.get("DB_HOST") !== "cxapp-mariadb" || values.get("DB_PORT") !== "3306")
   ) {
-    problems.push("container deployment requires DB_HOST=cxshop-mariadb and DB_PORT=3306");
+    problems.push("container deployment requires DB_HOST=cxapp-mariadb and DB_PORT=3306");
   }
   if (
     validateDeployment &&

@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
-import { getTenantPublicPortal, type TenantPublicPortal } from "../../modules/tenant-portal";
+import { getPublicCompanyBranding, type TenantPublicPortal } from "../../modules/tenant-portal";
 import { logout, restoreSession } from "../../shared/api/platform-api";
 import { fallbackTenantPortal } from "./tenant-site.defaults";
 
@@ -17,11 +17,9 @@ let portalRequest: Promise<TenantPublicPortal> | null = null;
 
 function loadTenantPortal() {
   if (cachedPortal) return Promise.resolve(cachedPortal);
-  portalRequest ??= getTenantPublicPortal()
-    .then((portal) => {
-      const publicPortal = portal.configured
-        ? portal
-        : { ...portal, brandName: fallbackTenantPortal.brandName };
+  portalRequest ??= getPublicCompanyBranding()
+    .then((branding) => {
+      const publicPortal = { ...fallbackTenantPortal, ...branding, configured: true };
       cachedPortal = publicPortal;
       return publicPortal;
     })

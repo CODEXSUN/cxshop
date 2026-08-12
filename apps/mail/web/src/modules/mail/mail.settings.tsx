@@ -338,7 +338,7 @@ function Field({ children, label }: { children: React.ReactNode; label: string }
 }
 function blankSettings(): MailSettingsPayload {
   return {
-    companyId: Number(localStorage.getItem("cxshop.tenant.company-id")) || 0,
+    companyId: Number(localStorage.getItem("cxshop.application.company-id")) || 0,
     enabled: false,
     fallbackEnabled: true,
     fromEmail: "",

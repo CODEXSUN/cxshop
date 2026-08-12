@@ -10,9 +10,10 @@ import {
 } from "./session-expiry";
 
 test("maps protected routes to their owning login desk", () => {
-  assert.equal(protectedDeskFromPathname("/app/billing"), "tenant");
+  assert.equal(protectedDeskFromPathname("/admin/billing"), "tenant");
+  assert.equal(protectedDeskFromPathname("/app/billing"), null);
   assert.equal(protectedDeskFromPathname("/sa/tenants"), "sa");
-  assert.equal(protectedDeskFromPathname("/admin"), "admin");
+  assert.equal(protectedDeskFromPathname("/admin"), "tenant");
 });
 
 test("does not treat login and public pages as protected routes", () => {
@@ -23,7 +24,7 @@ test("does not treat login and public pages as protected routes", () => {
 });
 
 test("builds desk-aware login routes with a durable expiry reason", () => {
-  assert.equal(sessionExpiredLoginPath("tenant"), "/login?reason=session-expired");
+  assert.equal(sessionExpiredLoginPath("tenant"), "/admin/login?reason=session-expired");
   assert.equal(sessionExpiredLoginPath("sa"), "/sa/login?reason=session-expired");
   assert.equal(sessionExpiredLoginPath("admin"), "/admin/login?reason=session-expired");
   assert.equal(hasSessionExpiredReason("?reason=session-expired"), true);
@@ -45,7 +46,7 @@ test("only an explicit expired-session 401 clears session state and opens login"
     value: {
       fetch,
       location: {
-        pathname: "/app/billing/sales",
+        pathname: "/admin/billing/sales",
         replace: (path: string) => {
           replacedWith = path;
         }
@@ -59,7 +60,7 @@ test("only an explicit expired-session 401 clears session state and opens login"
   await window.fetch("/api/billing/sales");
 
   assert.equal(cleared, 1);
-  assert.equal(replacedWith, "/login?reason=session-expired");
+  assert.equal(replacedWith, "/admin/login?reason=session-expired");
 });
 
 test("a domain lookup 401 is not misclassified as an expired browser session", async () => {

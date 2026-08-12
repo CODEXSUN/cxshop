@@ -68,14 +68,21 @@ require_stack_dependencies() {
     exit 69
   }
 
-  for container in cxshop-mariadb cxshop-redis; do
+  application_data=$(env_value BILLING_STACK_DATA_VOLUME)
+  docker volume inspect "$application_data" >/dev/null 2>&1 || {
+    echo "Required CXShop application volume is missing: $application_data" >&2
+    echo "Run: bash setup.sh $STACK" >&2
+    exit 69
+  }
+
+  for container in cxapp-mariadb cxapp-redis; do
     state=$(docker inspect "$container" --format '{{.State.Status}}' 2>/dev/null || true)
     health=$(docker inspect "$container" \
       --format '{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}' \
       2>/dev/null || true)
     [ "$state" = "running" ] && [ "$health" = "healthy" ] || {
       echo "Required dependency is not healthy: $container (state=${state:-missing}, health=${health:-missing})" >&2
-      echo "deploy.sh will not modify infrastructure. Run: bash setup.sh $STACK" >&2
+      echo "Run CXApp setup.sh before deploying CXShop." >&2
       exit 69
     }
   done
@@ -92,7 +99,7 @@ stack_image() {
     *) echo "Unknown image role: $suffix" >&2; exit 64 ;;
   esac
   tag=$(env_value "$tag_key")
-  printf '%s/%s-stack-%s:%s' "$registry" "$STACK" "$suffix" "$tag"
+  printf '%s/%s:%s' "$registry" "$suffix" "$tag"
 }
 
 remove_stack_images() {

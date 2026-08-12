@@ -10,9 +10,21 @@ type AuthLayoutProps = {
   description?: string;
   surface?: "admin" | "sa" | "tenant";
   title: string;
+  brandName?: string | undefined;
+  logoDarkSrc?: string | null | undefined;
+  logoSrc?: string | null | undefined;
 };
 
-export function AuthLayout({ afterCard, children, description, surface, title }: AuthLayoutProps) {
+export function AuthLayout({
+  afterCard,
+  brandName = "CXShop",
+  children,
+  description,
+  logoDarkSrc,
+  logoSrc,
+  surface,
+  title
+}: AuthLayoutProps) {
   const resolvedSurface = surface ?? surfaceFromTitle(title);
   const isTenant = resolvedSurface === "tenant";
   const nextDescription =
@@ -25,8 +37,8 @@ export function AuthLayout({ afterCard, children, description, surface, title }:
     <main className="auth-page">
       <section className="auth-shell" aria-label={title}>
         <div className="auth-brand">
-          <SurfaceMark surface={resolvedSurface} />
-          <strong>Codexsun</strong>
+          <SurfaceMark logoDarkSrc={logoDarkSrc} logoSrc={logoSrc} surface={resolvedSurface} />
+          <strong>{brandName}</strong>
         </div>
         <div className="auth-content">
           <div className={cn("auth-card-frame", `auth-card-frame-${resolvedSurface}`)}>
@@ -52,19 +64,27 @@ function surfaceFromTitle(title: string): "admin" | "sa" | "tenant" {
   return "tenant";
 }
 
-function SurfaceMark({ surface }: { surface: "admin" | "sa" | "tenant" }) {
+function SurfaceMark({
+  logoDarkSrc,
+  logoSrc,
+  surface
+}: {
+  logoDarkSrc?: string | null | undefined;
+  logoSrc?: string | null | undefined;
+  surface: "admin" | "sa" | "tenant";
+}) {
   const Icon = surface === "sa" ? Crown : surface === "admin" ? Headphones : Building2;
   return (
     <span className="auth-surface-mark" data-surface={surface}>
       <img
         className="auth-logo-image dark:hidden"
-        src="/icons/logo.svg"
+        src={logoSrc ?? "/icons/logo.svg"}
         alt=""
         aria-hidden="true"
       />
       <img
         className="auth-logo-image hidden dark:block"
-        src="/icons/logo-dark.svg"
+        src={logoDarkSrc ?? logoSrc ?? "/icons/logo-dark.svg"}
         alt=""
         aria-hidden="true"
       />

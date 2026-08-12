@@ -18,6 +18,11 @@ const envSchema = z
     DB_MASTER_NAME: z.string().min(1, "DB_MASTER_NAME is required"),
     CXSHOP_DB_FRESH_ON_START: z.enum(["0", "1"]),
     CXSHOP_DB_RESET_CONFIRM: z.string(),
+    CXSHOP_DATA_SOURCE: z.enum(["own", "frappe"]).default("own"),
+    CXSHOP_FRAPPE_URL: z.string().default(""),
+    CXSHOP_FRAPPE_API_KEY: z.string().default(""),
+    CXSHOP_FRAPPE_API_SECRET: z.string().default(""),
+    CXSHOP_ENV_FILE_PATH: z.string().default(""),
     CXSHOP_ALLOW_PRODUCTION_DB_RESET: z.enum(["0", "1"]),
     CXSHOP_BACKUP_DIR: z.string().min(1),
     CXSHOP_QUEUE_BACKEND: z.preprocess(

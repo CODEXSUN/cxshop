@@ -16,6 +16,7 @@ export type PlatformDatabase = {
   auth_sessions: AuthSessionsTable;
   auth_login_attempts: AuthLoginAttemptsTable;
   database_maintenance_runs: DatabaseMaintenanceRunsTable;
+  data_source_settings: DataSourceSettingsTable;
   entitlements: EntitlementsTable;
   industries: IndustriesTable;
   plans: PlansTable;
@@ -32,6 +33,30 @@ export type PlatformDatabase = {
   tenant_domains: TenantDomainsTable;
   tenant_audit_events: TenantAuditEventsTable;
   tenants: TenantsTable;
+};
+
+export type DataSourceSettingsTable = {
+  connection_name: string;
+  created_at: TimestampColumn;
+  created_by: Generated<string>;
+  env_fingerprint: string;
+  env_provider: "frappe" | "own";
+  frappe_api_key_secret: string | null;
+  frappe_api_secret_secret: string | null;
+  frappe_enabled: boolean | number;
+  frappe_url: string | null;
+  id: Generated<number>;
+  provider: "frappe" | "own";
+  singleton_key: number;
+  last_checked_at: TimestampColumn | null;
+  last_verified_at: TimestampColumn | null;
+  save_to_environment: boolean | number;
+  status: Generated<"active" | "inactive">;
+  updated_at: TimestampColumn;
+  updated_by: string;
+  verification_status: "live" | "offline" | "unverified";
+  verified_user: string | null;
+  uuid: Generated<string>;
 };
 
 export type ApplicationSettingsTable = {

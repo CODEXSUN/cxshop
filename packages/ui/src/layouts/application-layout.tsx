@@ -31,27 +31,27 @@ type ApplicationLayoutProps = {
 const applicationMenuItems: SidemenuItem[] = [
   {
     title: "Application",
-    url: "/app",
+    url: "/admin/application/overview",
     icon: StoreIcon,
     isActive: true,
     items: [
       {
         title: "Landing Desk",
-        url: "/app"
+        url: "/admin/application/overview"
       },
       {
         title: "Company",
-        url: "/app/company"
+        url: "/admin/core/organisation/company"
       },
       {
         title: "Settings",
-        url: "/app/settings"
+        url: "/admin/application/settings"
       }
     ]
   },
   {
     title: "Settings",
-    url: "/app/settings",
+    url: "/admin/application/settings",
     icon: Settings2Icon
   }
 ];
@@ -62,19 +62,19 @@ const applicationWorkspaceItems = [
     description: "Company setup, users, roles, settings, and landing desk.",
     icon: StoreIcon,
     active: true,
-    url: "/app"
+    url: "/admin/application/overview"
   },
   {
     title: "Mail",
     description: "Reusable workspace mail services.",
     icon: MailIcon,
-    url: "/app"
+    url: "/admin/application/overview"
   },
   {
     title: "Knowledge",
     description: "Application documents, guides, and shared notes.",
     icon: BookOpenIcon,
-    url: "/app"
+    url: "/admin/application/overview"
   }
 ];
 
@@ -86,8 +86,8 @@ export function ApplicationLayout({
   homeHref = "/",
   menuItems = applicationMenuItems,
   onLogout,
-  subtitle = "Tenant application workspace.",
-  title = "Application Desk",
+  subtitle = "Standalone back-office workspace.",
+  title = "Back Office",
   user,
   versionLabel,
   workspaceItems = applicationWorkspaceItems
@@ -96,13 +96,13 @@ export function ApplicationLayout({
     <AppLayout
       brand={{
         ...brand,
-        href: "/app",
-        subtitle: brand?.subtitle ?? "application workspace",
-        title: brand?.title ?? "Application Desk"
+        href: brand?.href ?? "/admin/application/overview",
+        subtitle: brand?.subtitle ?? "back-office workspace",
+        title: brand?.title ?? "Back Office"
       }}
       headerTitle={headerTitle}
       homeHref={homeHref}
-      logoutHref="/login"
+      logoutHref="/admin/login"
       menuItems={menuItems}
       {...(onLogout ? { onLogout } : {})}
       subtitle={subtitle}
@@ -118,12 +118,12 @@ export function ApplicationLayout({
         {
           icon: Settings2Icon,
           title: "Account",
-          url: "/app/settings"
+          url: "/admin/application/settings"
         },
         {
           icon: LogOutIcon,
           title: "Log out",
-          url: "/login"
+          url: "/admin/login"
         }
       ]}
       workspaceItems={workspaceItems}

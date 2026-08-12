@@ -1,6 +1,5 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { fail, ok } from "@cxshop/framework/http";
-import { verifyAuthToken } from "../../auth/jwt.js";
 import { requireSuperAdmin } from "../../auth/super-admin.guard.js";
 import { StorageManagerService } from "./storage-manager.service.js";
 import type {
@@ -45,20 +44,16 @@ export async function registerStorageManagerRoutes(app: FastifyInstance) {
   );
   app.post(
     "/application/media/company-logo",
-    { preHandler: requireTenantUser },
+    { preHandler: requireApplicationUser },
     async (request) => {
-      const tenantId = String(request.headers["x-tenant-id"] || "");
-      return ok(
-        await service.uploadCompanyLogo(tenantId, request.body as CompanyLogoUploadPayload),
-        {
-          requestId: request.id
-        }
-      );
+      return ok(await service.uploadCompanyLogo(request.body as CompanyLogoUploadPayload), {
+        requestId: request.id
+      });
     }
   );
   app.get(
     "/application/media/company-logo/:variant",
-    { preHandler: requireTenantUser },
+    { preHandler: requireApplicationUser },
     async (request, reply) => {
       const { variant } = request.params as { variant: string };
       if (variant !== "logo" && variant !== "logo-dark") {
@@ -71,8 +66,7 @@ export async function registerStorageManagerRoutes(app: FastifyInstance) {
             )
           );
       }
-      const tenantId = String(request.headers["x-tenant-id"] || "");
-      const file = await service.readCompanyLogo(tenantId, variant);
+      const file = await service.readCompanyLogo(variant);
       if (!file) {
         return reply
           .code(404)
@@ -90,6 +84,35 @@ export async function registerStorageManagerRoutes(app: FastifyInstance) {
         .send(file.buffer);
     }
   );
+  app.get("/public/company-logo/:variant", async (request, reply) => {
+    const { variant } = request.params as { variant: string };
+    if (variant !== "logo" && variant !== "logo-dark") {
+      return reply
+        .code(404)
+        .send(
+          fail(
+            { code: "COMPANY_LOGO_NOT_FOUND", message: "Company logo was not found." },
+            { requestId: request.id }
+          )
+        );
+    }
+    const file = await service.readCompanyLogo(variant);
+    if (!file) {
+      return reply
+        .code(404)
+        .send(
+          fail(
+            { code: "COMPANY_LOGO_NOT_FOUND", message: "Company logo was not found." },
+            { requestId: request.id }
+          )
+        );
+    }
+    return reply
+      .header("cache-control", "public, max-age=300")
+      .header("content-type", file.mimeType)
+      .header("content-length", String(file.sizeBytes))
+      .send(file.buffer);
+  });
   app.get(
     "/application/storage/download",
     { preHandler: requireTenantUser },
@@ -103,30 +126,28 @@ export async function registerStorageManagerRoutes(app: FastifyInstance) {
   );
 }
 
-async function requireTenantUser(request: FastifyRequest, reply: FastifyReply) {
-  const payload = authPayload(request);
-  if (payload?.userType === "tenant" && payload.tenantId) {
-    request.headers["x-tenant-id"] = payload.tenantId;
+async function requireApplicationUser(request: FastifyRequest, reply: FastifyReply) {
+  const payload = request.authContext?.payload;
+  if (
+    payload?.userType === "tenant" &&
+    payload.tenantId === "application" &&
+    payload.tenantCode === "CXSHOP"
+  ) {
+    request.headers["x-tenant-id"] = "application";
     return;
   }
   return reply.code(403).send(
     fail(
       {
-        code: "TENANT_STORAGE_REQUIRED",
-        message: "Tenant storage access requires a tenant session."
+        code: "APPLICATION_STORAGE_REQUIRED",
+        message: "Application storage access requires a signed-in CXShop user."
       },
       { requestId: request.id }
     )
   );
 }
 
-function authPayload(request: FastifyRequest) {
-  const authorization = request.headers.authorization;
-  const token = authorization?.startsWith("Bearer ")
-    ? authorization.slice("Bearer ".length).trim()
-    : "";
-  return token ? verifyAuthToken(token) : null;
-}
+const requireTenantUser = requireApplicationUser;
 
 function tenantStorageInput(
   request: FastifyRequest,

@@ -1,5 +1,6 @@
 import { AppError } from "@cxshop/framework/errors";
 import { CompanyRepository } from "./company.repository.js";
+import { runWithCoreDatabase } from "../../../database/core-database.js";
 import type {
   CompanyAddress,
   CompanyBankAccount,
@@ -106,6 +107,10 @@ export class CompanyService {
       throw AppError.validation("Selected bank name was not found or is inactive.");
     return { ...account, bankNameId: bank?.id ?? null, bankName: bank?.name ?? null };
   }
+}
+
+export function getDefaultCompanyBrandingForDatabase(databaseName: string) {
+  return runWithCoreDatabase(databaseName, () => new CompanyRepository().findDefaultBranding());
 }
 function assertParent(
   label: string,
