@@ -31,7 +31,7 @@ export function HoneyPromptForm({
           placeholder={
             mode === "content-writer"
               ? "Describe the audience, purpose, format, tone, and facts to include…"
-              : "Ask Piko about your CXShop work…"
+              : "Ask Piko about your work…"
           }
           value={message}
         />

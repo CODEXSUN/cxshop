@@ -47,11 +47,16 @@ export function TenantSiteHeader({ activePage }: { activePage: TenantPublicPageK
 }
 
 function PublicNavigation({ activePage }: { activePage: TenantPublicPageKey }) {
+  const { portal } = useTenantSite();
   return (
     <NavigationMenu className="tenant-portal-menu">
       <NavigationMenuList>
         <PublicMenu label="Shop">
-          <MenuFeature href="/shop" eyebrow="CXShop collection" title="Computers for real work">
+          <MenuFeature
+            href="/shop"
+            eyebrow={`${portal.brandName} collection`}
+            title="Computers for real work"
+          >
             Shop laptops, desktops, accessories, and selected business systems.
           </MenuFeature>
           <MenuColumn title="Shop">
@@ -83,7 +88,11 @@ function PublicNavigation({ activePage }: { activePage: TenantPublicPageKey }) {
           </MenuColumn>
         </PublicMenu>
         <PublicMenu label="Company">
-          <MenuFeature href="/about" eyebrow="About CXShop" title="Useful technology support">
+          <MenuFeature
+            href="/about"
+            eyebrow={`About ${portal.brandName}`}
+            title="Useful technology support"
+          >
             Learn about the team, service approach, contact routes, and product updates.
           </MenuFeature>
           <MenuColumn title="Company">

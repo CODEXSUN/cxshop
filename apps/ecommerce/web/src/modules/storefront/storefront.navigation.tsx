@@ -67,13 +67,15 @@ export function StoreHeader({
       <StorefrontAnnouncementBanner announcement={announcement} />
       <header className="cx-store__header">
         <a className="cx-store__brand" href="/">
-          <img
-            alt=""
-            aria-hidden="true"
-            className="cx-store__brand-mark"
-            src={branding?.logoUrl ?? "/icons/logo.svg"}
-          />
-          <strong>{branding?.brandName ?? "CXShop"}</strong>
+          {branding?.logoUrl ? (
+            <img
+              alt=""
+              aria-hidden="true"
+              className="cx-store__brand-mark"
+              src={branding.logoUrl}
+            />
+          ) : null}
+          {branding?.brandName ? <strong>{branding.brandName}</strong> : null}
         </a>
         <StoreNavigation branding={branding} discovery={discovery} />
         <button
@@ -192,7 +194,7 @@ function StoreNavigation({
   branding: StorefrontBranding | null;
   discovery: StorefrontDiscovery;
 }) {
-  const brandName = branding?.brandName ?? "CXShop";
+  const brandName = branding?.brandName ?? "your company";
   return (
     <NavigationMenu className="cx-store__primary-nav" aria-label="Store navigation">
       <NavigationMenuList>

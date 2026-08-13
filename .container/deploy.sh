@@ -75,7 +75,7 @@ require_stack_dependencies() {
     exit 69
   }
 
-  for container in cxapp-mariadb cxapp-redis; do
+  for container in "$(mariadb_container_name)" "$(redis_container_name)"; do
     state=$(docker inspect "$container" --format '{{.State.Status}}' 2>/dev/null || true)
     health=$(docker inspect "$container" \
       --format '{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}' \

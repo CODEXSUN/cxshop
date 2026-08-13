@@ -29,14 +29,16 @@ export async function registerStorefrontRoutes(app: FastifyInstance, service: St
     schemas: {
       response: z.object({
         about: z.string(),
-        copyrightOwner: z.string(),
+        copyrightText: z.string(),
         groups: z.array(
           z.object({
             title: z.string(),
             links: z.array(z.object({ label: z.string(), href: z.string() }))
           })
         ),
-        socialLinks: z.array(z.object({ label: z.string(), href: z.string() }))
+        poweredByText: z.string(),
+        socialLinks: z.array(z.object({ label: z.string(), href: z.string().url() })),
+        tagline: z.string()
       })
     },
     handler: () => service.siteNavigation()

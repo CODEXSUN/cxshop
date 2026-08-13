@@ -10,7 +10,7 @@ const empty: ArticlePayload = {
   mdx: "# Start writing\n",
   featuredImage: "",
   imageAlt: "",
-  authorName: "CXShop Editorial Team",
+  authorName: "Editorial Team",
   authorRole: "Technology Editor",
   authorAvatar: "",
   categoryId: null,
@@ -66,7 +66,9 @@ export function EditorForm({
       {error ? <p className="blogs-error">{error}</p> : null}
       <div className="blogs-editor-meta">
         <span>{record ? `Created ${formatDate(record.createdAt)}` : "Unsaved draft"}</span>
-        <span>{record ? `Updated ${formatDate(record.updatedAt)}` : "A timestamp is added on save"}</span>
+        <span>
+          {record ? `Updated ${formatDate(record.updatedAt)}` : "A timestamp is added on save"}
+        </span>
         <span>{value.mdx.trim().split(/\s+/u).length} words</span>
       </div>
       <div className="blogs-editor-grid">
@@ -152,9 +154,27 @@ export function EditorForm({
           </fieldset>
           <div className="blogs-form-section">
             <h2>Author</h2>
-            <label>Display name<input value={value.authorName} onChange={(e) => field("authorName", e.target.value)} /></label>
-            <label>Role<input value={value.authorRole} onChange={(e) => field("authorRole", e.target.value)} /></label>
-            <label>Avatar URL<input value={value.authorAvatar} onChange={(e) => field("authorAvatar", e.target.value)} /></label>
+            <label>
+              Display name
+              <input
+                value={value.authorName}
+                onChange={(e) => field("authorName", e.target.value)}
+              />
+            </label>
+            <label>
+              Role
+              <input
+                value={value.authorRole}
+                onChange={(e) => field("authorRole", e.target.value)}
+              />
+            </label>
+            <label>
+              Avatar URL
+              <input
+                value={value.authorAvatar}
+                onChange={(e) => field("authorAvatar", e.target.value)}
+              />
+            </label>
           </div>
           <label>
             Featured image URL
@@ -179,7 +199,13 @@ export function EditorForm({
               onChange={(e) => field("seoDescription", e.target.value)}
             />
           </label>
-          <label>Canonical URL<input value={value.canonicalUrl} onChange={(e) => field("canonicalUrl", e.target.value)} /></label>
+          <label>
+            Canonical URL
+            <input
+              value={value.canonicalUrl}
+              onChange={(e) => field("canonicalUrl", e.target.value)}
+            />
+          </label>
         </div>
         <label className="blogs-mdx">
           Content / MDX
@@ -199,5 +225,7 @@ export function EditorForm({
 }
 
 function formatDate(value: string) {
-  return new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" }).format(new Date(value));
+  return new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" }).format(
+    new Date(value)
+  );
 }

@@ -76,7 +76,7 @@ function toRecord(r: Row): ArticleRecord {
     mdx: r.mdx,
     featuredImage: String(r.featured_image ?? ""),
     imageAlt: String(r.image_alt ?? ""),
-    authorName: String(r.author_name ?? "CXShop Editorial Team"),
+    authorName: String(r.author_name ?? "Editorial Team"),
     authorRole: String(r.author_role ?? "Technology Editor"),
     authorAvatar: String(r.author_avatar ?? ""),
     categoryId: r.category_id == null ? null : Number(r.category_id),

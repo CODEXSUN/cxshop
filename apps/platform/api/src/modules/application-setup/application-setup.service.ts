@@ -35,7 +35,7 @@ export class ApplicationSetupService {
       ? `/api/platform/public/company-logo/logo${version}`
       : null;
     return {
-      brandName: company?.legalName?.trim() || company?.name.trim() || "CXShop",
+      brandName: company?.legalName?.trim() || company?.name.trim() || "",
       logoDarkUrl: hasStoredLogo(company?.logoDarkPath)
         ? `/api/platform/public/company-logo/logo-dark${version}`
         : logoUrl,

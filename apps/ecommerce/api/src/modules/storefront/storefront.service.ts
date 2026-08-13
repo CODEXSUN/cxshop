@@ -1,5 +1,6 @@
 import type { StorefrontCatalogFilters } from "./storefront.types.js";
 import type { StorefrontCatalogSource } from "../catalog-data-source/catalog-data-source.types.js";
+import { StorefrontProfileService } from "../storefront-profile/storefront-profile.service.js";
 
 export class StorefrontService {
   constructor(private readonly source: StorefrontCatalogSource) {}
@@ -20,11 +21,11 @@ export class StorefrontService {
   product(slug: string) {
     return this.source.product(slug.trim().toLowerCase());
   }
-  siteNavigation() {
+  async siteNavigation() {
+    const profile = await new StorefrontProfileService().get();
     return {
-      about:
-        "Reliable technology, practical buying guidance, and business-ready support for work, study, and creativity.",
-      copyrightOwner: "CXShop",
+      about: profile.aboutUs,
+      copyrightText: profile.copyrightText,
       groups: [
         {
           title: "Shop",
@@ -64,11 +65,13 @@ export class StorefrontService {
           ]
         }
       ],
+      poweredByText: profile.poweredByText,
       socialLinks: [
-        { label: "LinkedIn", href: "https://www.linkedin.com" },
-        { label: "Instagram", href: "https://www.instagram.com" },
-        { label: "X", href: "https://x.com" }
-      ]
+        { label: "LinkedIn", href: profile.linkedinUrl },
+        { label: "Instagram", href: profile.instagramUrl },
+        { label: "X", href: profile.xUrl }
+      ].filter((link) => link.href),
+      tagline: profile.tagline
     };
   }
 }

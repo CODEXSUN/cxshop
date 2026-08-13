@@ -40,6 +40,10 @@ validate_deploy_env() {
   for key in \
     NODE_ENV NODE_RUNTIME_VERSION NPM_RUNTIME_VERSION NGINX_BASE_IMAGE CXSHOP_VERSION \
     CXSHOP_IMAGE_REGISTRY CXSHOP_DOCKER_NETWORK CXSHOP_BIND_ADDRESS \
+    CXSHOP_SHARED_MARIADB_CONTAINER CXSHOP_SHARED_MARIADB_PROJECT CXSHOP_SHARED_MARIADB_SERVICE \
+    CXSHOP_SHARED_REDIS_CONTAINER CXSHOP_SHARED_REDIS_PROJECT CXSHOP_SHARED_REDIS_SERVICE \
+    CXSHOP_SHARED_MEDIA_CONTAINER CXSHOP_SHARED_MEDIA_PROJECT CXSHOP_SHARED_MEDIA_SERVICE \
+    CXSHOP_RUNTIME_ENV_MODE CXSHOP_ENV_FILE_PATH CXSHOP_PIKO_CODEX_HOME CXSHOP_CODEX_DATA_VOLUME \
     CXSHOP_SINGLE_TENANT MARIADB_BASE_IMAGE MARIADB_IMAGE_TAG \
     MARIADB_ROOT_PASSWORD MARIADB_BIND_ADDRESS MARIADB_HOST_PORT \
     MARIADB_DATA_VOLUME MARIADB_BACKUP_VOLUME DB_DRIVER DB_HOST DB_PORT \
@@ -76,6 +80,10 @@ validate_deploy_env() {
     echo "NODE_ENV must be production for container deployment." >&2
     exit 78
   }
+  case "$(env_value CXSHOP_RUNTIME_ENV_MODE)" in
+    ro|rw) ;;
+    *) echo "CXSHOP_RUNTIME_ENV_MODE must be ro or rw." >&2; exit 78 ;;
+  esac
 
   if [ "$(env_value MAIL_ENABLED)" = "1" ]; then
     require_env_value MAIL_SMTP_HOST
@@ -146,6 +154,14 @@ validate_container_ownership() {
   require_compose_container_ownership cxshop-web cxshop platform-web
 }
 
+mariadb_container_name() {
+  env_value CXSHOP_SHARED_MARIADB_CONTAINER
+}
+
+redis_container_name() {
+  env_value CXSHOP_SHARED_REDIS_CONTAINER
+}
+
 migrate_legacy_application_project() {
   legacy_found=false
   for specification in "cxshop-api:platform-api" "cxshop-web:platform-web"; do
@@ -200,9 +216,17 @@ require_shared_infrastructure() {
     echo "Required shared Docker network is missing: $network" >&2
     exit 69
   }
-  require_shared_container cxapp-mariadb cxapp-mariadb mariadb
-  require_shared_container cxapp-redis cxapp-redis redis
-  require_shared_container cxapp-media cxapp-media media
+  mariadb_container=$(mariadb_container_name)
+  redis_container=$(redis_container_name)
+  require_shared_container "$mariadb_container" \
+    "$(env_value CXSHOP_SHARED_MARIADB_PROJECT)" \
+    "$(env_value CXSHOP_SHARED_MARIADB_SERVICE)"
+  require_shared_container "$redis_container" \
+    "$(env_value CXSHOP_SHARED_REDIS_PROJECT)" \
+    "$(env_value CXSHOP_SHARED_REDIS_SERVICE)"
+  require_shared_container "$(env_value CXSHOP_SHARED_MEDIA_CONTAINER)" \
+    "$(env_value CXSHOP_SHARED_MEDIA_PROJECT)" \
+    "$(env_value CXSHOP_SHARED_MEDIA_SERVICE)"
 }
 
 ensure_network() {

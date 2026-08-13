@@ -70,8 +70,8 @@ export function DataSourceSettingsForm({
             <div>
               <p className="text-sm font-medium">Application connection</p>
               <p className="mt-1 text-sm text-muted-foreground">
-                Credentials are encrypted in CXShop MariaDB and never returned to the browser. Leave
-                a secret blank to keep its saved value.
+                Credentials are encrypted in MariaDB and never returned to the browser. Leave a
+                secret blank to keep its saved value.
               </p>
             </div>
           </div>
@@ -125,7 +125,7 @@ export function DataSourceSettingsForm({
               ariaLabel="Enable Frappe connection"
               checked={value.enabled}
               className="md:col-span-2"
-              description="CXShop API integrations may use this connection only while enabled."
+              description="API integrations may use this connection only while enabled."
               disabled={busy}
               fieldLabel="Connection status"
               inactiveLabel="Connection disabled"
@@ -136,7 +136,7 @@ export function DataSourceSettingsForm({
               ariaLabel="Sync Frappe connection to root environment"
               checked={value.saveToEnvironment}
               className="md:col-span-2"
-              description="Write the same connection to CXShop's configured root .env. Database persistence is always enabled."
+              description="Write the same connection to the configured root .env. Database persistence is always enabled."
               disabled={busy}
               fieldLabel="Environment synchronization"
               inactiveLabel="Save only in database"

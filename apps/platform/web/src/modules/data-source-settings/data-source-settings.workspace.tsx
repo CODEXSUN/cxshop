@@ -55,7 +55,7 @@ export function DataSourceSettingsWorkspace() {
   return (
     <WorkspacePage
       title="Frappe Connection"
-      description="Save the CXShop application connection in MariaDB, optionally synchronize .env, and select the active data provider."
+      description="Save the application connection in MariaDB, optionally synchronize .env, and select the active data provider."
       technicalName="page.data-source-settings"
     >
       <div className="rounded-md border bg-card p-4">

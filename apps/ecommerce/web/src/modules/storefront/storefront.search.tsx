@@ -115,10 +115,10 @@ export function StorefrontSearch({
             <a
               className="cx-store-search__wordmark"
               href="/"
-              aria-label={`${branding?.brandName ?? "CXShop"} home`}
+              aria-label={`${branding?.brandName || "Company"} home`}
             >
               <img alt="" aria-hidden="true" src={branding?.logoUrl ?? "/icons/logo.svg"} />
-              <span>{branding?.brandName ?? "CXShop"}</span>
+              {branding?.brandName ? <span>{branding.brandName}</span> : null}
             </a>
             <button aria-label="Close search" onClick={() => setOpen(false)} type="button">
               <XIcon />

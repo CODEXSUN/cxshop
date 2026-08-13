@@ -50,9 +50,10 @@ RUN npm install --global npm@${NPM_RUNTIME_VERSION} \
   && apt-get install -y --no-install-recommends ca-certificates mariadb-client \
   && rm -rf /var/lib/apt/lists/* \
   && mkdir -p /storage /app/apps/platform/web/public \
+  && touch /app/.env \
   && ln -s /storage/tenants /app/storage \
   && ln -s /storage/app/public /app/apps/platform/web/public/storage \
-  && chown -R node:node /storage /app/apps/platform
+  && chown -R node:node /storage /app/apps/platform /app/.env
 
 COPY --from=production-dependencies /app/node_modules ./node_modules
 COPY --from=build /app/packages/framework ./packages/framework

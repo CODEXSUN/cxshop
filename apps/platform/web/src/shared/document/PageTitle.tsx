@@ -1,10 +1,10 @@
 import { useEffect } from "react";
-import { requiredClientEnv } from "../env/client-env";
-
-const tenantDisplayName = requiredClientEnv("VITE_TENANT_NAME");
+let companyName = "";
+let currentPageTitle = "Dashboard";
 
 export function setPlatformDocumentTitle(pageTitle: string) {
-  document.title = `${tenantDisplayName} | ${pageTitle}`;
+  currentPageTitle = pageTitle;
+  document.title = companyName ? `${companyName} | ${pageTitle}` : pageTitle;
 }
 
 const pageTitles: Record<string, string> = {
@@ -29,6 +29,10 @@ function resolvePageTitle(pathname: string) {
 
 export function PageTitle() {
   useEffect(() => {
+    void loadCompanyName().then((value) => {
+      companyName = value;
+      setPlatformDocumentTitle(currentPageTitle);
+    });
     const updateTitle = () => {
       if (
         window.location.pathname.startsWith("/admin/") &&
@@ -63,4 +67,17 @@ export function PageTitle() {
   }, []);
 
   return null;
+}
+
+async function loadCompanyName() {
+  try {
+    const response = await fetch("/api/platform/public/company-branding", {
+      credentials: "same-origin",
+      headers: { Accept: "application/json" }
+    });
+    const body = (await response.json()) as { data?: { brandName?: string } };
+    return response.ok ? (body.data?.brandName?.trim() ?? "") : "";
+  } catch {
+    return "";
+  }
 }

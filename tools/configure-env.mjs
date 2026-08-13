@@ -112,7 +112,6 @@ if (!checkOnly) {
 
   if (deployment) {
     current.set("NODE_ENV", "production");
-    current.set("DB_HOST", "cxapp-mariadb");
     current.set("DB_PORT", "3306");
     current.set("CXSHOP_QUEUE_BACKEND", "database");
     if (current.get("CXSHOP_SINGLE_TENANT") === "1") {
@@ -200,12 +199,8 @@ function validate(values, validateDeployment) {
   if (validateDeployment && values.get("NODE_ENV") !== "production") {
     problems.push("NODE_ENV must be production for deployment");
   }
-  if (
-    validateDeployment &&
-    (values.get("DB_HOST") !== "cxapp-mariadb" || values.get("DB_PORT") !== "3306")
-  ) {
-    problems.push("container deployment requires DB_HOST=cxapp-mariadb and DB_PORT=3306");
-  }
+  if (validateDeployment && values.get("DB_PORT") !== "3306")
+    problems.push("container deployment requires DB_PORT=3306");
   if (
     validateDeployment &&
     !["database", "bullmq-redis"].includes(values.get("CXSHOP_QUEUE_BACKEND"))

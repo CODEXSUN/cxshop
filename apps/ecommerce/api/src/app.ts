@@ -21,6 +21,11 @@ import {
   type CatalogDataSourceControl
 } from "./modules/catalog-data-source/index.js";
 import { StorefrontService } from "./modules/storefront/storefront.service.js";
+import {
+  registerStorefrontProfilePublicRoutes,
+  registerStorefrontProfileRoutes,
+  storefrontProfileModuleKey
+} from "./modules/storefront-profile/index.js";
 
 export const ecommerceApiModuleKeys = [
   productInformationModule.key,
@@ -28,7 +33,8 @@ export const ecommerceApiModuleKeys = [
   productImageModule.key,
   catalogMatchingModule.key,
   storefrontAnnouncementModule.key,
-  catalogDataSourceModuleKey
+  catalogDataSourceModuleKey,
+  storefrontProfileModuleKey
 ];
 export async function registerEcommerceApi(
   app: FastifyInstance,
@@ -41,6 +47,7 @@ export async function registerEcommerceApi(
   const catalogDataSource = new CatalogDataSourceService(dependencies.catalogDataSource);
   await registerStorefrontRoutes(app, new StorefrontService(catalogDataSource));
   await registerStorefrontAnnouncementPublicRoutes(app);
+  await registerStorefrontProfilePublicRoutes(app);
   await app.register(async (ecommerceApp) => {
     ecommerceApp.addHook("preHandler", async (request) => {
       const database = resolveEcommerceDatabaseName(undefined);
@@ -56,6 +63,7 @@ export async function registerEcommerceApi(
     await productImageModule.register(ecommerceApp);
     await catalogMatchingModule.register(ecommerceApp);
     await storefrontAnnouncementModule.register(ecommerceApp);
+    await registerStorefrontProfileRoutes(ecommerceApp, dependencies.resolveActorEmail);
     await registerCatalogDataSourceRoutes(
       ecommerceApp,
       catalogDataSource,

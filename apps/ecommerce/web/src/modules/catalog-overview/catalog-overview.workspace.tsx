@@ -13,7 +13,7 @@ export function CatalogOverviewWorkspace() {
   return (
     <WorkspacePage
       title="Ecommerce"
-      description="Manage the CXShop catalog and storefront publication flow."
+      description="Manage the company catalog and storefront publication flow."
     >
       <div className="flex justify-end">
         <Button onClick={() => window.open("/shop", "_blank", "noopener,noreferrer")}>

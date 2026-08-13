@@ -82,6 +82,17 @@ Platform Web sends `Permissions-Policy: unload=*` in development and from the ru
 
 Shared MariaDB listens inside Docker on `3306` and is exposed by CXApp at `127.0.0.1:3307` by default. CXShop uses `cxapp-mariadb:3306`, `cxapp-redis:6379/2`, and `cxapp-network`.
 
+Shared infrastructure ownership is configurable through the
+`CXSHOP_SHARED_{MARIADB,REDIS,MEDIA}_{CONTAINER,PROJECT,SERVICE}` settings. The
+defaults preserve the CXApp topology. Compatible external services can use
+their existing Compose identity without renaming their containers.
+
+The API environment mount is read-only by default. Set
+`CXSHOP_RUNTIME_ENV_MODE=rw` only when Super Admin must save approved data-source
+settings to `CXSHOP_ENV_FILE_PATH`. Restrict the host file to the runtime group.
+Piko state uses the separate `CXSHOP_CODEX_DATA_VOLUME` at
+`CXSHOP_PIKO_CODEX_HOME`.
+
 ## Clean installation
 
 For a guided cleanup followed by installation, run:

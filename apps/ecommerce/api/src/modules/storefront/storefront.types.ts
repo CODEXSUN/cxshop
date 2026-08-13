@@ -41,7 +41,9 @@ export type StorefrontDiscovery = {
 };
 export type StorefrontSiteNavigation = {
   about: string;
-  copyrightOwner: string;
+  copyrightText: string;
   groups: Array<{ title: string; links: Array<{ label: string; href: string }> }>;
   socialLinks: Array<{ label: string; href: string }>;
+  poweredByText: string;
+  tagline: string;
 };

@@ -6,7 +6,8 @@ x-api-service: &api-service
   volumes:
     - billing-stack-data:/storage
     - media-data:/storage/media
-    - ../deploy.env:/app/.env:ro
+    - ../deploy.env:/app/.env:${CXSHOP_RUNTIME_ENV_MODE:?required}
+    - codex-data:/app/.codex
   networks:
     - cxshop-network
   extra_hosts:
@@ -25,11 +26,13 @@ services:
     entrypoint: ["/bin/sh", "-c"]
     command:
       - |
-        mkdir -p /storage/app /storage/public /storage/tenants /storage/backups/database
+        mkdir -p /storage/app /storage/public /storage/tenants /storage/backups/database /codex
         chown -R 1000:1000 /storage/app /storage/public /storage/tenants /storage/backups
+        chown -R 1000:1000 /codex
     volumes:
       - billing-stack-data:/storage
       - media-data:/storage/media
+      - codex-data:/codex
     networks:
       - cxshop-network
     healthcheck:
@@ -109,7 +112,6 @@ services:
     volumes:
       - billing-stack-data:/storage
       - media-data:/storage/media
-      - ../deploy.env:/app/.env:ro
     networks:
       - cxshop-network
 
@@ -120,6 +122,8 @@ volumes:
   media-data:
     name: ${MEDIA_DATA_VOLUME:?required}
     external: true
+  codex-data:
+    name: ${CXSHOP_CODEX_DATA_VOLUME:?required}
 
 networks:
   cxshop-network:

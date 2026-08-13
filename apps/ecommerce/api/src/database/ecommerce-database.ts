@@ -39,6 +39,11 @@ import {
 } from "../modules/storefront-announcement/storefront-announcement.migration.js";
 import { seedStorefrontAnnouncementModule } from "../modules/storefront-announcement/storefront-announcement.seed.js";
 import {
+  migrateStorefrontProfileModule,
+  storefrontProfileMigration
+} from "../modules/storefront-profile/storefront-profile.migration.js";
+import { seedStorefrontProfileModule } from "../modules/storefront-profile/storefront-profile.seed.js";
+import {
   catalogModuleDataSourceMigration,
   catalogDataSourceAuditMigration,
   catalogDataSourceSyncMigration,
@@ -70,7 +75,8 @@ export const ecommerceTenantMigrations = [
   storefrontAnnouncementMigration,
   catalogDataSourceSyncMigration,
   catalogDataSourceAuditMigration,
-  catalogModuleDataSourceMigration
+  catalogModuleDataSourceMigration,
+  storefrontProfileMigration
 ] as const;
 export const ecommerceMigrationBatch: MigrationBatch<EcommerceDatabase> = {
   batch: 1,
@@ -182,6 +188,21 @@ const ecommerceModuleDataSourceMigrationBatch: MigrationBatch<EcommerceDatabase>
     }
   ]
 };
+const ecommerceStorefrontProfileMigrationBatch: MigrationBatch<EcommerceDatabase> = {
+  batch: 6,
+  description: "White-label storefront profile settings.",
+  scope: "ecommerce",
+  version: "1.0.58",
+  steps: [
+    {
+      checksum: `${storefrontProfileMigration.key}:v1`,
+      description: storefrontProfileMigration.description,
+      name: storefrontProfileMigration.key,
+      up: migrateStorefrontProfileModule,
+      version: 1
+    }
+  ]
+};
 
 export function resolveEcommerceDatabaseName(value: unknown) {
   void value;
@@ -233,11 +254,13 @@ export async function bootstrapEcommerceDatabase(databaseName: string) {
   await runMigrationBatch(getEcommerceDatabase(name), ecommerceCatalogSyncMigrationBatch);
   await runMigrationBatch(getEcommerceDatabase(name), ecommerceCatalogSyncAuditMigrationBatch);
   await runMigrationBatch(getEcommerceDatabase(name), ecommerceModuleDataSourceMigrationBatch);
+  await runMigrationBatch(getEcommerceDatabase(name), ecommerceStorefrontProfileMigrationBatch);
   await runWithEcommerceDatabase(name, seedProductInformationModule);
   await runWithEcommerceDatabase(name, seedProductVariantModule);
   await runWithEcommerceDatabase(name, seedProductImageModule);
   await runWithEcommerceDatabase(name, seedCatalogMatchingModule);
   await runWithEcommerceDatabase(name, seedStorefrontAnnouncementModule);
+  await runWithEcommerceDatabase(name, seedStorefrontProfileModule);
   migrated.add(name);
 }
 
@@ -249,6 +272,7 @@ export async function migrateEcommerceTenantDatabase(databaseName: string) {
   await runMigrationBatch(getEcommerceDatabase(name), ecommerceCatalogSyncMigrationBatch);
   await runMigrationBatch(getEcommerceDatabase(name), ecommerceCatalogSyncAuditMigrationBatch);
   await runMigrationBatch(getEcommerceDatabase(name), ecommerceModuleDataSourceMigrationBatch);
+  await runMigrationBatch(getEcommerceDatabase(name), ecommerceStorefrontProfileMigrationBatch);
 }
 
 export async function seedEcommerceTenantDatabase(databaseName: string) {
@@ -259,9 +283,14 @@ export async function seedEcommerceTenantDatabase(databaseName: string) {
   await runWithEcommerceDatabase(name, seedProductImageModule);
   await runWithEcommerceDatabase(name, seedCatalogMatchingModule);
   await runWithEcommerceDatabase(name, seedStorefrontAnnouncementModule);
+  await runWithEcommerceDatabase(name, seedStorefrontProfileModule);
 }
 
 export async function rollbackEcommerceTenantDatabase(databaseName: string) {
+  await rollbackMigrationBatch(
+    getEcommerceDatabase(databaseName),
+    ecommerceStorefrontProfileMigrationBatch
+  );
   await rollbackMigrationBatch(
     getEcommerceDatabase(databaseName),
     ecommerceModuleDataSourceMigrationBatch

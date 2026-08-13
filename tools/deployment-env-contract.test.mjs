@@ -37,6 +37,10 @@ test("development and deployment samples own independent runtime endpoints", asy
   assert.equal(deployment.CXSHOP_IMAGE_REGISTRY, "cxshop");
   assert.equal(deployment.CXSHOP_DATA_SOURCE, "own");
   assert.equal(deployment.CXSHOP_FRAPPE_URL, "");
+  assert.equal(deployment.CXSHOP_RUNTIME_ENV_MODE, "ro");
+  assert.equal(deployment.CXSHOP_ENV_FILE_PATH, "/app/.env");
+  assert.equal(deployment.CXSHOP_PIKO_CODEX_HOME, "/app/.codex");
+  assert.equal(deployment.CXSHOP_CODEX_DATA_VOLUME, "cxshop-codex-data");
 });
 
 test("container tooling and Compose consume deploy.env only", async () => {
@@ -48,6 +52,8 @@ test("container tooling and Compose consume deploy.env only", async () => {
   assert.match(compose, /\.\.\/deploy\.env/u);
   assert.match(compose, /host\.docker\.internal:host-gateway/u);
   assert.doesNotMatch(compose, /\.\.\/\.\.\/\.env/u);
+  assert.match(compose, /CXSHOP_RUNTIME_ENV_MODE/u);
+  assert.match(compose, /codex-data:\/app\/\.codex/u);
 });
 
 test("guarded updates enforce reproducible versions and recoverable deployment evidence", async () => {

@@ -18,7 +18,7 @@ export function buildPikoItemDraft({
 }) {
   const context = {
     request:
-      "Review this CXShop item and help improve its storefront content. Preserve verified facts, identify missing information, and do not invent specifications.",
+      "Review this item and help improve its storefront content. Preserve verified facts, identify missing information, and do not invent specifications.",
     frappeItem,
     details: {
       coreProduct: coreProducts.find((item) => item.id === value.coreProductId) ?? null,

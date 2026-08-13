@@ -30,6 +30,8 @@ Records UI, API, service logic, tooling, packaging, and documentation changes.
   tables to the CXShop migration lifecycle.
 - Stored conversation ownership by application actor. Added active and archived thread states so
   archive actions retain messages and run history.
+- Added the Ecommerce-owned storefront profile table for tagline, About Us, copyright, powered-by,
+  and social-link settings.
 
 #### App Codebase Changes
 
@@ -53,6 +55,18 @@ Records UI, API, service logic, tooling, packaging, and documentation changes.
   draft into a new Piko prompt without submitting the message.
 - Updated the storefront search, branding assets, responsive footer, card previews, and development
   restart tooling to use the current CXShop interaction and identity rules.
+- Hardened the 1.0.58 container update path for shared CXApp infrastructure. Deployment scripts now
+  resolve configured MariaDB and Redis containers, close every composed database connection after
+  CLI work, and validate the master/default tenant mapping plus Billing and Mail module state.
+- Corrected legacy Compose migration ordering. Updates now build, back up, and migrate while the
+  existing `cxshop-billing` deployment remains available, then transfer ownership immediately before
+  replacing the application containers. The runtime environment mount is now explicitly configurable.
+- Made shared infrastructure ownership configurable without host-specific code. Added an opt-in
+  writable production environment mount and a separate persistent volume for Piko Codex state.
+- Made Application Company the only visible brand source. Removed client-side CXShop title, logo,
+  footer, assistant, catalog, article, and public-page fallbacks that caused white-label flicker.
+- Added Ecommerce Settings -> Storefront Profile with persisted footer content, social links, a live
+  footer preview, authenticated editing, and a public storefront profile contract.
 
 ## v-1.0.57
 

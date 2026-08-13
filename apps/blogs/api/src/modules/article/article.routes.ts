@@ -14,7 +14,7 @@ const payload = z.object({
   mdx: z.string().min(1),
   featuredImage: z.string().max(1000).default(""),
   imageAlt: z.string().max(255).default(""),
-  authorName: z.string().min(1).max(191).default("CXShop Editorial Team"),
+  authorName: z.string().min(1).max(191).default("Editorial Team"),
   authorRole: z.string().max(191).default("Technology Editor"),
   authorAvatar: z.string().max(1000).default(""),
   categoryId: z.number().int().positive().nullable().default(null),

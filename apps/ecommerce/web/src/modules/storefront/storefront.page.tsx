@@ -210,7 +210,7 @@ function ProductPage({ slug }: { slug: string }) {
       </div>
     );
   const enquiry = whatsappLink(
-    `Hello ${branding?.brandName ?? "CXShop"}, I would like to know more about ${product.name}.`
+    `Hello${branding?.brandName ? ` ${branding.brandName}` : ""}, I would like to know more about ${product.name}.`
   );
   return (
     <div className="cx-store">

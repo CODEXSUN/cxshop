@@ -1,6 +1,8 @@
 import { createConnection } from "mysql2/promise";
 import { closeAllBillingDatabases } from "@cxshop/billing-api";
+import { closeBlogsDatabase } from "@cxshop/blogs-api";
 import { closeCoreDatabase } from "@cxshop/core-api";
+import { closeAllEcommerceDatabases } from "@cxshop/ecommerce-api";
 import {
   closePlatformDatabase,
   createMasterDatabase,
@@ -20,6 +22,7 @@ import {
 } from "../modules/tenant/tenant.seed.js";
 import { env } from "../env.js";
 import { assertDatabaseName, quoteIdentifier } from "./database-utils.js";
+import { closeAllTenantDatabases } from "./tenant-database.js";
 
 type DbCommand =
   | "migrate"
@@ -118,7 +121,14 @@ async function main() {
 
     console.log(`ok db:${command} completed`);
   } finally {
-    await Promise.all([closeAllBillingDatabases(), closeCoreDatabase(), closePlatformDatabase()]);
+    await Promise.all([
+      closeBlogsDatabase(),
+      closeAllEcommerceDatabases(),
+      closeAllBillingDatabases(),
+      closeCoreDatabase(),
+      closeAllTenantDatabases(),
+      closePlatformDatabase()
+    ]);
   }
 }
 

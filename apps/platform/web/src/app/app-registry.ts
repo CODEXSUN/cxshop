@@ -449,9 +449,20 @@ export function appMenuItemsFor(
       },
       {
         icon: Settings2Icon,
-        isActive: activePage === "ecommerce.settings.data-source",
-        onSelect: () => onSelect("ecommerce.settings.data-source"),
-        title: "Settings"
+        isActive: activePage.startsWith("ecommerce.settings"),
+        title: "Settings",
+        items: [
+          {
+            title: "Storefront Profile",
+            isActive: activePage === "ecommerce.settings.storefront-profile",
+            onSelect: () => onSelect("ecommerce.settings.storefront-profile")
+          },
+          {
+            title: "Data Source",
+            isActive: activePage === "ecommerce.settings.data-source",
+            onSelect: () => onSelect("ecommerce.settings.data-source")
+          }
+        ]
       }
     ];
   }

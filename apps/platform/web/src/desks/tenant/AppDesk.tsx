@@ -73,6 +73,8 @@ const loadProductInformationModule = () =>
 const loadProductVariantModule = () => import("@cxshop/ecommerce-web/modules/product-variant");
 const loadProductImageModule = () => import("@cxshop/ecommerce-web/modules/product-image");
 const loadCatalogDataSourceModule = () => import("@cxshop/ecommerce-web");
+const loadStorefrontProfileModule = () =>
+  import("@cxshop/ecommerce-web/modules/storefront-profile");
 const loadBlogsEditorModule = () => import("@cxshop/blogs-web/modules/editor");
 
 const billingWorkspacePreloaders = [
@@ -103,6 +105,9 @@ const ProductImageWorkspace = lazyWorkspace(() =>
 );
 const CatalogDataSourceWorkspace = lazyWorkspace(() =>
   loadCatalogDataSourceModule().then((module) => module.CatalogDataSourceWorkspace)
+);
+const StorefrontProfileWorkspace = lazyWorkspace(() =>
+  loadStorefrontProfileModule().then((module) => module.StorefrontProfileWorkspace)
 );
 const BlogsEditorWorkspace = lazyWorkspace(() =>
   loadBlogsEditorModule().then((module) => module.BlogsEditorWorkspace)
@@ -381,6 +386,7 @@ type AppPage =
   | "ecommerce.catalog.variants"
   | "ecommerce.catalog.images"
   | "ecommerce.settings.data-source"
+  | "ecommerce.settings.storefront-profile"
   | "blogs.editor"
   | "mail.inbox"
   | "mail.outbox"
@@ -832,6 +838,9 @@ export function AppDesk() {
             {safePage === "ecommerce.catalog.variants" ? <ProductVariantWorkspace /> : null}
             {safePage === "ecommerce.catalog.images" ? <ProductImageWorkspace /> : null}
             {safePage === "ecommerce.settings.data-source" ? <CatalogDataSourceWorkspace /> : null}
+            {safePage === "ecommerce.settings.storefront-profile" ? (
+              <StorefrontProfileWorkspace />
+            ) : null}
             {safePage === "blogs.editor" ? <BlogsEditorWorkspace /> : null}
             {safePage.startsWith("mail.") ? (
               <MailWorkspace mailbox={mailboxForPage(safePage)} />
@@ -933,6 +942,7 @@ function pageFromUrl(landingApp: PlatformAppId | null): AppPage {
     key === "ecommerce.catalog.variants" ||
     key === "ecommerce.catalog.images" ||
     key === "ecommerce.settings.data-source" ||
+    key === "ecommerce.settings.storefront-profile" ||
     key === "blogs.editor" ||
     key === "mail.inbox" ||
     key === "mail.outbox" ||
@@ -1136,7 +1146,7 @@ function ApplicationOverview({
         <div className="flex items-center gap-4">
           <div>
             <p className="text-sm font-semibold text-sky-900">Piko is ready</p>
-            <h2 className="pt-1 text-xl font-semibold tracking-normal">Your CXShop AI companion</h2>
+            <h2 className="pt-1 text-xl font-semibold tracking-normal">Your AI companion</h2>
             <p className="max-w-2xl pt-2 text-sm leading-6 text-slate-600">
               Ask questions, plan commerce work, or coordinate the content-writer specialists.
             </p>
@@ -1436,6 +1446,7 @@ function titleForPage(page: AppPage) {
     "ecommerce.catalog.variants": "Product Variants",
     "ecommerce.catalog.images": "Product Images",
     "ecommerce.settings.data-source": "Data Source",
+    "ecommerce.settings.storefront-profile": "Storefront Profile",
     "mail.inbox": "Inbox",
     "mail.outbox": "Outbox",
     "mail.drafts": "Drafts",

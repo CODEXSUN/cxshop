@@ -227,10 +227,10 @@ export function SaDesk() {
       <SuperLayout
         brand={{
           href: "/sa",
-          title: branding.data?.brandName ?? "CXShop",
+          title: branding.data?.brandName ?? "",
           ...(branding.data?.logoUrl ? { logoSrc: branding.data.logoUrl } : {}),
           ...(branding.data?.logoDarkUrl ? { logoDarkSrc: branding.data.logoDarkUrl } : {}),
-          logoAlt: `${branding.data?.brandName ?? "CXShop"} logo`,
+          logoAlt: branding.data?.brandName ? `${branding.data.brandName} logo` : "Company logo",
           subtitle: "super-admin"
         }}
         homeHref="/"

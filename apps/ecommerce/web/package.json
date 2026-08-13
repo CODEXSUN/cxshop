@@ -10,6 +10,7 @@
     "./modules/product-variant": "./src/modules/product-variant/index.ts",
     "./modules/product-image": "./src/modules/product-image/index.ts",
     "./modules/catalog-data-source": "./src/modules/catalog-data-source/index.ts",
+    "./modules/storefront-profile": "./src/modules/storefront-profile/index.ts",
     "./modules/storefront": "./src/modules/storefront/index.ts"
   },
   "scripts": {

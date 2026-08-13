@@ -140,7 +140,7 @@ export function BrandsSection({ brands }: { brands: StorefrontDiscovery["brands"
 }
 
 export function BlogSolutionsSection({
-  brandName = "CXShop",
+  brandName = "",
   posts
 }: {
   brandName?: string | undefined;
@@ -301,7 +301,7 @@ export function CatalogFilters({ discovery, filters, onFilters }: FilterProps) {
 }
 
 export function ProductCard({
-  brandName = "CXShop",
+  brandName = "",
   product
 }: {
   brandName?: string | undefined;
@@ -389,32 +389,28 @@ export function StoreFooter({
         <section className="cx-store__footer-brand">
           <a className="cx-store__footer-logo" href="/">
             <StoreBrandMark branding={branding} dark />
-            <strong>{branding?.brandName ?? "CXShop"}</strong>
+            {branding?.brandName ? <strong>{branding.brandName}</strong> : null}
           </a>
-          <p>
-            {navigation?.about ??
-              "Reliable technology, practical buying guidance, and business-ready support for work, study, and creativity."}
-          </p>
+          {navigation?.tagline ? <b>{navigation.tagline}</b> : null}
+          {navigation?.about ? <p>{navigation.about}</p> : null}
           <div className="cx-store__socials" aria-label="Social links">
-            <a
-              aria-label="LinkedIn"
-              href="https://www.linkedin.com"
-              rel="noreferrer"
-              target="_blank"
-            >
-              <Globe2Icon />
-            </a>
-            <a
-              aria-label="Instagram"
-              href="https://www.instagram.com"
-              rel="noreferrer"
-              target="_blank"
-            >
-              <CameraIcon />
-            </a>
-            <a aria-label="X" href="https://x.com" rel="noreferrer" target="_blank">
-              <AtSignIcon />
-            </a>
+            {navigation?.socialLinks.map((link) => (
+              <a
+                aria-label={link.label}
+                href={link.href}
+                key={link.label}
+                rel="noreferrer"
+                target="_blank"
+              >
+                {link.label === "Instagram" ? (
+                  <CameraIcon />
+                ) : link.label === "X" ? (
+                  <AtSignIcon />
+                ) : (
+                  <Globe2Icon />
+                )}
+              </a>
+            ))}
           </div>
         </section>
         <button
@@ -449,7 +445,7 @@ export function StoreFooter({
         </a>
         <a
           href={whatsappLink(
-            `Hello ${branding?.brandName ?? "CXShop"}, I need help choosing a product.`
+            `Hello${branding?.brandName ? ` ${branding.brandName}` : ""}, I need help choosing a product.`
           )}
           rel="noreferrer"
           target="_blank"
@@ -459,10 +455,10 @@ export function StoreFooter({
       </div>
       <div className="cx-store__footer-bottom">
         <span>
-          © {new Date().getFullYear()}{" "}
-          {branding?.brandName ?? navigation?.copyrightOwner ?? "CXShop"}. All rights reserved.
+          © {new Date().getFullYear()} {branding?.brandName ?? ""}
+          {navigation?.copyrightText ? `. ${navigation.copyrightText}` : ""}
         </span>
-        <span>Secure commerce powered by CODEXSUN</span>
+        {navigation?.poweredByText ? <span>{navigation.poweredByText}</span> : null}
       </div>
     </footer>
   );
@@ -475,18 +471,9 @@ function StoreBrandMark({
   branding: StorefrontBranding | null;
   dark?: boolean;
 }) {
-  return (
-    <img
-      alt=""
-      aria-hidden="true"
-      className="cx-store__brand-mark"
-      src={
-        dark
-          ? (branding?.logoDarkUrl ?? branding?.logoUrl ?? "/icons/logo-dark.svg")
-          : (branding?.logoUrl ?? "/icons/logo.svg")
-      }
-    />
-  );
+  const source = dark ? (branding?.logoDarkUrl ?? branding?.logoUrl) : branding?.logoUrl;
+  if (!source) return null;
+  return <img alt="" aria-hidden="true" className="cx-store__brand-mark" src={source} />;
 }
 
 function FooterColumn({ title, links }: { title: string; links: Array<[string, string]> }) {

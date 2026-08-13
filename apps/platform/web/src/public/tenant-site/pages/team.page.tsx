@@ -1,12 +1,14 @@
 import { HeartHandshake, ShieldCheck, UsersRound } from "lucide-react";
 import { TenantPageIntro } from "../blocks/tenant-page-intro";
 import { TenantSiteTemplate } from "../templates/tenant-site.template";
+import { useTenantSite } from "../tenant-site.context";
 
 export function TenantTeamPage() {
+  const { portal } = useTenantSite();
   return (
     <TenantSiteTemplate activePage="team" pageTitle="Team">
       <TenantPageIntro
-        eyebrow="People behind CXShop"
+        eyebrow={`People behind ${portal.brandName}`}
         title="A commerce team focused on useful technology and dependable support."
         summary="Product specialists, operations teams, and support partners work together to make business technology easier to choose, buy, and maintain."
       />

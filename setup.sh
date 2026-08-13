@@ -70,7 +70,7 @@ validate_container_ownership
 echo
 echo "CODEXSUN deployment plan"
 echo "  Runtime and deployment configuration: $DEPLOY_ENV"
-echo "  Shared infrastructure: cxapp-mariadb, cxapp-redis, cxapp-media, cxapp-network"
+echo "  Shared infrastructure: $(env_value CXSHOP_SHARED_MARIADB_CONTAINER), $(env_value CXSHOP_SHARED_REDIS_CONTAINER), $(env_value CXSHOP_SHARED_MEDIA_CONTAINER), $(env_value CXSHOP_DOCKER_NETWORK)"
 echo "  Application: Framework + UI + Platform + Core + Billing + Mail + Ecommerce + Blogs"
 echo "  Persistent data: named volumes are preserved"
 echo "  Container ownership: verified before Docker changes"
@@ -93,7 +93,7 @@ MSYS_NO_PATHCONV=1 docker exec -i \
   -e "CXSHOP_DB_USER=$(env_value DB_USER)" \
   -e "CXSHOP_DB_PASSWORD=$(env_value DB_PASSWORD)" \
   -e "CXSHOP_DB_NAME=$(env_value DB_MASTER_NAME)" \
-  cxapp-mariadb bash -s <"$CONTAINER_DIR/database/mariadb/10-cxshop-grants.sh"
+  "$(env_value CXSHOP_SHARED_MARIADB_CONTAINER)" bash -s <"$CONTAINER_DIR/database/mariadb/10-cxshop-grants.sh"
 echo "CXShop database and restricted application grants reconciled in shared MariaDB."
 bash "$CONTAINER_DIR/update-runtime.sh"
 

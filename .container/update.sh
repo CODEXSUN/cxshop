@@ -307,7 +307,6 @@ validate_deploy_env
 validate_release_contract
 inspect_source_state
 require_docker
-validate_container_ownership
 
 backup_retention=$(env_value CXSHOP_UPDATE_BACKUP_RETENTION)
 backup_retention=${backup_retention:-10}
@@ -347,10 +346,27 @@ require_free_space "$resolved_backup_dir" "$minimum_backup_mb" "MariaDB backup"
 require_docker_free_space "$docker_root" "$minimum_docker_mb"
 
 require_shared_infrastructure
-require_existing_service cxshop-api cxshop platform-api
-require_existing_service cxshop-web cxshop platform-web
+require_existing_application_service() {
+  container="$1"
+  service="$2"
+  docker container inspect "$container" >/dev/null 2>&1 || {
+    echo "Existing CODEXSUN $service container was not found: $container" >&2
+    echo "Run bash setup.sh to create a new installation." >&2
+    exit 69
+  }
+  container_is_compose_service "$container" cxshop "$service" ||
+    container_is_compose_service "$container" cxshop-billing "$service" || {
+      echo "Refusing to use container not owned by CXShop: $container" >&2
+      exit 78
+    }
+}
 
-for container in cxapp-mariadb cxapp-redis cxapp-media cxshop-api cxshop-web; do
+require_existing_application_service cxshop-api platform-api
+require_existing_application_service cxshop-web platform-web
+
+mariadb_container=$(mariadb_container_name)
+redis_container=$(redis_container_name)
+for container in "$mariadb_container" "$redis_container" "$(env_value CXSHOP_SHARED_MEDIA_CONTAINER)" cxshop-api cxshop-web; do
   container_is_running "$container" || {
     echo "Existing CODEXSUN container is not running: $container" >&2
     exit 69
@@ -411,7 +427,7 @@ metadata_file="$resolved_backup_dir/cxshop-deployment-$timestamp.json"
 echo "Creating CXShop MariaDB backup: $backup_file"
 if ! MSYS_NO_PATHCONV=1 docker exec \
   -e MYSQL_PWD="$(env_value DB_PASSWORD)" \
-  cxapp-mariadb \
+  "$mariadb_container" \
   mariadb-dump \
   --no-defaults \
   --user="$(env_value DB_USER)" \
@@ -465,6 +481,9 @@ if ! bash "$SCRIPT_DIR/deploy.sh" billing migrate; then
 fi
 migration_result="completed"
 write_deployment_metadata "migrated" "$built_api_image" "$built_web_image"
+
+migrate_legacy_application_project
+validate_container_ownership
 
 if ! stack_compose billing up -d \
   --no-build \
