@@ -20,41 +20,17 @@ type IShopCatalog = FrappeIShopCatalog & { catalog_items?: CatalogItem[]; name: 
 type CatalogMembership = { category: string; displayOrder: number };
 type CatalogSnapshot = {
   catalogs: IShopCatalog[];
+  erpItems: Map<string, FrappeErpItem>;
   items: IShopItem[];
   memberships: Map<string, CatalogMembership[]>;
 };
-
-const itemFields = [
-  "name",
-  "item_code",
-  "item_name",
-  "erpnext_item",
-  "availability",
-  "item_group",
-  "brand",
-  "short_description",
-  "full_description",
-  "web_price",
-  "mrp",
-  "image",
-  "highlights",
-  "published"
-] as const;
-const catalogFields = [
-  "name",
-  "catalog_code",
-  "catalog_name",
-  "description",
-  "catalog_image",
-  "published"
-] as const;
 
 export class FrappeCatalogSource implements StorefrontCatalogSource {
   constructor(private readonly resolveCredentials: () => Promise<FrappeCatalogCredentials>) {}
 
   async catalog(filters: StorefrontCatalogFilters) {
     const snapshot = await this.snapshot();
-    const products = snapshot.items.map((item) => this.toProduct(item, snapshot.memberships));
+    const products = snapshot.items.map((item) => this.toProduct(item, snapshot));
     return sortProducts(
       products.filter((product) => matches(product, filters)),
       filters.sort
@@ -68,7 +44,7 @@ export class FrappeCatalogSource implements StorefrontCatalogSource {
 
   async discovery(): Promise<StorefrontDiscovery> {
     const snapshot = await this.snapshot();
-    const products = snapshot.items.map((item) => this.toProduct(item, snapshot.memberships));
+    const products = snapshot.items.map((item) => this.toProduct(item, snapshot));
     const prices = products.map((product) => product.price);
     return {
       brands: brandsFrom(products),
@@ -85,7 +61,7 @@ export class FrappeCatalogSource implements StorefrontCatalogSource {
     const item = snapshot.items.find((candidate) => slugify(candidate.item_code) === slug);
     if (!item) return null;
     return {
-      ...this.toProduct(item, snapshot.memberships),
+      ...this.toProduct(item, snapshot),
       bulletPoints: highlights(item.highlights),
       returnPolicy: "",
       variants: [],
@@ -156,29 +132,24 @@ export class FrappeCatalogSource implements StorefrontCatalogSource {
 
   private async snapshot(): Promise<CatalogSnapshot> {
     const credentials = await this.resolveCredentials();
-    this.currentBaseUrl = credentials.url;
-    const [items, catalogRows] = await Promise.all([
-      this.list<IShopItem>(credentials, "iShop Item", itemFields),
-      this.list<IShopCatalog>(credentials, "iShop Catalog", catalogFields)
-    ]);
-    const catalogs = await Promise.all(
-      catalogRows.map((catalog) =>
-        this.document<IShopCatalog>(credentials, "iShop Catalog", catalog.name)
-      )
+    const payload = await this.method<FrappeCatalogSnapshot>(
+      credentials,
+      "get_catalog_snapshot",
+      "GET"
     );
-    return { catalogs, items, memberships: membershipsFrom(catalogs) };
-  }
-
-  private list<T>(
-    credentials: FrappeCatalogCredentials,
-    doctype: string,
-    fields: readonly string[]
-  ) {
-    const url = resourceUrl(credentials.url, doctype);
-    url.searchParams.set("fields", JSON.stringify(fields));
-    url.searchParams.set("filters", JSON.stringify([["published", "=", 1]]));
-    url.searchParams.set("limit_page_length", "500");
-    return this.request<{ data?: T[] }>(credentials, url).then((body) => body.data ?? []);
+    this.currentBaseUrl = credentials.url;
+    const items = payload.items
+      .filter((item) => Boolean(item.published))
+      .map((item) => ({ ...item, name: item.name || item.item_code }));
+    const catalogs = payload.catalogs
+      .filter((catalog) => Boolean(catalog.published))
+      .map((catalog) => ({ ...catalog, name: catalog.name || catalog.catalog_code }));
+    return {
+      catalogs,
+      erpItems: new Map(payload.erpnext_items.map((item) => [item.item_code, item])),
+      items,
+      memberships: membershipsFrom(catalogs)
+    };
   }
 
   private document<T>(credentials: FrappeCatalogCredentials, doctype: string, name: string) {
@@ -231,22 +202,23 @@ export class FrappeCatalogSource implements StorefrontCatalogSource {
     return responseBody.message;
   }
 
-  private toProduct(
-    item: IShopItem,
-    memberships: Map<string, CatalogMembership[]>
-  ): StorefrontProduct {
-    const price = Number(item.web_price ?? 0);
+  private toProduct(item: IShopItem, snapshot: CatalogSnapshot): StorefrontProduct {
+    const erpItem = snapshot.erpItems.get(item.erpnext_item || item.item_code);
+    const price = Number(item.web_price ?? erpItem?.standard_rate ?? 0);
     const mrp = Number(item.mrp ?? 0);
     const category =
-      memberships.get(item.name)?.[0]?.category || item.item_group || "Uncategorised";
+      snapshot.memberships.get(item.name)?.[0]?.category ||
+      item.item_group ||
+      erpItem?.item_group ||
+      "Uncategorised";
     return {
-      brand: item.brand?.trim() || null,
+      brand: item.brand?.trim() || erpItem?.brand?.trim() || null,
       category,
       compareAtPrice: mrp > price ? mrp : null,
       description: plainText(item.full_description),
-      featured: memberships.has(item.name),
+      featured: snapshot.memberships.has(item.name),
       imageAlt: item.item_name,
-      imageUrl: absoluteUrl(item.image, this.currentBaseUrl),
+      imageUrl: absoluteUrl(item.image || erpItem?.image, this.currentBaseUrl),
       name: item.item_name,
       price,
       shortDescription: plainText(item.short_description),

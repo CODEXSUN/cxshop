@@ -4,6 +4,8 @@ import { DraggableSpritePet } from "@cxshop/ui/components/sprite-pet";
 
 type PikoMessage = { body: string; id: string; role: "assistant" | "user" };
 type PikoConversation = { id: string; messages: PikoMessage[]; title: string };
+type PikoMascotSettings = { behavior: "roam" | "stay"; xRatio: number; yRatio: number };
+const defaultMascotSettings: PikoMascotSettings = { behavior: "roam", xRatio: 1, yRatio: 1 };
 
 export function PikoStoreAssistant() {
   const [open, setOpen] = useState(false);
@@ -12,11 +14,24 @@ export function PikoStoreAssistant() {
   const [messages, setMessages] = useState<PikoMessage[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [mascotSettings, setMascotSettings] = useState(defaultMascotSettings);
   const end = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     end.current?.scrollIntoView({ behavior: "smooth" });
   }, [busy, messages.length]);
+
+  useEffect(() => {
+    void fetch("/api/platform/public/piko/mascot")
+      .then(async (response) => {
+        const envelope = (await response.json()) as {
+          data?: PikoMascotSettings;
+          success: boolean;
+        };
+        if (response.ok && envelope.success && envelope.data) setMascotSettings(envelope.data);
+      })
+      .catch(() => undefined);
+  }, []);
 
   async function send() {
     const text = message.trim();
@@ -99,14 +114,16 @@ export function PikoStoreAssistant() {
       ) : null}
       <DraggableSpritePet
         alt="Piko the panda storekeeper"
+        behavior={mascotSettings.behavior}
         className="cx-piko__mascot"
         onClick={() => setOpen(true)}
         onVoiceTranscript={(transcript) => {
           setMessage(transcript);
           setOpen(true);
         }}
+        placement={mascotSettings}
         src="/mascots/piko/spritesheet.webp"
-        storageKey="cxshop.piko.storefront-position-v2"
+        storageKey="cxshop.piko"
       />
     </aside>
   );

@@ -6,6 +6,10 @@ export function money(value: number) {
   }).format(value);
 }
 
+export function hasStorefrontPrice(value: number | null | undefined) {
+  return typeof value === "number" && Number.isFinite(value) && value > 0;
+}
+
 export function whatsappLink(message: string) {
   return `https://wa.me/?text=${encodeURIComponent(message)}`;
 }

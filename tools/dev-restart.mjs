@@ -5,6 +5,8 @@ import { existsSync, statSync, watch } from "node:fs";
 import { resolve } from "node:path";
 
 const root = resolve(import.meta.dirname, "..");
+const changeSettleMilliseconds = 1_200;
+const unexpectedExitDelayMilliseconds = 1_500;
 const serviceName = process.argv[2];
 const services = {
   "platform-api": {
@@ -46,9 +48,10 @@ let child;
 let debounceTimer;
 let restartQueued = false;
 let stopping = false;
+let watchers = [];
 
 start();
-const watchers = service.paths
+watchers = service.paths
   .filter((path) => existsSync(resolve(root, path)))
   .map((path) => {
     const absolutePath = resolve(root, path);
@@ -79,17 +82,29 @@ function start() {
   child.once("exit", (code, signal) => {
     child = undefined;
     if (stopping || restartQueued) return;
+    if (code === 75) {
+      stopSupervisor("already running");
+      return;
+    }
     console.error(
       `[${service.label}] stopped (${signal ?? `code ${code ?? 1}`}); restarting shortly`
     );
-    debounceTimer = setTimeout(start, 1_000);
+    debounceTimer = setTimeout(start, unexpectedExitDelayMilliseconds);
   });
+}
+
+function stopSupervisor(reason) {
+  stopping = true;
+  clearTimeout(debounceTimer);
+  watchers.forEach((watcher) => watcher.close());
+  console.log(`[${service.label}] ${reason}; supervisor stopped`);
+  process.exit(0);
 }
 
 function queueRestart(filename) {
   if (stopping || !isRelevant(filename)) return;
   clearTimeout(debounceTimer);
-  debounceTimer = setTimeout(() => void restart(filename), 350);
+  debounceTimer = setTimeout(() => void restart(filename), changeSettleMilliseconds);
 }
 
 async function restart(filename) {

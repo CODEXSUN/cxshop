@@ -236,11 +236,15 @@ async function freePort(port, host) {
 
   console.log(`  ! ${host}:${port} is already in use by PID ${pids.join(", ")}`);
 
-  if (process.env.CXSHOP_DEV_PORT_POLICY === "abort") {
-    console.error(
-      "  x Port policy is abort. Stop the existing process or change CXSHOP_DEV_PORT_POLICY.\n"
-    );
-    process.exit(1);
+  const nodeEnvironment = process.env.NODE_ENV ?? env.NODE_ENV ?? "development";
+  const defaultPortPolicy = nodeEnvironment === "production" ? "replace" : "abort";
+  const portPolicy =
+    process.env.CXSHOP_DEV_PORT_POLICY ?? env.CXSHOP_DEV_PORT_POLICY ?? defaultPortPolicy;
+
+  if (portPolicy !== "replace") {
+    console.log("  ok Existing development service keeps ownership of this port.");
+    console.log("  - No replacement or restart is required.\n");
+    process.exit(75);
   }
 
   for (const pid of pids) {
@@ -281,17 +285,25 @@ async function waitForPlatformApi(apiPort) {
   const healthUrl = `http://127.0.0.1:${apiPort}/health`;
   const startedAt = Date.now();
   let lastStatus = "not reachable";
+  let consecutiveReadyChecks = 0;
+  const requiredReadyChecks = 5;
 
-  console.log(`\n  - Waiting for Platform API at ${healthUrl}`);
+  console.log(`\n  - Waiting for Platform API to become stable at ${healthUrl}`);
   while (Date.now() - startedAt < 90_000) {
     try {
       const response = await fetch(healthUrl, { signal: AbortSignal.timeout(2_000) });
       lastStatus = `HTTP ${response.status}`;
       if (response.ok) {
-        console.log("  ok Platform API is ready");
-        return;
+        consecutiveReadyChecks += 1;
+        if (consecutiveReadyChecks >= requiredReadyChecks) {
+          console.log("  ok Platform API is fully loaded and stable");
+          return;
+        }
+      } else {
+        consecutiveReadyChecks = 0;
       }
     } catch (error) {
+      consecutiveReadyChecks = 0;
       lastStatus = error instanceof Error ? error.message : String(error);
     }
 

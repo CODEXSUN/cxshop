@@ -6,6 +6,15 @@ export const honeyMigration = {
   key: "devkit.honey.sql.v1"
 } as const;
 
+export const honeyMascotSettingsMigration = {
+  description: "Global Piko placement and movement settings.",
+  key: "devkit.honey.mascot-settings.sql.v1"
+} as const;
+export const honeyMascotSettingsStandardizationMigration = {
+  description: "Standardize the global Piko settings record.",
+  key: "devkit.honey.mascot-settings.sql.v2"
+} as const;
+
 export async function migrateHoneyModule(database: Kysely<DevkitDatabase>) {
   await sql`CREATE TABLE IF NOT EXISTS devkit_honey_threads (
     id INT NOT NULL AUTO_INCREMENT PRIMARY KEY, uuid CHAR(16) NOT NULL,
@@ -38,4 +47,36 @@ export async function migrateHoneyModule(database: Kysely<DevkitDatabase>) {
     KEY idx_devkit_honey_runs_thread (thread_uuid, updated_at)
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`.execute(database);
   return honeyMigration;
+}
+
+export async function migrateHoneyMascotSettings(database: Kysely<DevkitDatabase>) {
+  await sql`CREATE TABLE IF NOT EXISTS devkit_honey_mascot_settings (
+    id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    uuid CHAR(8) NOT NULL,
+    x_ratio DECIMAL(7,6) NOT NULL,
+    y_ratio DECIMAL(7,6) NOT NULL,
+    behavior VARCHAR(16) NOT NULL DEFAULT 'roam',
+    status VARCHAR(16) NOT NULL DEFAULT 'active',
+    created_by VARCHAR(160) NOT NULL,
+    updated_by VARCHAR(160) NOT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`.execute(database);
+  await sql`INSERT INTO devkit_honey_mascot_settings
+    (id, uuid, x_ratio, y_ratio, behavior, status, created_by, updated_by)
+    VALUES (1, 'piko0001', 1, 1, 'roam', 'active', 'system', 'system')
+    ON DUPLICATE KEY UPDATE id = id`.execute(database);
+  return honeyMascotSettingsMigration;
+}
+
+export async function standardizeHoneyMascotSettings(database: Kysely<DevkitDatabase>) {
+  await sql`ALTER TABLE devkit_honey_mascot_settings
+    MODIFY COLUMN id INT NOT NULL AUTO_INCREMENT,
+    ADD COLUMN IF NOT EXISTS uuid CHAR(8) NOT NULL DEFAULT 'piko0001' AFTER id,
+    ADD COLUMN IF NOT EXISTS status VARCHAR(16) NOT NULL DEFAULT 'active' AFTER behavior,
+    ADD COLUMN IF NOT EXISTS created_by VARCHAR(160) NOT NULL DEFAULT 'system' AFTER status,
+    ADD COLUMN IF NOT EXISTS created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP AFTER updated_by`.execute(
+    database
+  );
+  return honeyMascotSettingsStandardizationMigration;
 }

@@ -19,7 +19,7 @@ import type {
   StorefrontBlogPost,
   StorefrontSiteNavigation
 } from "./storefront.types";
-import { money, whatsappLink } from "./storefront.formatters";
+import { hasStorefrontPrice, money, whatsappLink } from "./storefront.formatters";
 
 type FilterProps = {
   discovery: StorefrontDiscovery;
@@ -46,9 +46,11 @@ export function HeroSlider({ products }: { products: StorefrontProduct[] }) {
       className="cx-store__hero"
     >
       <div className="cx-store__hero-copy" key={`copy-${product.slug}`}>
-        <span className="cx-store__hero-reveal">{product.brand} · Featured system</span>
+        <span className="cx-store__hero-reveal">
+          {[product.brand, "Featured system"].filter(Boolean).join(" · ")}
+        </span>
         <h1 className="cx-store__hero-reveal">{product.name}</h1>
-        <p className="cx-store__hero-reveal">{product.description}</p>
+        {product.description ? <p className="cx-store__hero-reveal">{product.description}</p> : null}
         <a className="cx-store__hero-reveal" href={`/shop/product/${product.slug}`}>
           Explore this product
         </a>
@@ -78,29 +80,31 @@ export function PromotionsSection({ products }: { products: StorefrontProduct[] 
     <section className="cx-store__promotions" id="promotions">
       <SectionTitle label="Current promotions" title="Better value on everyday technology" />
       <div className="cx-store__promotion-grid">
-        {products.map((product) => (
-          <a
+        {products.map((product) => {
+          const metadata = [product.brand, product.category].filter(Boolean).join(" · ");
+          const priced = hasStorefrontPrice(product.price);
+          return <a
             className="cx-store__promotion-card"
             href={`/shop/product/${product.slug}`}
             key={product.slug}
           >
             <span className="cx-store__promotion-media">
               <img alt={product.imageAlt || product.name} loading="lazy" src={product.imageUrl} />
-              <span className="cx-store__promotion-saving">
+              {priced && hasStorefrontPrice(product.compareAtPrice) ? <span className="cx-store__promotion-saving">
                 Save {money((product.compareAtPrice ?? product.price) - product.price)}
-              </span>
+              </span> : null}
             </span>
             <span className="cx-store__promotion-copy">
-              <small>{[product.brand, product.category].filter(Boolean).join(" · ")}</small>
+              {metadata ? <small>{metadata}</small> : null}
               <strong>{product.name}</strong>
-              <span className="cx-store__promotion-price">
+              {priced ? <span className="cx-store__promotion-price">
                 <b>{money(product.price)}</b>
-                <del>{money(product.compareAtPrice ?? product.price)}</del>
-              </span>
-              <span className="cx-store__promotion-link">View offer</span>
+                {hasStorefrontPrice(product.compareAtPrice) ? <del>{money(product.compareAtPrice ?? product.price)}</del> : null}
+              </span> : null}
+              <span className="cx-store__promotion-link">{priced ? "View offer" : "Enquire"}</span>
             </span>
-          </a>
-        ))}
+          </a>;
+        })}
       </div>
     </section>
   );
@@ -307,6 +311,8 @@ export function ProductCard({
   brandName?: string | undefined;
   product: StorefrontProduct;
 }) {
+  const metadata = [product.brand, product.category].filter(Boolean).join(" · ");
+  const priced = hasStorefrontPrice(product.price);
   return (
     <article className="cx-product-card">
       <a href={`/shop/product/${product.slug}`}>
@@ -315,15 +321,17 @@ export function ProductCard({
           <img src={product.imageUrl} alt={product.imageAlt} loading="lazy" />
         </div>
         <div className="cx-product-card__copy">
-          <small>
-            {product.brand} · {product.category}
-          </small>
+          {metadata ? <small>{metadata}</small> : null}
           <h3>{product.name}</h3>
-          <p>{product.shortDescription}</p>
-          <div>
-            <strong>{money(product.price)}</strong>
-            {product.compareAtPrice ? <del>{money(product.compareAtPrice)}</del> : null}
-          </div>
+          {product.shortDescription ? <p>{product.shortDescription}</p> : null}
+          {priced ? (
+            <div>
+              <strong>{money(product.price)}</strong>
+              {hasStorefrontPrice(product.compareAtPrice) ? (
+                <del>{money(product.compareAtPrice ?? product.price)}</del>
+              ) : null}
+            </div>
+          ) : null}
         </div>
       </a>
       <a

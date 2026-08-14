@@ -31,6 +31,8 @@ export type SpritePetState =
   | "sitting"
   | "waiting"
   | "waving";
+export type SpritePetBehavior = "roam" | "stay";
+export type SpritePetPlacement = { xRatio: number; yRatio: number };
 
 const animationRows: Record<SpritePetState, { frames: number; row: number; startFrame?: number }> =
   {
@@ -92,28 +94,32 @@ export function SpritePet({
 
 export function DraggableSpritePet({
   alt,
+  behavior = "roam",
+  canManage = false,
   className,
   onClick,
+  onBehaviorChange,
+  onPlacementChange,
   onVoiceTranscript,
+  placement = { xRatio: 1, yRatio: 1 },
   src,
   storageKey
 }: {
   alt: string;
+  behavior?: SpritePetBehavior;
+  canManage?: boolean;
   className?: string;
   onClick?: () => void;
+  onBehaviorChange?: (behavior: SpritePetBehavior) => void;
+  onPlacementChange?: (placement: SpritePetPlacement) => void;
   onVoiceTranscript?: (transcript: string) => void;
+  placement?: SpritePetPlacement;
   src: string;
   storageKey: string;
 }) {
-  const [position, setPosition] = useState(() => ({
-    x: Math.max(8, window.innerWidth - 116),
-    y: Math.max(8, window.innerHeight - 124)
-  }));
+  const [position, setPosition] = useState(() => positionFromPlacement(placement));
   const positionRef = useRef(position);
   const [mounted, setMounted] = useState(false);
-  const [behavior, setBehavior] = useState<"roam" | "stay">(() =>
-    window.localStorage.getItem(`${storageKey}.behavior`) === "stay" ? "stay" : "roam"
-  );
   const [mode, setMode] = useState<SpritePetState>("idle");
   const [walking, setWalking] = useState(false);
   const [walkingDuration, setWalkingDuration] = useState(0);
@@ -156,42 +162,34 @@ export function DraggableSpritePet({
           const restingState = randomRestingState();
           setMode(restingState);
           setWalking(false);
-          window.localStorage.setItem(storageKey, JSON.stringify(next));
           if (restingState !== "idle") window.setTimeout(() => setMode("idle"), 2800);
         }, duration);
       },
       6500 + Math.random() * 4500
     );
     return () => window.clearTimeout(timer);
-  }, [behavior, storageKey, walking]);
+  }, [behavior, walking]);
 
   useEffect(() => {
-    const saved = window.localStorage.getItem(storageKey);
-    if (!saved) return;
-    try {
-      const value = JSON.parse(saved) as { x?: number; y?: number };
-      if (Number.isFinite(value.x) && Number.isFinite(value.y)) {
-        const next = clampPetPosition({ x: value.x ?? 20, y: value.y ?? 20 });
-        positionRef.current = next;
-        setPosition(next);
-      }
-    } catch {
-      window.localStorage.removeItem(storageKey);
-    }
-  }, [storageKey]);
+    if (drag.current) return;
+    const next = positionFromPlacement(placement);
+    positionRef.current = next;
+    setPosition(next);
+  }, [placement.xRatio, placement.yRatio]);
 
   useEffect(() => {
     const place = () => {
-      const next = clampPetPosition(positionRef.current);
+      const next = positionFromPlacement(placement);
       positionRef.current = next;
       setPosition(next);
     };
     place();
     window.addEventListener("resize", place);
     return () => window.removeEventListener("resize", place);
-  }, []);
+  }, [placement.xRatio, placement.yRatio]);
 
   function begin(event: PointerEvent<HTMLDivElement>) {
+    if (!canManage) return;
     if ((event.target as HTMLElement).closest("button,[role='menuitem']")) return;
     const bounds = event.currentTarget.getBoundingClientRect();
     drag.current = {
@@ -205,7 +203,7 @@ export function DraggableSpritePet({
   }
 
   function move(event: PointerEvent<HTMLDivElement>) {
-    if (!drag.current) return;
+    if (!canManage || !drag.current) return;
     drag.current.moved = true;
     const next = clampPetPosition({
       x: event.clientX - drag.current.offsetX,
@@ -216,11 +214,11 @@ export function DraggableSpritePet({
   }
 
   function end(event: PointerEvent<HTMLDivElement>) {
-    if (!drag.current) return;
+    if (!canManage || !drag.current) return;
     const moved = drag.current.moved;
     drag.current = undefined;
     event.currentTarget.releasePointerCapture(event.pointerId);
-    window.localStorage.setItem(storageKey, JSON.stringify(positionRef.current));
+    if (moved) onPlacementChange?.(placementFromPosition(positionRef.current));
     if (!moved) onClick?.();
   }
 
@@ -229,8 +227,9 @@ export function DraggableSpritePet({
   return createPortal(
     <motion.div
       animate={{ x: position.x, y: position.y }}
-      aria-label={`${alt}. Drag to move.`}
+      aria-label={canManage ? `${alt}. Drag to set the global position.` : alt}
       className={cn("group fixed z-[90] touch-none select-none", className)}
+      onClick={canManage ? undefined : onClick}
       onPointerCancel={end}
       onPointerDown={begin}
       onPointerMove={move}
@@ -267,46 +266,72 @@ export function DraggableSpritePet({
       >
         <MicIcon className={cn("size-4", listening && "animate-pulse")} />
       </button>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <button
-            aria-label="Piko movement options"
-            className="pointer-events-none absolute left-full top-1/2 grid size-8 -translate-y-1/2 scale-90 place-items-center rounded-full border border-sky-200 bg-white text-sky-800 opacity-0 shadow-md transition group-hover:pointer-events-auto group-hover:scale-100 group-hover:opacity-100 data-[state=open]:pointer-events-auto data-[state=open]:scale-100 data-[state=open]:opacity-100"
-            onPointerDown={(event) => event.stopPropagation()}
-            type="button"
+      {canManage ? (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              aria-label="Piko movement options"
+              className="pointer-events-none absolute left-full top-1/2 grid size-8 -translate-y-1/2 scale-90 place-items-center rounded-full border border-sky-200 bg-white text-sky-800 opacity-0 shadow-md transition group-hover:pointer-events-auto group-hover:scale-100 group-hover:opacity-100 data-[state=open]:pointer-events-auto data-[state=open]:scale-100 data-[state=open]:opacity-100"
+              onPointerDown={(event) => event.stopPropagation()}
+              type="button"
+            >
+              <EllipsisVerticalIcon className="size-4" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent
+            align="start"
+            className="w-52 rounded-2xl"
+            side="right"
+            sideOffset={8}
           >
-            <EllipsisVerticalIcon className="size-4" />
-          </button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="start" className="w-52 rounded-2xl" side="right" sideOffset={8}>
-          <DropdownMenuLabel>Piko movement</DropdownMenuLabel>
-          <DropdownMenuItem onSelect={() => changeBehavior("stay")}>
-            <PauseIcon />
-            <span className="flex-1">Stay in place</span>
-            {behavior === "stay" ? <CheckIcon /> : null}
-          </DropdownMenuItem>
-          <DropdownMenuItem onSelect={() => changeBehavior("roam")}>
-            <MoveHorizontalIcon />
-            <span className="flex-1">Roam left and right</span>
-            {behavior === "roam" ? <CheckIcon /> : null}
-          </DropdownMenuItem>
-          <DropdownMenuLabel>Piko assistant</DropdownMenuLabel>
-          <DropdownMenuItem onSelect={() => onClick?.()}>
-            <MessageCircleIcon />
-            Open Piko chat
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+            <DropdownMenuLabel>Piko movement</DropdownMenuLabel>
+            <DropdownMenuItem onSelect={() => changeBehavior("stay")}>
+              <PauseIcon />
+              <span className="flex-1">Stay in place</span>
+              {behavior === "stay" ? <CheckIcon /> : null}
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => changeBehavior("roam")}>
+              <MoveHorizontalIcon />
+              <span className="flex-1">Roam left and right</span>
+              {behavior === "roam" ? <CheckIcon /> : null}
+            </DropdownMenuItem>
+            <DropdownMenuLabel>Piko assistant</DropdownMenuLabel>
+            <DropdownMenuItem onSelect={() => onClick?.()}>
+              <MessageCircleIcon />
+              Open Piko chat
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      ) : null}
     </motion.div>,
     document.body
   );
 
-  function changeBehavior(next: "roam" | "stay") {
-    setBehavior(next);
+  function changeBehavior(next: SpritePetBehavior) {
     setWalking(false);
     setMode("idle");
-    window.localStorage.setItem(`${storageKey}.behavior`, next);
+    onBehaviorChange?.(next);
   }
+}
+
+function positionFromPlacement(placement: SpritePetPlacement) {
+  const width = Math.max(0, window.innerWidth - 112);
+  const height = Math.max(0, window.innerHeight - 120);
+  return clampPetPosition({
+    x: 8 + width * clampRatio(placement.xRatio),
+    y: 8 + height * clampRatio(placement.yRatio)
+  });
+}
+
+function placementFromPosition(position: { x: number; y: number }): SpritePetPlacement {
+  return {
+    xRatio: clampRatio((position.x - 8) / Math.max(1, window.innerWidth - 112)),
+    yRatio: clampRatio((position.y - 8) / Math.max(1, window.innerHeight - 120))
+  };
+}
+
+function clampRatio(value: number) {
+  return Math.min(1, Math.max(0, value));
 }
 
 function clampPetPosition(position: { x: number; y: number }) {

@@ -1,9 +1,17 @@
 import { honeyModelGateway } from "./honey.model-gateway.js";
 import { honeyRepository } from "./honey.repository.js";
-import type { HoneyChatInput } from "./honey.types.js";
+import type { HoneyChatInput, PikoMascotSettings } from "./honey.types.js";
 import { honeyWorker } from "./honey.worker.js";
 
 export class HoneyService {
+  mascotSettings() {
+    return honeyRepository.mascotSettings();
+  }
+
+  updateMascotSettings(settings: PikoMascotSettings, actorId: string) {
+    return honeyRepository.updateMascotSettings(settings, actorId);
+  }
+
   connection() {
     return honeyModelGateway.settings();
   }

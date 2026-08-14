@@ -7,6 +7,7 @@ export type TimestampColumn = ColumnType<
 >;
 
 export type DevkitDatabase = {
+  devkit_honey_mascot_settings: HoneyMascotSettingsTable;
   devkit_honey_messages: HoneyMessagesTable;
   devkit_honey_runs: HoneyRunsTable;
   devkit_honey_threads: HoneyThreadsTable;
@@ -14,6 +15,19 @@ export type DevkitDatabase = {
   devkit_platform_registry_groups: PlatformRegistryGroupsTable;
   devkit_platform_registry_modules: PlatformRegistryModulesTable;
   devkit_platform_registry_platforms: PlatformRegistryPlatformsTable;
+};
+
+export type HoneyMascotSettingsTable = {
+  behavior: string;
+  created_at: TimestampColumn;
+  created_by: string;
+  id: Generated<number>;
+  status: string;
+  updated_at: TimestampColumn;
+  updated_by: string;
+  uuid: string;
+  x_ratio: ColumnType<number, number | string, number | string>;
+  y_ratio: ColumnType<number, number | string, number | string>;
 };
 
 export type HoneyThreadsTable = {

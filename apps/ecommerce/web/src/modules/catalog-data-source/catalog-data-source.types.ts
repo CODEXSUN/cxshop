@@ -11,12 +11,32 @@ export type CatalogModuleDataSource = {
 };
 
 export type CatalogDataSourceSettings = {
+  appKeyConfigured: boolean;
+  appSecretConfigured: boolean;
+  connectionName: string;
   frappeConfigured: boolean;
+  frappeEnabled: boolean;
   frappeUrl: string | null;
   lastVerifiedAt: string | null;
   modules: CatalogModuleDataSource[];
+  saveToEnvironment: boolean;
   verificationStatus: "live" | "offline" | "unverified";
+  verifiedUser: string | null;
 };
+
+export type FrappeConnectionPayload = {
+  apiKey?: string;
+  apiSecret?: string;
+  connectionName: string;
+  enabled: boolean;
+  saveToEnvironment: true;
+  url: string;
+};
+
+export type FrappeVerificationPayload = Pick<
+  FrappeConnectionPayload,
+  "apiKey" | "apiSecret" | "url"
+>;
 
 export type CatalogDataSourceConnectionResult = {
   connected: boolean;

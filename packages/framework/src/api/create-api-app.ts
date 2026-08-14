@@ -5,6 +5,7 @@ import { isAppError } from "../errors/index.js";
 import { fail, ok } from "../http/index.js";
 import { registerShutdownHooks, type ShutdownHook } from "./graceful-shutdown.js";
 import { registerTenantContext } from "./tenant-context.js";
+import { renderApiWelcomePage, type ApiWelcomePageOptions } from "./api-welcome-page.js";
 
 export type CreateApiAppOptions = {
   appName: string;
@@ -13,6 +14,7 @@ export type CreateApiAppOptions = {
   environment: string;
   onReady?: () => Promise<void> | void;
   shutdownHooks?: ShutdownHook[];
+  welcomePage?: ApiWelcomePageOptions;
 };
 
 function requestMeta(request: { correlationId?: string; id: string; tenantId?: string }) {
@@ -95,15 +97,19 @@ export async function createApiApp(options: CreateApiAppOptions): Promise<Fastif
     registerShutdownHooks(app, options.shutdownHooks);
   }
 
-  app.get("/", async (request) =>
-    ok(
+  app.get("/", async (request, reply) => {
+    if (options.welcomePage && request.headers.accept?.includes("text/html")) {
+      return reply.type("text/html; charset=utf-8").send(renderApiWelcomePage(options.welcomePage));
+    }
+
+    return ok(
       {
         name: options.appName,
         status: "ready"
       },
       requestMeta(request)
-    )
-  );
+    );
+  });
 
   return app;
 }

@@ -1,21 +1,28 @@
-import { DatabaseIcon, DownloadIcon, RefreshCwIcon, ServerIcon, UploadIcon } from "lucide-react";
+import { useState } from "react";
+import { DownloadIcon, RefreshCwIcon, UploadIcon } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@cxshop/ui/components/button";
 import { Card } from "@cxshop/ui/components/card";
-import { RadioGroup, RadioGroupItem } from "@cxshop/ui/components/radio-group";
 import { WorkspacePage } from "@cxshop/ui/workspace/page";
 import { WorkspaceStatusBadge } from "@cxshop/ui/workspace/status";
+import { CatalogDataSourceForm } from "./catalog-data-source.form";
 import { useCatalogDataSource } from "./catalog-data-source.hooks";
+import { CatalogDataSourceList } from "./catalog-data-source.list";
 import type {
   CatalogDataSourceModule,
-  CatalogDataSourceProvider,
-  CatalogModuleDataSource
+  CatalogDataSourceProvider
 } from "./catalog-data-source.types";
 
 export function CatalogDataSourceWorkspace() {
-  const { save, settings, sync, test } = useCatalogDataSource();
+  const { save, saveConnection, settings, sync, test, verifyConnection } = useCatalogDataSource();
+  const [compact, setCompact] = useState(false);
   const value = settings.data;
-  const busy = save.isPending || sync.isPending || test.isPending;
+  const busy =
+    save.isPending ||
+    saveConnection.isPending ||
+    sync.isPending ||
+    test.isPending ||
+    verifyConnection.isPending;
 
   function change(module: CatalogDataSourceModule, provider: CatalogDataSourceProvider) {
     save.mutate(
@@ -38,6 +45,21 @@ export function CatalogDataSourceWorkspace() {
     });
   }
 
+  function verifyConnectionDetails(input: Parameters<typeof verifyConnection.mutate>[0]) {
+    verifyConnection.mutate(input, {
+      onError: (error) => toast.error(error.message),
+      onSuccess: (result) =>
+        result.connected ? toast.success(result.message) : toast.error(result.message)
+    });
+  }
+
+  function saveConnectionDetails(input: Parameters<typeof saveConnection.mutate>[0]) {
+    saveConnection.mutate(input, {
+      onError: (error) => toast.error(error.message),
+      onSuccess: () => toast.success("Frappe connector saved to MariaDB and .env.")
+    });
+  }
+
   function synchronize(action: "pull" | "push" | "seed-demo") {
     sync.mutate(action, {
       onError: (error) => toast.error(error.message),
@@ -53,12 +75,18 @@ export function CatalogDataSourceWorkspace() {
       title="Data Source"
       description="Route each Ecommerce module to local MariaDB or live Frappe. Local is the default and remains available for every module."
     >
-      <div className="grid gap-4">
+      <div className={`grid ${compact ? "gap-3" : "gap-5"}`}>
+        <CatalogDataSourceForm
+          busy={busy || settings.isLoading}
+          onSave={saveConnectionDetails}
+          onVerify={verifyConnectionDetails}
+          {...(value ? { settings: value } : {})}
+        />
         <Card
           title="Module data routing"
           description="Choose one live read source per module. Changes apply immediately to storefront requests."
         >
-          <DataSourceTable
+          <CatalogDataSourceList
             busy={busy || settings.isLoading}
             frappeConfigured={value?.frappeConfigured ?? false}
             modules={value?.modules ?? []}
@@ -80,114 +108,20 @@ export function CatalogDataSourceWorkspace() {
           />
         </div>
       </div>
-    </WorkspacePage>
-  );
-}
-
-function DataSourceTable({
-  busy,
-  frappeConfigured,
-  modules,
-  onChange
-}: {
-  busy: boolean;
-  frappeConfigured: boolean;
-  modules: CatalogModuleDataSource[];
-  onChange: (module: CatalogDataSourceModule, provider: CatalogDataSourceProvider) => void;
-}) {
-  return (
-    <div className="overflow-x-auto">
-      <table className="w-full min-w-[720px] border-collapse text-sm">
-        <thead>
-          <tr className="border-b bg-muted/35 text-left text-xs uppercase tracking-wide text-muted-foreground">
-            <th className="px-4 py-3 font-semibold">Module</th>
-            <th className="px-4 py-3 font-semibold">Purpose</th>
-            <th className="w-44 px-4 py-3 text-center font-semibold">Local MariaDB</th>
-            <th className="w-44 px-4 py-3 text-center font-semibold">Frappe Live</th>
-          </tr>
-        </thead>
-        <tbody>
-          {modules.map((item) => (
-            <DataSourceRow
-              busy={busy}
-              frappeConfigured={frappeConfigured}
-              item={item}
-              key={item.module}
-              onChange={onChange}
-            />
-          ))}
-        </tbody>
-      </table>
-      {!frappeConfigured ? (
-        <p className="border-t px-4 py-3 text-sm text-muted-foreground">
-          Configure and verify Frappe in Super Admin before selecting a Frappe Live radio option.
-        </p>
-      ) : null}
-    </div>
-  );
-}
-
-function DataSourceRow({
-  busy,
-  frappeConfigured,
-  item,
-  onChange
-}: {
-  busy: boolean;
-  frappeConfigured: boolean;
-  item: CatalogModuleDataSource;
-  onChange: (module: CatalogDataSourceModule, provider: CatalogDataSourceProvider) => void;
-}) {
-  return (
-    <tr className="border-b last:border-b-0 hover:bg-muted/20">
-      <td className="px-4 py-4">
-        <strong className="font-medium">{item.label}</strong>
-        <div className="pt-1">
-          <WorkspaceStatusBadge
-            label={item.provider === "own" ? "Local priority" : "Live from Frappe"}
-            tone={item.provider === "own" ? "success" : "info"}
-          />
-        </div>
-      </td>
-      <td className="px-4 py-4 text-muted-foreground">{item.description}</td>
-      <td colSpan={2} className="px-4 py-4">
-        <RadioGroup
-          aria-label={`${item.label} data source`}
-          className="grid grid-cols-2 gap-4"
-          disabled={busy}
-          onValueChange={(provider) => onChange(item.module, provider as CatalogDataSourceProvider)}
-          value={item.provider}
+      <div className="fixed bottom-5 right-5 z-30 flex items-center gap-1 rounded-md border bg-background/95 p-1 shadow-sm backdrop-blur">
+        <span className="px-2 text-xs text-muted-foreground">Density</span>
+        <Button onClick={() => setCompact(true)} size="sm" variant={compact ? "default" : "ghost"}>
+          Compact
+        </Button>
+        <Button
+          onClick={() => setCompact(false)}
+          size="sm"
+          variant={!compact ? "default" : "ghost"}
         >
-          <SourceOption icon={DatabaseIcon} label="Local" value="own" />
-          <SourceOption
-            disabled={!frappeConfigured}
-            icon={ServerIcon}
-            label="Frappe"
-            value="frappe"
-          />
-        </RadioGroup>
-      </td>
-    </tr>
-  );
-}
-
-function SourceOption({
-  disabled = false,
-  icon: Icon,
-  label,
-  value
-}: {
-  disabled?: boolean;
-  icon: typeof DatabaseIcon;
-  label: string;
-  value: CatalogDataSourceProvider;
-}) {
-  return (
-    <label className="flex cursor-pointer items-center justify-center gap-2 rounded-md border px-3 py-2 transition-colors hover:bg-accent/60 has-[[data-state=checked]]:border-primary has-[[data-state=checked]]:bg-primary/5 has-[:disabled]:cursor-not-allowed has-[:disabled]:opacity-45">
-      <RadioGroupItem disabled={disabled} value={value} />
-      <Icon className="size-4" />
-      <span>{label}</span>
-    </label>
+          Relaxed
+        </Button>
+      </div>
+    </WorkspacePage>
   );
 }
 

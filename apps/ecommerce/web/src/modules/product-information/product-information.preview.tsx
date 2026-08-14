@@ -27,21 +27,16 @@ export function ProductInformationPreview({
   value: ProductInformationPayload;
 }) {
   const preview: PreviewProps = {
-    brand:
-      brands.find((candidate) => candidate.id === value.brandId)?.name ||
-      value.manufacturer ||
-      "Brand",
-    category: value.subtitle || "Category",
-    description:
-      value.shortDescription ||
-      "Add a concise description to help customers understand the product.",
+    brand: brands.find((candidate) => candidate.id === value.brandId)?.name || value.manufacturer,
+    category: value.subtitle,
+    description: value.shortDescription,
     featured: value.isFeatured,
     image: usableImage(frappeItem?.image),
     price:
-      frappeItem?.standardRate === null || frappeItem?.standardRate === undefined
-        ? "Price on request"
+      !frappeItem?.standardRate || frappeItem.standardRate <= 0
+        ? ""
         : `₹${frappeItem.standardRate.toLocaleString("en-IN")}`,
-    title: value.storefrontTitle || "Your product title"
+    title: value.storefrontTitle
   };
 
   return (
@@ -85,9 +80,11 @@ function FeaturedPreview(props: PreviewProps) {
     >
       <ProductImage {...props} className="aspect-square bg-slate-100" />
       <div className="space-y-3 p-5">
-        <p className="text-xs font-medium text-white/70">{props.brand} · Featured system</p>
-        <h4 className="text-xl font-semibold leading-tight">{props.title}</h4>
-        <p className="line-clamp-2 text-sm leading-6 text-white/75">{props.description}</p>
+        <p className="text-xs font-medium text-white/70">
+          {[props.brand, "Featured system"].filter(Boolean).join(" · ")}
+        </p>
+        {props.title ? <h4 className="text-xl font-semibold leading-tight">{props.title}</h4> : null}
+        {props.description ? <p className="line-clamp-2 text-sm leading-6 text-white/75">{props.description}</p> : null}
         <span className="flex items-center gap-2 pt-1 text-sm font-medium">
           Explore this product <ArrowUpRight className="size-4" />
         </span>
@@ -104,13 +101,13 @@ function PromotionPreview(props: PreviewProps) {
     >
       <ProductImage {...props} className="aspect-square bg-muted/45" />
       <div className="space-y-3 p-4">
-        <p className="text-xs text-muted-foreground">
-          {props.brand} · {props.category}
-        </p>
-        <h4 className="text-base font-semibold leading-snug">{props.title}</h4>
-        <strong className="block text-base">{props.price}</strong>
+        {[props.brand, props.category].filter(Boolean).length ? <p className="text-xs text-muted-foreground">
+          {[props.brand, props.category].filter(Boolean).join(" · ")}
+        </p> : null}
+        {props.title ? <h4 className="text-base font-semibold leading-snug">{props.title}</h4> : null}
+        {props.price ? <strong className="block text-base">{props.price}</strong> : null}
         <span className="flex items-center gap-2 border-t border-border pt-3 text-sm font-medium">
-          View offer <ArrowUpRight className="size-4" />
+          {props.price ? "View offer" : "Enquire"} <ArrowUpRight className="size-4" />
         </span>
       </div>
     </article>
@@ -121,15 +118,15 @@ function CollectionPreview(props: PreviewProps) {
   return (
     <article className="cx-item-preview-card cx-item-preview-card--collection bg-card" tabIndex={0}>
       <ProductImage {...props} className="aspect-square bg-muted/45" showFeatured />
-      <div className="space-y-2 px-0.5 pb-3 pt-4">
-        <p className="text-sm text-muted-foreground">
-          {props.brand} · {props.category}
-        </p>
-        <h4 className="text-base font-medium leading-snug">{props.title}</h4>
-        <p className="line-clamp-2 min-h-10 text-sm leading-6 text-muted-foreground">
+      <div className="space-y-2 p-4">
+        {[props.brand, props.category].filter(Boolean).length ? <p className="text-sm text-muted-foreground">
+          {[props.brand, props.category].filter(Boolean).join(" · ")}
+        </p> : null}
+        {props.title ? <h4 className="text-base font-medium leading-snug">{props.title}</h4> : null}
+        {props.description ? <p className="line-clamp-2 text-sm leading-6 text-muted-foreground">
           {props.description}
-        </p>
-        <strong className="block pb-2 text-base">{props.price}</strong>
+        </p> : null}
+        {props.price ? <strong className="block pb-2 text-base">{props.price}</strong> : null}
         <span className="flex items-center gap-2 border-t border-border py-3 text-sm text-foreground/80">
           <MessageCircle className="size-4" /> Enquire
         </span>

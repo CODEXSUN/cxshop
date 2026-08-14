@@ -59,6 +59,13 @@ export async function createApp() {
     cookieSecret: env.JWT_SECRET,
     corsOrigins: await platformWebOrigins(),
     environment: env.NODE_ENV,
+    welcomePage: {
+      actionLabel: "Open storefront",
+      actionUrl: env.PLATFORM_WEB_ORIGIN,
+      message:
+        "Everything is connected and ready. Continue to the storefront to browse products, discover current offers, and manage your shopping experience.",
+      title: "Welcome—your store is ready."
+    },
     shutdownHooks: [
       async () => {
         console.info("[shutdown] closing Blogs MariaDB pool");
@@ -159,16 +166,24 @@ export async function createApp() {
   await registerEcommerceApi(app, {
     catalogDataSource: {
       credentials: () => dataSourceSettings.frappeCredentials(),
+      save: (input, actorEmail) => dataSourceSettings.saveFrappe(input, actorEmail),
       settings: async () => {
         const value = await dataSourceSettings.settings();
         return {
+          appKeyConfigured: value.appKeyConfigured,
+          appSecretConfigured: value.appSecretConfigured,
+          connectionName: value.connectionName,
           frappeConfigured: value.frappeConfigured,
+          frappeEnabled: value.frappeEnabled,
           frappeUrl: value.frappeUrl,
           lastVerifiedAt: value.lastVerifiedAt,
-          verificationStatus: value.verificationStatus
+          saveToEnvironment: value.saveToEnvironment,
+          verificationStatus: value.verificationStatus,
+          verifiedUser: value.verifiedUser
         };
       },
-      test: (provider) => dataSourceSettings.test(provider)
+      test: (provider) => dataSourceSettings.test(provider),
+      verify: (input) => dataSourceSettings.verifyFrappe(input)
     },
     resolveActorEmail: (request) => request.authContext?.payload.email ?? "application-admin"
   });

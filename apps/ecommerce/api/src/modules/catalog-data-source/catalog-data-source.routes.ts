@@ -7,7 +7,11 @@ import { catalogDataSourceModules } from "./catalog-data-source.types.js";
 const provider = z.enum(["own", "frappe"]);
 const moduleKey = z.enum(catalogDataSourceModules);
 const settings = z.object({
+  appKeyConfigured: z.boolean(),
+  appSecretConfigured: z.boolean(),
+  connectionName: z.string(),
   frappeConfigured: z.boolean(),
+  frappeEnabled: z.boolean(),
   frappeUrl: z.string().nullable(),
   lastVerifiedAt: z.string().nullable(),
   modules: z.array(
@@ -20,7 +24,9 @@ const settings = z.object({
       updatedBy: z.string().nullable()
     })
   ),
-  verificationStatus: z.enum(["live", "offline", "unverified"])
+  saveToEnvironment: z.boolean(),
+  verificationStatus: z.enum(["live", "offline", "unverified"]),
+  verifiedUser: z.string().nullable()
 });
 const connection = z.object({
   connected: z.boolean(),
@@ -48,6 +54,21 @@ const frappeItem = z.object({
   standard_rate: z.union([z.number(), z.string()]).nullable().optional(),
   stock_uom: z.string().nullable().optional()
 });
+const optionalSecret = z.string().trim().max(2000).optional();
+const frappeVerification = z
+  .object({
+    apiKey: optionalSecret,
+    apiSecret: optionalSecret,
+    url: z.string().trim().min(1).max(500)
+  })
+  .strict();
+const frappeSave = frappeVerification
+  .extend({
+    connectionName: z.string().trim().min(1).max(160),
+    enabled: z.boolean(),
+    saveToEnvironment: z.literal(true)
+  })
+  .strict();
 
 export async function registerCatalogDataSourceRoutes(
   app: FastifyInstance,
@@ -90,6 +111,34 @@ export async function registerCatalogDataSourceRoutes(
     url: "/ecommerce/settings/data-source/test",
     schemas: { body: z.object({ provider }).strict(), response: connection },
     handler: ({ body }) => service.test(body.provider)
+  });
+  registerContractRoute(app, {
+    method: "POST",
+    url: "/ecommerce/settings/data-source/frappe/verify",
+    schemas: { body: frappeVerification, response: connection },
+    handler: ({ body }) =>
+      service.verifyFrappeConnection({
+        url: body.url,
+        ...(body.apiKey ? { apiKey: body.apiKey } : {}),
+        ...(body.apiSecret ? { apiSecret: body.apiSecret } : {})
+      })
+  });
+  registerContractRoute(app, {
+    method: "PUT",
+    url: "/ecommerce/settings/data-source/frappe",
+    schemas: { body: frappeSave, response: settings.omit({ modules: true }) },
+    handler: ({ body, request }) =>
+      service.saveFrappeConnection(
+        {
+          connectionName: body.connectionName,
+          enabled: body.enabled,
+          saveToEnvironment: true,
+          url: body.url,
+          ...(body.apiKey ? { apiKey: body.apiKey } : {}),
+          ...(body.apiSecret ? { apiSecret: body.apiSecret } : {})
+        },
+        resolveActorEmail(request)
+      )
   });
   registerContractRoute(app, {
     method: "POST",

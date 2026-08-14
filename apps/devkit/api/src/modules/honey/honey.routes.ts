@@ -17,6 +17,13 @@ const chatSchema = z
     threadId: z.string().length(16).nullable().optional()
   })
   .strict();
+const mascotSettingsSchema = z
+  .object({
+    behavior: z.enum(["roam", "stay"]),
+    xRatio: z.number().min(0).max(1),
+    yRatio: z.number().min(0).max(1)
+  })
+  .strict();
 
 export async function registerHoneyRoutes(app: FastifyInstance) {
   app.get("/honey/connection", async (request) =>
@@ -43,6 +50,17 @@ export async function registerHoneyRoutes(app: FastifyInstance) {
   app.get("/honey/system/connector", async (request) => {
     requireSystemAdmin();
     return ok(honeyModelGateway.settings(), { requestId: request.id });
+  });
+  app.get("/honey/system/mascot", async (request) => {
+    requireSystemAdmin();
+    return ok(await service.mascotSettings(), { requestId: request.id });
+  });
+  app.put("/honey/system/mascot", async (request) => {
+    const actor = requireSystemAdmin();
+    return ok(
+      await service.updateMascotSettings(mascotSettingsSchema.parse(request.body), actor.id),
+      { requestId: request.id }
+    );
   });
   app.post("/honey/system/connector/test", async (request) => {
     requireSystemAdmin();
@@ -115,4 +133,5 @@ function requireSystemAdmin() {
   const actor = requireDevkitActor();
   if (!actor.roles.includes("super_admin"))
     throw AppError.forbidden("System Admin access is required.");
+  return actor;
 }

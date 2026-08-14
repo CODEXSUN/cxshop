@@ -25,7 +25,7 @@ export class DataSourceSettingsService {
     const record = await this.repository.get();
     if (provider === "frappe" && !this.configured(record))
       throw AppError.validation(
-        "Configure the Frappe URL and API credentials in .env before enabling Frappe Live."
+        "Configure the Frappe URL and API credentials before enabling Frappe Live."
       );
     const updated = await this.repository.setProvider(provider, actorEmail);
     await this.activity.recordActivity({

@@ -1,6 +1,6 @@
 {
   "name": "@cxshop/ecommerce-web",
-  "version": "1.0.58",
+  "version": "1.0.59",
   "private": true,
   "type": "module",
   "exports": {
@@ -19,7 +19,7 @@
     "lint": "eslint src --ext .ts,.tsx"
   },
   "dependencies": {
-    "@cxshop/ui": "^1.0.58",
+    "@cxshop/ui": "^1.0.59",
     "@tanstack/react-query": "^5.100.10",
     "lucide-react": "^1.22.0",
     "react": "^19.0.0",

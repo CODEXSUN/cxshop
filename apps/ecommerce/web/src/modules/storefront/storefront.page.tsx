@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { ArrowRightIcon } from "lucide-react";
+import { ArrowLeftIcon, ArrowRightIcon } from "lucide-react";
 import {
   getStorefrontAnnouncement,
   getStorefrontBranding,
@@ -31,7 +31,7 @@ import type {
   StorefrontBlogPost,
   StorefrontSiteNavigation
 } from "./storefront.types";
-import { money, whatsappLink } from "./storefront.formatters";
+import { hasStorefrontPrice, money, whatsappLink } from "./storefront.formatters";
 import "./storefront.css";
 import { PikoStoreAssistant } from "./storefront.assistant";
 import { addStorefrontCartItem } from "./storefront.cart";
@@ -109,7 +109,7 @@ function CatalogPage({ category, searchPage = false }: { category: string; searc
         discovery={discovery}
         filters={filters}
       />
-      <main>
+      <main className={searchPage ? "cx-store__search-main" : undefined}>
         {!searchPage ? <HeroSlider products={featured} /> : null}
         {!searchPage ? <PromotionsSection products={promotions} /> : null}
         {!searchPage ? <BrandsSection brands={discovery.brands} /> : null}
@@ -161,6 +161,7 @@ function CatalogPage({ category, searchPage = false }: { category: string; searc
 
 function ProductPage({ slug }: { slug: string }) {
   const [product, setProduct] = useState<StorefrontProductDetail | null>(null);
+  const [similarProducts, setSimilarProducts] = useState<StorefrontProduct[]>([]);
   const [discovery, setDiscovery] = useState<StorefrontDiscovery>(emptyDiscovery);
   const [error, setError] = useState("");
   const [siteNavigation, setSiteNavigation] = useState<StorefrontSiteNavigation | null>(null);
@@ -168,9 +169,11 @@ function ProductPage({ slug }: { slug: string }) {
   const [branding, setBranding] = useState<StorefrontBranding | null>(null);
   useEffect(() => {
     Promise.all([getStorefrontProduct(slug), getStorefrontDiscovery()])
-      .then(([item, data]) => {
+      .then(async ([item, data]) => {
         setProduct(item);
         setDiscovery(data);
+        const related = await listStorefrontProducts(defaultFilters(item.category, ""));
+        setSimilarProducts(related.filter((candidate) => candidate.slug !== item.slug).slice(0, 4));
       })
       .catch((reason) =>
         setError(reason instanceof Error ? reason.message : "Product unavailable")
@@ -212,46 +215,78 @@ function ProductPage({ slug }: { slug: string }) {
   const enquiry = whatsappLink(
     `Hello${branding?.brandName ? ` ${branding.brandName}` : ""}, I would like to know more about ${product.name}.`
   );
+  const priced = hasStorefrontPrice(product.price);
+  const bulletPoints = product.bulletPoints.filter(Boolean);
+  const hasPolicies = Boolean(product.warranty || product.returnPolicy);
   return (
     <div className="cx-store">
       {header}
       <main className="cx-detail">
+        <button
+          className="cx-detail__back"
+          onClick={() => {
+            if (window.history.length > 1) window.history.back();
+            else window.location.assign("/shop");
+          }}
+          type="button"
+        >
+          <ArrowLeftIcon aria-hidden="true" /> Back
+        </button>
         <div className="cx-detail__image">
           <img src={product.imageUrl} alt={product.imageAlt} />
         </div>
         <div className="cx-detail__copy">
-          <a href={`/shop/category/${encodeURIComponent(product.category)}`}>{product.category}</a>
+          {product.category ? (
+            <a href={`/shop/category/${encodeURIComponent(product.category)}`}>{product.category}</a>
+          ) : null}
           <h1>{product.name}</h1>
-          <p className="cx-detail__subtitle">{product.shortDescription}</p>
-          <div className="cx-detail__price">
-            <strong>{money(product.price)}</strong>
-            {product.compareAtPrice ? <del>{money(product.compareAtPrice)}</del> : null}
-          </div>
-          <p>{product.description}</p>
-          <ul>
-            {product.bulletPoints.map((point) => (
+          {product.shortDescription ? (
+            <p className="cx-detail__subtitle">{product.shortDescription}</p>
+          ) : null}
+          {priced ? (
+            <div className="cx-detail__price">
+              <strong>{money(product.price)}</strong>
+              {hasStorefrontPrice(product.compareAtPrice) ? (
+                <del>{money(product.compareAtPrice ?? product.price)}</del>
+              ) : null}
+            </div>
+          ) : null}
+          {product.description ? <p>{product.description}</p> : null}
+          {bulletPoints.length ? <ul>
+            {bulletPoints.map((point) => (
               <li key={point}>{point}</li>
             ))}
-          </ul>
+          </ul> : null}
           <div className="cx-detail__actions">
-            <button onClick={() => addStorefrontCartItem(product)} type="button">
-              Add to basket
-            </button>
-            <a href={enquiry} rel="noreferrer" target="_blank">
+            {priced ? (
+              <button onClick={() => addStorefrontCartItem(product)} type="button">
+                Add to basket
+              </button>
+            ) : null}
+            <a className="cx-detail__whatsapp" href={enquiry} rel="noreferrer" target="_blank">
               Enquire on WhatsApp
             </a>
           </div>
-          <div className="cx-detail__policy">
-            <span>
+          {hasPolicies ? <div className="cx-detail__policy">
+            {product.warranty ? <span>
               <strong>Warranty</strong>
               {product.warranty}
-            </span>
-            <span>
+            </span> : null}
+            {product.returnPolicy ? <span>
               <strong>Returns</strong>
               {product.returnPolicy}
-            </span>
-          </div>
+            </span> : null}
+          </div> : null}
         </div>
+        {similarProducts.length ? (
+          <div className="cx-detail__similar">
+            <ProductSection
+              label="Similar items"
+              products={similarProducts}
+              title="More products you may like"
+            />
+          </div>
+        ) : null}
       </main>
       <BackToTopButton />
       <StoreFooter branding={branding} navigation={siteNavigation} />

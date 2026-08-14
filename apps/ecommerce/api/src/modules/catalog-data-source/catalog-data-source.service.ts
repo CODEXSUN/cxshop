@@ -8,6 +8,8 @@ import type {
   CatalogSyncResult,
   CatalogDataSourceControl,
   CatalogDataSourceProvider,
+  FrappeConnectionPayload,
+  FrappeVerificationPayload,
   StorefrontCatalogSource
 } from "./catalog-data-source.types.js";
 
@@ -62,6 +64,14 @@ export class CatalogDataSourceService implements StorefrontCatalogSource {
 
   frappeItem(itemCode: string) {
     return this.frappe.item(itemCode);
+  }
+
+  saveFrappeConnection(input: FrappeConnectionPayload, actorEmail: string) {
+    return this.control.save(input, actorEmail);
+  }
+
+  verifyFrappeConnection(input: FrappeVerificationPayload) {
+    return this.control.verify(input);
   }
 
   async settings() {

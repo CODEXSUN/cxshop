@@ -11,7 +11,14 @@ import {
 } from "../modules/platform-registry/platform-registry.migration.js";
 import { seedPlatformRegistryModule } from "../modules/platform-registry/platform-registry.seed.js";
 import type { DevkitDatabase } from "./schema.js";
-import { honeyMigration, migrateHoneyModule } from "../modules/honey/honey.migration.js";
+import {
+  honeyMascotSettingsMigration,
+  honeyMascotSettingsStandardizationMigration,
+  honeyMigration,
+  migrateHoneyMascotSettings,
+  migrateHoneyModule,
+  standardizeHoneyMascotSettings
+} from "../modules/honey/honey.migration.js";
 import { seedHoneyModule } from "../modules/honey/honey.seed.js";
 import {
   devkitSchemaStandardizationMigration,
@@ -42,6 +49,16 @@ const migrationSteps = [
     description: honeyMigration.description,
     migrate: migrateHoneyModule,
     name: honeyMigration.key
+  },
+  {
+    description: honeyMascotSettingsMigration.description,
+    migrate: migrateHoneyMascotSettings,
+    name: honeyMascotSettingsMigration.key
+  },
+  {
+    description: honeyMascotSettingsStandardizationMigration.description,
+    migrate: standardizeHoneyMascotSettings,
+    name: honeyMascotSettingsStandardizationMigration.key
   },
   {
     description: platformRegistryTableRenameMigration.description,

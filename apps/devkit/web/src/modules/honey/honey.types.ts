@@ -1,4 +1,9 @@
 export type HoneyMode = "chat" | "content-writer";
+export type PikoMascotSettings = {
+  behavior: "roam" | "stay";
+  xRatio: number;
+  yRatio: number;
+};
 export type HoneyConnection = {
   configured: boolean;
   endpoint: string;

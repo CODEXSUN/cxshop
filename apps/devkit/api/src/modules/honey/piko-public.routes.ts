@@ -24,6 +24,12 @@ export async function registerPikoPublicRoutes(
   app: FastifyInstance,
   adapter: PikoPublicHostAdapter
 ) {
+  app.get("/public/piko/mascot", async (request) => {
+    const database = adapter.resolveDatabase(request);
+    await bootstrapDevkitDatabase(database);
+    const settings = await runWithDevkitDatabase(database, () => service.mascotSettings());
+    return ok(settings, { requestId: request.id });
+  });
   app.post("/public/piko/chat", async (request) => {
     const input = requestSchema.parse(request.body);
     const database = adapter.resolveDatabase(request);

@@ -2,11 +2,11 @@
 
 ## Version State
 
-Current version: 1.0.58
+Current version: 1.0.59
 
-Release tag: v-1.0.58
+Release tag: v-1.0.59
 
-Changelog label: v 1.0.58
+Changelog label: v 1.0.59
 
 This changelog starts fresh from the cleaned CODEXSUN foundation. Earlier copied application history was intentionally removed because it did not represent the current workspace.
 
@@ -19,6 +19,51 @@ Records schema, migration, seed, tenant provisioning, and data compatibility cha
 #### App Codebase Changes
 
 Records UI, API, service logic, tooling, packaging, and documentation changes.
+
+## v-1.0.59
+
+### [v 1.0.59] 2026-08-14 8:38 am - Storefront product and development runtime updates
+
+#### Database Changes
+
+- Database update: No.
+
+#### App Codebase Changes
+
+- Added an API welcome card for browser requests. The card links to the configured storefront, while
+  API clients continue to receive the JSON readiness response.
+- Updated the development launcher to use configured API and web ports. Production replaces an
+  existing process on its configured port, while development prevents duplicate supervisors.
+- Made the web launcher wait for five stable API health checks before it starts Vite. Added restart
+  delays so file changes and normal startup activity do not cause restart loops.
+- Changed product image areas to white and matched the WhatsApp action to its green application
+  color with white text.
+- Hid empty product fields and prices that are empty, invalid, or zero. Products without a valid
+  price now show enquiry actions without basket actions.
+- Added consistent content padding to storefront product cards and admin storefront previews.
+- Added a compact Back button and up to four similar category items to the product page. The similar
+  item grid adapts from four columns to two columns and then one column.
+- Expanded the search results layout to 80 percent of the desktop viewport. Smaller screens use the
+  available width with responsive page padding.
+
+### [v 1.0.59] 2026-08-14 8:30 am - Global Piko mascot placement
+
+#### Database Changes
+
+- Database update: Yes. Added the DevKit-owned global Piko mascot settings table and its
+  forward-only schema standardization migration.
+- Stored one viewport-relative home position and Stay or Roam behavior for all Piko clients.
+- Recorded the System Admin actor and update time for each global settings change.
+
+#### App Codebase Changes
+
+- Bumped workspace version to 1.0.59.
+- Added System Admin-only Piko dragging and Stay or Roam controls in the back office.
+- Added a public read-only mascot settings endpoint for the storefront.
+- Removed browser-specific position persistence. Piko now returns to the global home position after
+  each reload, while automatic roaming does not overwrite that position.
+- Kept Piko chat and voice actions available to storefront users without exposing movement controls.
+- Used viewport-relative coordinates so the global position adapts to different screen sizes.
 
 ## v-1.0.58
 
@@ -67,6 +112,12 @@ Records UI, API, service logic, tooling, packaging, and documentation changes.
   footer, assistant, catalog, article, and public-page fallbacks that caused white-label flicker.
 - Added Ecommerce Settings -> Storefront Profile with persisted footer content, social links, a live
   footer preview, authenticated editing, and a public storefront profile contract.
+- Updated the Frappe live-storefront adapter for LogicX iShop 1.0.9. Storefront reads now use the
+  LogicX-owned catalog snapshot contract, retain published catalog ordering, and use linked ERPNext
+  price, brand, category, or image values only when the iShop Item leaves those values empty.
+- Added the shared Frappe connector to Ecommerce Settings for Application Admin users. The form
+  verifies URL, API key, and secret through the existing Platform connection service, stores secrets
+  encrypted in MariaDB, and synchronizes the same connection to the configured root `.env`.
 
 ## v-1.0.57
 

@@ -1,9 +1,36 @@
 import { randomBytes } from "node:crypto";
 import { AppError } from "@cxshop/framework/errors";
 import { getDevkitDatabase } from "../../database/devkit-database.js";
-import type { HoneyMode, HoneyProvider, HoneyRole } from "./honey.types.js";
+import type { HoneyMode, HoneyProvider, HoneyRole, PikoMascotSettings } from "./honey.types.js";
 
 class HoneyRepository {
+  async mascotSettings(): Promise<PikoMascotSettings> {
+    const row = await getDevkitDatabase()
+      .selectFrom("devkit_honey_mascot_settings")
+      .select(["behavior", "x_ratio", "y_ratio"])
+      .where("id", "=", 1)
+      .executeTakeFirstOrThrow();
+    return {
+      behavior: row.behavior === "stay" ? "stay" : "roam",
+      xRatio: Number(row.x_ratio),
+      yRatio: Number(row.y_ratio)
+    };
+  }
+
+  async updateMascotSettings(settings: PikoMascotSettings, actorId: string) {
+    await getDevkitDatabase()
+      .updateTable("devkit_honey_mascot_settings")
+      .set({
+        behavior: settings.behavior,
+        updated_by: actorId,
+        x_ratio: settings.xRatio,
+        y_ratio: settings.yRatio
+      })
+      .where("id", "=", 1)
+      .executeTakeFirst();
+    return this.mascotSettings();
+  }
+
   listThreads(actorId: string) {
     return getDevkitDatabase()
       .selectFrom("devkit_honey_threads")
