@@ -236,33 +236,36 @@ async function freePort(port, host) {
 
   console.log(`  ! ${host}:${port} is already in use by PID ${pids.join(", ")}`);
 
-  const nodeEnvironment = process.env.NODE_ENV ?? env.NODE_ENV ?? "development";
-  const defaultPortPolicy = nodeEnvironment === "production" ? "replace" : "abort";
-  const portPolicy =
-    process.env.CXSHOP_DEV_PORT_POLICY ?? env.CXSHOP_DEV_PORT_POLICY ?? defaultPortPolicy;
-
-  if (portPolicy !== "replace") {
-    console.log("  ok Existing development service keeps ownership of this port.");
-    console.log("  - No replacement or restart is required.\n");
-    process.exit(75);
+  const portPolicy = process.env.CXSHOP_DEV_PORT_POLICY ?? env.CXSHOP_DEV_PORT_POLICY;
+  if (portPolicy === "abort") {
+    console.error(
+      "  x Port policy is abort. Stop the existing process or change CXSHOP_DEV_PORT_POLICY.\n"
+    );
+    process.exit(1);
   }
 
-  for (const pid of pids) {
-    killPid(pid);
-    console.log(`  ok Stopped PID ${pid}`);
-  }
-
-  for (let attempt = 0; attempt < 40; attempt += 1) {
+  const stoppedPids = new Set(stopPortProcesses(pids));
+  let consecutiveFreeChecks = 0;
+  for (let attempt = 0; attempt < 60; attempt += 1) {
     if (await probePort(port, host)) {
-      await waitForPortRelease();
-      console.log(`  ok ${host}:${port} is ready\n`);
-      return;
+      consecutiveFreeChecks += 1;
+      if (consecutiveFreeChecks >= 8) {
+        await waitForPortRelease();
+        console.log(`  ok ${host}:${port} is ready\n`);
+        return;
+      }
+    } else {
+      consecutiveFreeChecks = 0;
+      const reboundPids = getPidsOnPort(port);
+      for (const pid of stopPortProcesses(reboundPids)) stoppedPids.add(pid);
     }
 
     await new Promise((resolveWait) => setTimeout(resolveWait, 250));
   }
 
-  console.error(`  x Port ${port} was not released after stopping PID ${pids.join(", ")}.\n`);
+  console.error(
+    `  x Port ${port} was not released after stopping PID ${[...stoppedPids].join(", ")}.\n`
+  );
   process.exit(1);
 }
 
@@ -370,6 +373,71 @@ function killPid(pid) {
   }
 
   process.kill(pid, "SIGTERM");
+}
+
+function stopPortProcesses(listenerPids) {
+  const replacementTargets = new Map();
+  for (const listenerPid of listenerPids) {
+    const replacementPid = replacementProcessId(listenerPid);
+    const listeners = replacementTargets.get(replacementPid) ?? [];
+    listeners.push(listenerPid);
+    replacementTargets.set(replacementPid, listeners);
+  }
+  const stoppedPids = [];
+  for (const [pid, ownedListeners] of replacementTargets) {
+    try {
+      killPid(pid);
+      stoppedPids.push(pid);
+      const detail = ownedListeners.includes(pid)
+        ? ""
+        : ` (owns listener PID ${ownedListeners.join(", ")})`;
+      console.log(`  ok Stopped PID ${pid}${detail}`);
+    } catch {
+      // The process can exit between the port scan and taskkill.
+    }
+  }
+  return stoppedPids;
+}
+
+function replacementProcessId(listenerPid) {
+  if (process.platform !== "win32") return listenerPid;
+  let currentPid = listenerPid;
+  let serviceSupervisorPid = listenerPid;
+  for (let depth = 0; depth < 8; depth += 1) {
+    const processInfo = windowsProcessInfo(currentPid);
+    if (!processInfo) return listenerPid;
+    const commandLine = processInfo.commandLine.replaceAll("\\", "/");
+    if (
+      commandLine.includes("tools/dev-restart.mjs") &&
+      commandLine.includes(app)
+    ) {
+      serviceSupervisorPid = processInfo.processId;
+    }
+    if (commandLine.includes("tools/dev-stack.mjs")) return processInfo.processId;
+    if (!processInfo.parentProcessId || processInfo.parentProcessId === currentPid) break;
+    currentPid = processInfo.parentProcessId;
+  }
+  return serviceSupervisorPid;
+}
+
+function windowsProcessInfo(pid) {
+  try {
+    const command = `$process = Get-CimInstance Win32_Process -Filter "ProcessId=${pid}"; if ($process) { [pscustomobject]@{ processId=$process.ProcessId; parentProcessId=$process.ParentProcessId; commandLine=$process.CommandLine } | ConvertTo-Json -Compress }`;
+    const output = execFileSync(
+      "powershell.exe",
+      ["-NoProfile", "-NonInteractive", "-Command", command],
+      { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }
+    ).trim();
+    if (!output) return null;
+    const value = JSON.parse(output);
+    return {
+      commandLine: String(value.commandLine ?? ""),
+      parentProcessId: Number(value.parentProcessId ?? 0),
+      processId: Number(value.processId ?? pid)
+    };
+  } catch {
+    return null;
+  }
 }
 
 function stopChild(childProcess, signal) {

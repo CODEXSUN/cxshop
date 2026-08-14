@@ -52,11 +52,11 @@ export async function registerHoneyRoutes(app: FastifyInstance) {
     return ok(honeyModelGateway.settings(), { requestId: request.id });
   });
   app.get("/honey/system/mascot", async (request) => {
-    requireSystemAdmin();
+    requireMascotAdmin();
     return ok(await service.mascotSettings(), { requestId: request.id });
   });
   app.put("/honey/system/mascot", async (request) => {
-    const actor = requireSystemAdmin();
+    const actor = requireMascotAdmin();
     return ok(
       await service.updateMascotSettings(mascotSettingsSchema.parse(request.body), actor.id),
       { requestId: request.id }
@@ -133,5 +133,12 @@ function requireSystemAdmin() {
   const actor = requireDevkitActor();
   if (!actor.roles.includes("super_admin"))
     throw AppError.forbidden("System Admin access is required.");
+  return actor;
+}
+
+function requireMascotAdmin() {
+  const actor = requireDevkitActor();
+  if (!actor.roles.some((role) => role === "super_admin" || role === "tenant_admin"))
+    throw AppError.forbidden("Admin access is required to configure Piko.");
   return actor;
 }

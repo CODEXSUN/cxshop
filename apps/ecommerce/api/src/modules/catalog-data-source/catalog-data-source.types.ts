@@ -75,6 +75,7 @@ export type FrappeErpItem = {
   item_code: string;
   item_group?: string | null;
   item_name: string;
+  modified?: string | null;
   standard_rate?: number | string | null;
   stock_uom?: string | null;
 };
@@ -90,6 +91,7 @@ export type FrappeIShopItem = {
   item_group?: string | null;
   item_name: string;
   mrp?: number | string | null;
+  modified?: string | null;
   name?: string;
   published?: number;
   short_description?: string | null;
@@ -102,6 +104,7 @@ export type FrappeIShopCatalog = {
   catalog_items?: Array<{ display_order?: number; ishop_item: string }>;
   catalog_name: string;
   description?: string | null;
+  modified?: string | null;
   name?: string;
   published?: number;
 };

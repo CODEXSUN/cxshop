@@ -9,8 +9,9 @@ export class CompanyRepository {
       logo_dark_path: string | null;
       logo_path: string | null;
       name: string;
+      primary_phone: string | null;
       updated_at: Date | string;
-    }>`SELECT c.name,c.legal_name,c.logo_path,c.logo_dark_path,c.updated_at FROM core_default_company_settings d INNER JOIN core_companies c ON c.id=d.company_id WHERE d.singleton_key=1 AND d.status='active' AND c.status='active' LIMIT 1`.execute(
+    }>`SELECT c.name,c.legal_name,c.logo_path,c.logo_dark_path,c.primary_phone,c.updated_at FROM core_default_company_settings d INNER JOIN core_companies c ON c.id=d.company_id WHERE d.singleton_key=1 AND d.status='active' AND c.status='active' LIMIT 1`.execute(
       getCoreDatabase()
     );
     const row = rows.rows[0];
@@ -20,6 +21,7 @@ export class CompanyRepository {
           logoDarkPath: row.logo_dark_path,
           logoPath: row.logo_path,
           name: row.name,
+          primaryPhone: row.primary_phone,
           updatedAt:
             row.updated_at instanceof Date
               ? row.updated_at.toISOString()

@@ -1,6 +1,6 @@
 {
   "name": "@cxshop/version-tools",
-  "version": "1.0.59",
+  "version": "1.0.61",
   "private": true,
   "type": "module",
   "bin": {

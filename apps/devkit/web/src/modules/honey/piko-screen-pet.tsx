@@ -10,43 +10,41 @@ import type { PikoMascotSettings } from "./honey.types";
 const defaultSettings: PikoMascotSettings = { behavior: "roam", xRatio: 1, yRatio: 1 };
 
 export function PikoScreenPet({ onClick }: { onClick: () => void }) {
-  const [settings, setSettings] = useState(defaultSettings);
-  const [canManage, setCanManage] = useState(false);
+  const [settings, setSettings] = useState<PikoMascotSettings | null>(null);
 
   useEffect(() => {
     void getPikoMascotSettings()
-      .then((next) => {
-        setSettings(next);
-        setCanManage(true);
-      })
+      .then(setSettings)
       .catch(() =>
         loadPublicSettings()
           .then(setSettings)
-          .catch(() => undefined)
+          .catch(() => setSettings(defaultSettings))
       );
   }, []);
 
   function save(patch: Partial<PikoMascotSettings>) {
-    const next = { ...settings, ...patch };
+    if (!settings) return;
+    const previous = settings;
+    const next = { ...previous, ...patch };
     setSettings(next);
     void updatePikoMascotSettings(next)
       .then(setSettings)
-      .catch(() => setSettings(settings));
+      .catch(() => setSettings(previous));
   }
+
+  if (!settings) return null;
 
   return (
     <DraggableSpritePet
       alt="Piko the panda storekeeper"
       behavior={settings.behavior}
-      canManage={canManage}
-      className={
-        canManage
-          ? "h-[104px] w-[96px] cursor-grab drop-shadow-xl active:cursor-grabbing"
-          : "h-[104px] w-[96px] cursor-pointer drop-shadow-xl"
-      }
+      canManage
+      className="h-[104px] w-[96px] cursor-grab drop-shadow-xl active:cursor-grabbing"
       onBehaviorChange={(behavior: SpritePetBehavior) => save({ behavior })}
       onClick={onClick}
-      onPlacementChange={(placement: SpritePetPlacement) => save(placement)}
+      onPlacementChange={(placement: SpritePetPlacement) =>
+        save({ ...placement, behavior: "stay" })
+      }
       placement={settings}
       src="/mascots/piko/spritesheet.webp"
       storageKey="cxshop.piko"

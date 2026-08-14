@@ -44,12 +44,16 @@ import {
 } from "../modules/storefront-profile/storefront-profile.migration.js";
 import { seedStorefrontProfileModule } from "../modules/storefront-profile/storefront-profile.seed.js";
 import {
+  catalogDataSourceCompatibilityMigration,
+  catalogDataSourceSeedCompatibilityMigration,
   catalogModuleDataSourceMigration,
   catalogDataSourceAuditMigration,
   catalogDataSourceSyncMigration,
   migrateCatalogModuleDataSources,
   migrateCatalogDataSourceSync,
-  upgradeCatalogDataSourceAudit
+  upgradeCatalogDataSourceAudit,
+  upgradeCatalogDataSourceCompatibility,
+  upgradeCatalogDataSourceSeedCompatibility
 } from "../modules/catalog-data-source/catalog-data-source.migration.js";
 
 export type EcommerceDatabase = Record<string, unknown>;
@@ -76,6 +80,8 @@ export const ecommerceTenantMigrations = [
   catalogDataSourceSyncMigration,
   catalogDataSourceAuditMigration,
   catalogModuleDataSourceMigration,
+  catalogDataSourceCompatibilityMigration,
+  catalogDataSourceSeedCompatibilityMigration,
   storefrontProfileMigration
 ] as const;
 export const ecommerceMigrationBatch: MigrationBatch<EcommerceDatabase> = {
@@ -203,6 +209,36 @@ const ecommerceStorefrontProfileMigrationBatch: MigrationBatch<EcommerceDatabase
     }
   ]
 };
+const ecommerceCatalogCompatibilityMigrationBatch: MigrationBatch<EcommerceDatabase> = {
+  batch: 7,
+  description: "Frappe-compatible local catalog cache fields.",
+  scope: "ecommerce",
+  version: "1.0.59",
+  steps: [
+    {
+      checksum: `${catalogDataSourceCompatibilityMigration.key}:v1`,
+      description: catalogDataSourceCompatibilityMigration.description,
+      name: catalogDataSourceCompatibilityMigration.key,
+      up: upgradeCatalogDataSourceCompatibility,
+      version: 1
+    }
+  ]
+};
+const ecommerceCatalogSeedCompatibilityMigrationBatch: MigrationBatch<EcommerceDatabase> = {
+  batch: 8,
+  description: "Local and Frappe catalog seed compatibility.",
+  scope: "ecommerce",
+  version: "1.0.59",
+  steps: [
+    {
+      checksum: `${catalogDataSourceSeedCompatibilityMigration.key}:v1`,
+      description: catalogDataSourceSeedCompatibilityMigration.description,
+      name: catalogDataSourceSeedCompatibilityMigration.key,
+      up: upgradeCatalogDataSourceSeedCompatibility,
+      version: 1
+    }
+  ]
+};
 
 export function resolveEcommerceDatabaseName(value: unknown) {
   void value;
@@ -255,6 +291,11 @@ export async function bootstrapEcommerceDatabase(databaseName: string) {
   await runMigrationBatch(getEcommerceDatabase(name), ecommerceCatalogSyncAuditMigrationBatch);
   await runMigrationBatch(getEcommerceDatabase(name), ecommerceModuleDataSourceMigrationBatch);
   await runMigrationBatch(getEcommerceDatabase(name), ecommerceStorefrontProfileMigrationBatch);
+  await runMigrationBatch(getEcommerceDatabase(name), ecommerceCatalogCompatibilityMigrationBatch);
+  await runMigrationBatch(
+    getEcommerceDatabase(name),
+    ecommerceCatalogSeedCompatibilityMigrationBatch
+  );
   await runWithEcommerceDatabase(name, seedProductInformationModule);
   await runWithEcommerceDatabase(name, seedProductVariantModule);
   await runWithEcommerceDatabase(name, seedProductImageModule);
@@ -273,6 +314,11 @@ export async function migrateEcommerceTenantDatabase(databaseName: string) {
   await runMigrationBatch(getEcommerceDatabase(name), ecommerceCatalogSyncAuditMigrationBatch);
   await runMigrationBatch(getEcommerceDatabase(name), ecommerceModuleDataSourceMigrationBatch);
   await runMigrationBatch(getEcommerceDatabase(name), ecommerceStorefrontProfileMigrationBatch);
+  await runMigrationBatch(getEcommerceDatabase(name), ecommerceCatalogCompatibilityMigrationBatch);
+  await runMigrationBatch(
+    getEcommerceDatabase(name),
+    ecommerceCatalogSeedCompatibilityMigrationBatch
+  );
 }
 
 export async function seedEcommerceTenantDatabase(databaseName: string) {
@@ -287,6 +333,14 @@ export async function seedEcommerceTenantDatabase(databaseName: string) {
 }
 
 export async function rollbackEcommerceTenantDatabase(databaseName: string) {
+  await rollbackMigrationBatch(
+    getEcommerceDatabase(databaseName),
+    ecommerceCatalogSeedCompatibilityMigrationBatch
+  );
+  await rollbackMigrationBatch(
+    getEcommerceDatabase(databaseName),
+    ecommerceCatalogCompatibilityMigrationBatch
+  );
   await rollbackMigrationBatch(
     getEcommerceDatabase(databaseName),
     ecommerceStorefrontProfileMigrationBatch

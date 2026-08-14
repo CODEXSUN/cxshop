@@ -10,6 +10,8 @@ import type {
 type Row = Record<string, unknown>;
 
 export class StorefrontRepository {
+  constructor(private readonly frappeCacheOnly = false) {}
+
   async list(filters: StorefrontCatalogFilters = {}) {
     const search = filters.search?.toLowerCase() ?? "";
     const category = filters.category?.toLowerCase() ?? "";
@@ -19,6 +21,7 @@ export class StorefrontRepository {
     const scope = filters.scope ?? "all";
     const result = await sql<Row>`${selectProducts()}
       WHERE info.publication_status='published' AND info.status='active'
+        AND ${this.sourceCondition()}
         AND (${search}='' OR ${searchCondition(search, scope)})
         AND (${category}='' OR LOWER(category.name)=${category.toLowerCase()})
         AND (${brand}='' OR LOWER(brand.name)=${brand})
@@ -29,7 +32,8 @@ export class StorefrontRepository {
 
   async find(slug: string): Promise<StorefrontProductDetail | null> {
     const result = await sql<Row>`${selectProducts()} WHERE info.slug=${slug}
-      AND info.publication_status='published' AND info.status='active' GROUP BY info.id LIMIT 1`.execute(
+      AND info.publication_status='published' AND info.status='active'
+      AND ${this.sourceCondition()} GROUP BY info.id LIMIT 1`.execute(
       getEcommerceDatabase()
     );
     if (!result.rows[0]) return null;
@@ -58,6 +62,7 @@ export class StorefrontRepository {
       COUNT(info.id) AS product_count FROM core_product_categories category
       INNER JOIN core_products product ON product.product_category_id=category.id AND product.status='active' AND product.deleted_at IS NULL
       INNER JOIN ecommerce_product_information info ON info.core_product_id=product.id AND info.publication_status='published' AND info.status='active'
+      WHERE ${this.sourceCondition("info")}
       GROUP BY category.id,category.name ORDER BY category.name`.execute(getEcommerceDatabase());
     return result.rows.map((row) => ({ name: row.name, productCount: Number(row.product_count) }));
   }
@@ -74,13 +79,14 @@ export class StorefrontRepository {
         COUNT(info.id) AS product_count FROM core_brands brand
         INNER JOIN ecommerce_product_information info ON info.brand_id=brand.id AND info.publication_status='published' AND info.status='active'
         INNER JOIN core_products product ON product.id=info.core_product_id AND product.status='active' AND product.deleted_at IS NULL
-        WHERE brand.status='active' AND brand.show_on_storefront=1
+        WHERE brand.status='active' AND brand.show_on_storefront=1 AND ${this.sourceCondition("info")}
         GROUP BY brand.id,brand.name,brand.logo_url,brand.logo_alt,brand.sort_order
         ORDER BY brand.sort_order,brand.name`.execute(getEcommerceDatabase()),
       sql<{ maximum: number | string; minimum: number | string }>`SELECT
         COALESCE(MAX(product.opening_price),0) AS maximum,COALESCE(MIN(product.opening_price),0) AS minimum
         FROM core_products product INNER JOIN ecommerce_product_information info ON info.core_product_id=product.id
-        WHERE product.status='active' AND product.deleted_at IS NULL AND info.publication_status='published' AND info.status='active'`.execute(
+        WHERE product.status='active' AND product.deleted_at IS NULL AND info.publication_status='published'
+        AND info.status='active' AND ${this.sourceCondition("info")}`.execute(
         getEcommerceDatabase()
       )
     ]);
@@ -97,6 +103,11 @@ export class StorefrontRepository {
         minimum: Number(prices.rows[0]?.minimum ?? 0)
       }
     };
+  }
+
+  private sourceCondition(alias = "info") {
+    if (!this.frappeCacheOnly) return sql`1=1`;
+    return sql.raw(`${alias}.frappe_item_code IS NOT NULL`);
   }
 }
 

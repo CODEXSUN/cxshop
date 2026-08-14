@@ -161,7 +161,7 @@ export class FrappeCatalogSource implements StorefrontCatalogSource {
   }
 
   private async request<T>(credentials: FrappeCatalogCredentials, url: URL): Promise<T> {
-    const response = await fetch(url, {
+    const response = await frappeFetch(url, {
       headers: {
         Accept: "application/json",
         Authorization: `token ${credentials.apiKey}:${credentials.apiSecret}`
@@ -192,7 +192,7 @@ export class FrappeCatalogSource implements StorefrontCatalogSource {
       signal: AbortSignal.timeout(httpMethod === "POST" ? 120_000 : 15_000)
     };
     if (body) request.body = JSON.stringify(body);
-    const response = await fetch(url, request);
+    const response = await frappeFetch(url, request);
     if (!response.ok) {
       const message = await frappeMessage(response);
       throw frappeError(message || `Frappe catalog method returned HTTP ${response.status}.`);
@@ -312,6 +312,15 @@ function frappeError(message: string) {
     message: plainText(message),
     statusCode: 502
   });
+}
+
+async function frappeFetch(url: URL, request: RequestInit) {
+  try {
+    return await fetch(url, request);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Frappe did not respond.";
+    throw frappeError(`Frappe connection is unavailable. ${message}`);
+  }
 }
 
 function highlights(value: string | null | undefined) {

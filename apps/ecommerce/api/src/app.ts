@@ -21,6 +21,7 @@ import {
   type CatalogDataSourceControl
 } from "./modules/catalog-data-source/index.js";
 import { StorefrontService } from "./modules/storefront/storefront.service.js";
+import { startCatalogCacheRefresh } from "./modules/catalog-data-source/catalog-data-source.scheduler.js";
 import {
   registerStorefrontProfilePublicRoutes,
   registerStorefrontProfileRoutes,
@@ -45,6 +46,7 @@ export async function registerEcommerceApi(
 ) {
   await bootstrapEcommerceDatabase(resolveEcommerceDatabaseName(undefined));
   const catalogDataSource = new CatalogDataSourceService(dependencies.catalogDataSource);
+  startCatalogCacheRefresh(app, catalogDataSource);
   await registerStorefrontRoutes(app, new StorefrontService(catalogDataSource));
   await registerStorefrontAnnouncementPublicRoutes(app);
   await registerStorefrontProfilePublicRoutes(app);

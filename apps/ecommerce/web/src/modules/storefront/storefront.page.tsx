@@ -115,9 +115,11 @@ function CatalogPage({ category, searchPage = false }: { category: string; searc
         {!searchPage ? <BrandsSection brands={discovery.brands} /> : null}
         {!searchPage && featured.length ? (
           <ProductSection
+            brandName={branding?.brandName}
             label="Featured products"
             products={featured}
             title="Selected systems worth a closer look"
+            whatsappNumber={branding?.primaryPhone}
           />
         ) : null}
         <section className="cx-store__catalog" id="catalog">
@@ -139,7 +141,12 @@ function CatalogPage({ category, searchPage = false }: { category: string; searc
             <div>
               <div className="cx-store__grid">
                 {products.map((item) => (
-                  <ProductCard brandName={branding?.brandName} key={item.slug} product={item} />
+                  <ProductCard
+                    brandName={branding?.brandName}
+                    key={item.slug}
+                    product={item}
+                    whatsappNumber={branding?.primaryPhone}
+                  />
                 ))}
               </div>
               {!loading && products.length === 0 ? (
@@ -213,7 +220,8 @@ function ProductPage({ slug }: { slug: string }) {
       </div>
     );
   const enquiry = whatsappLink(
-    `Hello${branding?.brandName ? ` ${branding.brandName}` : ""}, I would like to know more about ${product.name}.`
+    `Hello${branding?.brandName ? ` ${branding.brandName}` : ""}, I would like to know more about ${product.name}.`,
+    branding?.primaryPhone
   );
   const priced = hasStorefrontPrice(product.price);
   const bulletPoints = product.bulletPoints.filter(Boolean);
@@ -237,7 +245,9 @@ function ProductPage({ slug }: { slug: string }) {
         </div>
         <div className="cx-detail__copy">
           {product.category ? (
-            <a href={`/shop/category/${encodeURIComponent(product.category)}`}>{product.category}</a>
+            <a href={`/shop/category/${encodeURIComponent(product.category)}`}>
+              {product.category}
+            </a>
           ) : null}
           <h1>{product.name}</h1>
           {product.shortDescription ? (
@@ -252,11 +262,13 @@ function ProductPage({ slug }: { slug: string }) {
             </div>
           ) : null}
           {product.description ? <p>{product.description}</p> : null}
-          {bulletPoints.length ? <ul>
-            {bulletPoints.map((point) => (
-              <li key={point}>{point}</li>
-            ))}
-          </ul> : null}
+          {bulletPoints.length ? (
+            <ul>
+              {bulletPoints.map((point) => (
+                <li key={point}>{point}</li>
+              ))}
+            </ul>
+          ) : null}
           <div className="cx-detail__actions">
             {priced ? (
               <button onClick={() => addStorefrontCartItem(product)} type="button">
@@ -267,23 +279,31 @@ function ProductPage({ slug }: { slug: string }) {
               Enquire on WhatsApp
             </a>
           </div>
-          {hasPolicies ? <div className="cx-detail__policy">
-            {product.warranty ? <span>
-              <strong>Warranty</strong>
-              {product.warranty}
-            </span> : null}
-            {product.returnPolicy ? <span>
-              <strong>Returns</strong>
-              {product.returnPolicy}
-            </span> : null}
-          </div> : null}
+          {hasPolicies ? (
+            <div className="cx-detail__policy">
+              {product.warranty ? (
+                <span>
+                  <strong>Warranty</strong>
+                  {product.warranty}
+                </span>
+              ) : null}
+              {product.returnPolicy ? (
+                <span>
+                  <strong>Returns</strong>
+                  {product.returnPolicy}
+                </span>
+              ) : null}
+            </div>
+          ) : null}
         </div>
         {similarProducts.length ? (
           <div className="cx-detail__similar">
             <ProductSection
+              brandName={branding?.brandName}
               label="Similar items"
               products={similarProducts}
               title="More products you may like"
+              whatsappNumber={branding?.primaryPhone}
             />
           </div>
         ) : null}
@@ -295,13 +315,17 @@ function ProductPage({ slug }: { slug: string }) {
 }
 
 function ProductSection({
+  brandName,
   label,
   products,
-  title
+  title,
+  whatsappNumber
 }: {
+  brandName?: string | undefined;
   label: string;
   products: StorefrontProduct[];
   title: string;
+  whatsappNumber?: string | null | undefined;
 }) {
   return (
     <section className="cx-store__featured-products">
@@ -317,7 +341,12 @@ function ProductSection({
       </div>
       <div className="cx-store__grid">
         {products.map((product) => (
-          <ProductCard key={product.slug} product={product} />
+          <ProductCard
+            brandName={brandName}
+            key={product.slug}
+            product={product}
+            whatsappNumber={whatsappNumber}
+          />
         ))}
       </div>
     </section>

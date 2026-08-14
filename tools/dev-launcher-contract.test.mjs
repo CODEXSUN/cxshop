@@ -17,19 +17,28 @@ test("the combined launcher uses configured ports", async () => {
   assert.doesNotMatch(source, /127\.0\.0\.1:7020/u);
 });
 
-test("preflight protects development ports and replaces production listeners", async () => {
+test("preflight replaces existing listeners unless abort is explicit", async () => {
   const source = await read("tools/preflight.mjs");
 
   assert.match(source, /CXSHOP_DEV_PORT_POLICY/u);
-  assert.match(source, /nodeEnvironment === "production" \? "replace" : "abort"/u);
-  assert.match(source, /portPolicy !== "replace"/u);
-  assert.match(source, /Existing development service keeps ownership of this port/u);
-  assert.match(source, /process\.exit\(75\)/u);
+  assert.match(source, /portPolicy === "abort"/u);
+  assert.match(source, /Port policy is abort/u);
+  assert.doesNotMatch(source, /Existing development service keeps ownership of this port/u);
+  assert.match(source, /killPid\(pid\)/u);
+  assert.match(source, /replacementProcessId\(listenerPid\)/u);
+  assert.match(source, /tools\/dev-restart\.mjs/u);
+  assert.match(source, /tools\/dev-stack\.mjs/u);
+  assert.match(source, /owns listener PID/u);
+  assert.match(source, /consecutiveFreeChecks >= 8/u);
+  assert.match(source, /stopPortProcesses\(reboundPids\)/u);
 });
 
 test("a duplicate development supervisor exits without retrying", async () => {
   const source = await read("tools/dev-restart.mjs");
 
+  assert.match(source, /claimServiceOwnership\(\)/u);
+  assert.match(source, /cxshop-\$\{serviceName\}-supervisor\.pid/u);
+  assert.match(source, /replaced supervisor PID/u);
   assert.match(source, /if \(code === 75\)/u);
   assert.match(source, /stopSupervisor\("already running"\)/u);
 });

@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import {
   CheckIcon,
   EllipsisVerticalIcon,
+  MapPinIcon,
   MessageCircleIcon,
   MicIcon,
   MoveHorizontalIcon,
@@ -33,6 +34,10 @@ export type SpritePetState =
   | "waving";
 export type SpritePetBehavior = "roam" | "stay";
 export type SpritePetPlacement = { xRatio: number; yRatio: number };
+type SpritePetAttention = "shopping-help" | "welcome";
+
+const IDLE_HELP_DELAY = 120_000;
+const HELP_MESSAGE_DURATION = 10_000;
 
 const animationRows: Record<SpritePetState, { frames: number; row: number; startFrame?: number }> =
   {
@@ -123,9 +128,12 @@ export function DraggableSpritePet({
   const [mode, setMode] = useState<SpritePetState>("idle");
   const [walking, setWalking] = useState(false);
   const [walkingDuration, setWalkingDuration] = useState(0);
-  const [welcome, setWelcome] = useState(
-    () => !window.sessionStorage.getItem(`${storageKey}.welcomed`)
+  const [attention, setAttention] = useState<SpritePetAttention | null>(() =>
+    window.sessionStorage.getItem(`${storageKey}.welcomed`) ? null : "welcome"
   );
+  const attentionRef = useRef(attention);
+  const modeRef = useRef(mode);
+  const walkingRef = useRef(walking);
   const [listening, setListening] = useState(false);
   const drag = useRef<{ moved: boolean; offsetX: number; offsetY: number } | undefined>(undefined);
 
@@ -134,14 +142,66 @@ export function DraggableSpritePet({
   }, []);
 
   useEffect(() => {
-    if (!welcome) return;
-    window.sessionStorage.setItem(`${storageKey}.welcomed`, "true");
-    const timer = window.setTimeout(() => setWelcome(false), 8000);
-    return () => window.clearTimeout(timer);
-  }, [storageKey, welcome]);
+    attentionRef.current = attention;
+  }, [attention]);
 
   useEffect(() => {
-    if (behavior !== "roam" || walking) return;
+    modeRef.current = mode;
+  }, [mode]);
+
+  useEffect(() => {
+    walkingRef.current = walking;
+  }, [walking]);
+
+  useEffect(() => {
+    if (attention !== "welcome") return;
+    window.sessionStorage.setItem(`${storageKey}.welcomed`, "true");
+    const timer = window.setTimeout(() => setAttention(null), 8000);
+    return () => window.clearTimeout(timer);
+  }, [attention, storageKey]);
+
+  useEffect(() => {
+    let lastActivity = Date.now();
+    let lastPrompt = 0;
+    let dismissTimer: number | undefined;
+    const markActive = () => {
+      lastActivity = Date.now();
+      if (attentionRef.current !== "shopping-help") return;
+      window.clearTimeout(dismissTimer);
+      setAttention(null);
+      setMode("idle");
+    };
+    const checkIdle = () => {
+      const inactiveSince = Math.max(lastActivity, lastPrompt);
+      if (
+        Date.now() - inactiveSince < IDLE_HELP_DELAY ||
+        walkingRef.current ||
+        modeRef.current !== "idle" ||
+        attentionRef.current
+      )
+        return;
+      lastPrompt = Date.now();
+      setMode("waving");
+      setAttention("shopping-help");
+      dismissTimer = window.setTimeout(() => {
+        setAttention(null);
+        setMode("idle");
+      }, HELP_MESSAGE_DURATION);
+    };
+    const activityEvents = ["keydown", "pointerdown", "pointermove", "scroll", "touchstart"];
+    activityEvents.forEach((event) =>
+      window.addEventListener(event, markActive, { passive: true })
+    );
+    const idleCheck = window.setInterval(checkIdle, 5000);
+    return () => {
+      window.clearInterval(idleCheck);
+      window.clearTimeout(dismissTimer);
+      activityEvents.forEach((event) => window.removeEventListener(event, markActive));
+    };
+  }, []);
+
+  useEffect(() => {
+    if (behavior !== "roam" || walking || mode !== "idle" || attention) return;
     const timer = window.setTimeout(
       () => {
         const current = positionRef.current;
@@ -168,7 +228,7 @@ export function DraggableSpritePet({
       6500 + Math.random() * 4500
     );
     return () => window.clearTimeout(timer);
-  }, [behavior, walking]);
+  }, [attention, behavior, mode, walking]);
 
   useEffect(() => {
     if (drag.current) return;
@@ -240,19 +300,24 @@ export function DraggableSpritePet({
       tabIndex={0}
       transition={{ duration: walking ? walkingDuration / 1000 : 0, ease: "linear" }}
     >
-      {welcome ? (
+      {attention ? (
         <div className="absolute bottom-full right-0 mb-3 w-56 rounded-3xl border border-sky-200 bg-white/95 px-5 py-3 text-sm text-slate-900 shadow-xl backdrop-blur">
           <button
             aria-label="Close Piko welcome"
             className="absolute right-2 top-2"
-            onClick={() => setWelcome(false)}
+            onClick={() => {
+              setAttention(null);
+              setMode("idle");
+            }}
             type="button"
           >
             <XIcon className="size-4" />
           </button>
-          <strong>Hi, I&apos;m Piko</strong>
+          <strong>{attention === "shopping-help" ? "Need a hand?" : "Hi, I'm Piko"}</strong>
           <p className="pt-1 text-xs text-slate-500">
-            I&apos;m watching the shop and ready to help.
+            {attention === "shopping-help"
+              ? "Can I help you find or compare something to buy?"
+              : "I'm watching the shop and ready to help."}
           </p>
         </div>
       ) : null}
@@ -294,6 +359,13 @@ export function DraggableSpritePet({
               <MoveHorizontalIcon />
               <span className="flex-1">Roam left and right</span>
               {behavior === "roam" ? <CheckIcon /> : null}
+            </DropdownMenuItem>
+            <DropdownMenuLabel>Piko position</DropdownMenuLabel>
+            <DropdownMenuItem
+              onSelect={() => onPlacementChange?.(placementFromPosition(positionRef.current))}
+            >
+              <MapPinIcon />
+              Use current at startup
             </DropdownMenuItem>
             <DropdownMenuLabel>Piko assistant</DropdownMenuLabel>
             <DropdownMenuItem onSelect={() => onClick?.()}>

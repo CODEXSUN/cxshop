@@ -59,7 +59,8 @@ export function StorefrontCartPage() {
   const orderLink = whatsappLink(
     `Hello${branding?.brandName ? ` ${branding.brandName}` : ""}, I would like to order: ${items
       .map((item) => `${item.name} x ${item.quantity}`)
-      .join(", ")}. Cart total: ${money(total)}.`
+      .join(", ")}. Cart total: ${money(total)}.`,
+    branding?.primaryPhone
   );
 
   return (

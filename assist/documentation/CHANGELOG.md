@@ -2,11 +2,11 @@
 
 ## Version State
 
-Current version: 1.0.59
+Current version: 1.0.61
 
-Release tag: v-1.0.59
+Release tag: v-1.0.61
 
-Changelog label: v 1.0.59
+Changelog label: v 1.0.61
 
 This changelog starts fresh from the cleaned CODEXSUN foundation. Earlier copied application history was intentionally removed because it did not represent the current workspace.
 
@@ -19,6 +19,55 @@ Records schema, migration, seed, tenant provisioning, and data compatibility cha
 #### App Codebase Changes
 
 Records UI, API, service logic, tooling, packaging, and documentation changes.
+
+## v-1.0.61
+
+### [v 1.0.61] 2026-08-14 11:00 am - Frappe catalog resilience and same-port development restart
+
+#### Database Changes
+
+- Database update: Yes. Added forward migrations for the Frappe-compatible local catalog cache.
+- Stored the Frappe document name, source modification time, ERPNext unit, description, stock flags,
+  standard rate, and ERPNext modification time.
+- Made the cached ERPNext description optional so existing local and demo product seeds remain valid.
+
+#### App Codebase Changes
+
+- Bumped workspace version to 1.0.61.
+- Fixed Frappe-to-local imports when a catalog contains duplicate membership rows.
+- Resolved catalog membership links by Frappe document name or item code.
+- Preserved products that share a display name by using a unique internal Core product name.
+- Reconciled the active Frappe cache with each snapshot. Removed products and catalogs become
+  inactive without deleting local-only records.
+- Added a catalog refresh every 15 minutes from 8 AM to 10 PM India time.
+- Used the synchronized local cache immediately from 10 PM to 8 AM without a Frappe timeout.
+- Added local cache fallback during daytime Frappe outages and automatic live recovery after the
+  connection returns.
+- Kept intentional Local mode separate from outage fallback. Local mode includes local-only
+  products, while outage fallback shows the exact synchronized Frappe catalog.
+- Updated the Data Source page with the refresh window and fallback behavior.
+- Changed API and web development preflight to replace an existing configured-port listener by
+  default. Set `CXSHOP_DEV_PORT_POLICY=abort` to disable replacement.
+- Added service supervisor ownership files and process-tree replacement. A new launcher stops the
+  previous supervisor before it reuses the same port.
+- Required the port to remain free for two seconds before service startup. Preflight also removes a
+  listener that reappears during this stabilization window.
+
+## v-1.0.60
+
+### [v 1.0.60] 2026-08-14 9:26 am - Company WhatsApp enquiry routing
+
+#### Database Changes
+
+- Database update: No (manual).
+
+#### App Codebase Changes
+
+- Bumped workspace version to 1.0.60.
+- Added the default company primary phone to the public branding contract.
+- Routed product, footer, and cart WhatsApp enquiries to the configured primary phone.
+- Normalized ten-digit Indian phone numbers to the WhatsApp international number format.
+- Kept the generic WhatsApp chooser when the default company has no primary phone.
 
 ## v-1.0.59
 
@@ -45,7 +94,6 @@ Records UI, API, service logic, tooling, packaging, and documentation changes.
   item grid adapts from four columns to two columns and then one column.
 - Expanded the search results layout to 80 percent of the desktop viewport. Smaller screens use the
   available width with responsive page padding.
-
 ### [v 1.0.59] 2026-08-14 8:30 am - Global Piko mascot placement
 
 #### Database Changes
@@ -53,17 +101,21 @@ Records UI, API, service logic, tooling, packaging, and documentation changes.
 - Database update: Yes. Added the DevKit-owned global Piko mascot settings table and its
   forward-only schema standardization migration.
 - Stored one viewport-relative home position and Stay or Roam behavior for all Piko clients.
-- Recorded the System Admin actor and update time for each global settings change.
+- Recorded the admin actor and update time for each global settings change.
 
 #### App Codebase Changes
 
 - Bumped workspace version to 1.0.59.
-- Added System Admin-only Piko dragging and Stay or Roam controls in the back office.
+- Added Piko dragging, startup-position pinning, and Stay or Roam controls for authenticated System
+  and Application Admin users.
+- Made every admin drag release save the startup position and switch Piko to Stay mode.
 - Added a public read-only mascot settings endpoint for the storefront.
 - Removed browser-specific position persistence. Piko now returns to the global home position after
   each reload, while automatic roaming does not overwrite that position.
 - Kept Piko chat and voice actions available to storefront users without exposing movement controls.
 - Used viewport-relative coordinates so the global position adapts to different screen sizes.
+- Added a two-minute inactivity check for the storefront and back office. Piko pauses roaming, waves,
+  and offers buying help until the user resumes mouse, keyboard, touch, or scroll activity.
 
 ## v-1.0.58
 

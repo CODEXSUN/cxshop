@@ -89,6 +89,7 @@ export type CompanyBranding = {
   logoDarkPath: string | null;
   logoPath: string | null;
   name: string;
+  primaryPhone: string | null;
   updatedAt: string;
 };
 

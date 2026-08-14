@@ -166,7 +166,7 @@ function SyncCard({
   return (
     <Card
       title="Catalog synchronization"
-      description="Copy catalog records between Frappe and local MariaDB without changing the selected live read source."
+      description="The local cache refreshes every 15 minutes from 8 AM to 10 PM. Frappe Live falls back to this cache during an outage and resumes automatically."
     >
       <div className="grid gap-3 p-4 sm:grid-cols-3">
         <Button

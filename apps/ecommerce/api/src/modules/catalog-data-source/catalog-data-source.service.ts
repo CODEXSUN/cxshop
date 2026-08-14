@@ -1,6 +1,7 @@
-import { AppError } from "@cxshop/framework/errors";
+import { AppError, isAppError } from "@cxshop/framework/errors";
 import { StorefrontRepository } from "../storefront/storefront.repository.js";
 import type { StorefrontCatalogFilters } from "../storefront/storefront.types.js";
+import { isFrappeOperatingWindow } from "./catalog-data-source.availability.js";
 import { FrappeCatalogSource } from "./catalog-data-source.frappe.js";
 import { CatalogDataSourceRepository } from "./catalog-data-source.repository.js";
 import type {
@@ -31,11 +32,15 @@ class OwnCatalogSource implements StorefrontCatalogSource {
 
 export class CatalogDataSourceService implements StorefrontCatalogSource {
   private readonly own = new OwnCatalogSource();
+  private readonly fallback = new OwnCatalogSource(new StorefrontRepository(true));
   private readonly frappe: FrappeCatalogSource;
+  private frappeRetryAfter = 0;
+  private frappeWasUnavailable = false;
 
   constructor(
     private readonly control: CatalogDataSourceControl,
-    private readonly repository = new CatalogDataSourceRepository()
+    private readonly repository = new CatalogDataSourceRepository(),
+    private readonly now = () => new Date()
   ) {
     this.frappe = new FrappeCatalogSource(() => control.credentials());
   }
@@ -122,27 +127,27 @@ export class CatalogDataSourceService implements StorefrontCatalogSource {
   }
 
   async catalog(filters: StorefrontCatalogFilters) {
-    return (await this.source("products")).catalog(filters);
+    return this.read("products", (source) => source.catalog(filters));
   }
 
   async categories() {
-    return (await this.source("categories")).categories();
+    return this.read("categories", (source) => source.categories());
   }
 
   async discovery() {
     const [productDiscovery, categories, brandDiscovery] = await Promise.all([
-      (await this.source("products")).discovery(),
-      (await this.source("categories")).categories(),
-      (await this.source("brands")).discovery()
+      this.read("products", (source) => source.discovery()),
+      this.read("categories", (source) => source.categories()),
+      this.read("brands", (source) => source.discovery())
     ]);
     return { ...productDiscovery, brands: brandDiscovery.brands, categories };
   }
 
   async product(slug: string) {
     const [details, variants, images] = await Promise.all([
-      (await this.source("product-details")).product(slug),
-      (await this.source("variants")).product(slug),
-      (await this.source("product-images")).product(slug)
+      this.read("product-details", (source) => source.product(slug)),
+      this.read("variants", (source) => source.product(slug)),
+      this.read("product-images", (source) => source.product(slug))
     ]);
     if (!details) return null;
     return {
@@ -154,12 +159,39 @@ export class CatalogDataSourceService implements StorefrontCatalogSource {
     };
   }
 
-  private async source(module: CatalogDataSourceModule) {
+  private async read<T>(
+    module: CatalogDataSourceModule,
+    operation: (source: StorefrontCatalogSource) => Promise<T>
+  ) {
     const providers = await this.repository.moduleProviders();
-    return providers.find((item) => item.module === module)?.provider === "frappe"
-      ? this.frappe
-      : this.own;
+    if (providers.find((item) => item.module === module)?.provider !== "frappe") {
+      return operation(this.own);
+    }
+    if (!isFrappeOperatingWindow(this.now()) || Date.now() < this.frappeRetryAfter) {
+      return operation(this.fallback);
+    }
+    try {
+      const result = await operation(this.frappe);
+      if (this.frappeWasUnavailable) {
+        console.info("[ecommerce.catalog] Frappe connection recovered; live reads resumed");
+      }
+      this.frappeRetryAfter = 0;
+      this.frappeWasUnavailable = false;
+      return result;
+    } catch (error) {
+      if (!isFrappeUnavailable(error)) throw error;
+      if (!this.frappeWasUnavailable) {
+        console.warn("[ecommerce.catalog] Frappe is unavailable; storefront reads use local cache");
+      }
+      this.frappeWasUnavailable = true;
+      this.frappeRetryAfter = Date.now() + 60_000;
+      return operation(this.fallback);
+    }
   }
+}
+
+function isFrappeUnavailable(error: unknown) {
+  return isAppError(error) && error.code === "FRAPPE_CATALOG_UNAVAILABLE";
 }
 
 function moduleDefinition(module: CatalogDataSourceModule) {

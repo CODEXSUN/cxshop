@@ -138,3 +138,46 @@ export async function migrateCatalogModuleDataSources(database: Kysely<Ecommerce
       (module_key,provider,updated_by) VALUES (${moduleKey},'own','system:seed')`.execute(database);
   }
 }
+
+export const catalogDataSourceCompatibilityMigration = {
+  description: "Retain Frappe document identity, revision, and ERPNext item fields in the local cache.",
+  key: "ecommerce.catalog.frappe-cache-compatibility"
+} as const;
+
+export async function upgradeCatalogDataSourceCompatibility(database: Kysely<EcommerceDatabase>) {
+  const productColumns = [
+    "ADD COLUMN IF NOT EXISTS frappe_document_name VARCHAR(191) NOT NULL DEFAULT ''",
+    "ADD COLUMN IF NOT EXISTS frappe_modified_at DATETIME NULL",
+    "ADD COLUMN IF NOT EXISTS erpnext_stock_uom VARCHAR(64) NOT NULL DEFAULT ''",
+    "ADD COLUMN IF NOT EXISTS erpnext_description TEXT NULL",
+    "ADD COLUMN IF NOT EXISTS erpnext_disabled TINYINT(1) NOT NULL DEFAULT 0",
+    "ADD COLUMN IF NOT EXISTS erpnext_is_stock_item TINYINT(1) NOT NULL DEFAULT 1",
+    "ADD COLUMN IF NOT EXISTS erpnext_standard_rate DECIMAL(14,2) NOT NULL DEFAULT 0",
+    "ADD COLUMN IF NOT EXISTS erpnext_modified_at DATETIME NULL"
+  ];
+  for (const column of productColumns) {
+    await sql.raw(`ALTER TABLE ecommerce_product_information ${column}`).execute(database);
+  }
+  await sql
+    .raw(
+      `ALTER TABLE ecommerce_ishop_catalogs
+        ADD COLUMN IF NOT EXISTS frappe_document_name VARCHAR(191) NOT NULL DEFAULT '',
+        ADD COLUMN IF NOT EXISTS frappe_modified_at DATETIME NULL`
+    )
+    .execute(database);
+}
+
+export const catalogDataSourceSeedCompatibilityMigration = {
+  description: "Allow non-Frappe product seeds to omit cached ERPNext description text.",
+  key: "ecommerce.catalog.frappe-cache-seed-compatibility"
+} as const;
+
+export async function upgradeCatalogDataSourceSeedCompatibility(
+  database: Kysely<EcommerceDatabase>
+) {
+  await sql
+    .raw(
+      "ALTER TABLE ecommerce_product_information MODIFY COLUMN erpnext_description TEXT NULL"
+    )
+    .execute(database);
+}

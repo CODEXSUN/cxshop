@@ -56,10 +56,16 @@ async function resolveDevkitContext(request: FastifyRequest): Promise<DevkitHost
         roles: ["tenant_admin"],
         storageScope: "application"
       },
-      database: devkitDatabase(context.database as unknown as Kysely<PlatformDatabase>)
+      database: isGlobalMascotRequest(request)
+        ? devkitDatabase(getPlatformDatabase())
+        : devkitDatabase(context.database as unknown as Kysely<PlatformDatabase>)
     };
   }
   throw AppError.forbidden("DevKit is available only to Super Admin.");
+}
+
+function isGlobalMascotRequest(request: FastifyRequest) {
+  return /\/honey\/system\/mascot(?:\?|$)/u.test(request.url);
 }
 
 function devkitDatabase(database: Kysely<PlatformDatabase>): Kysely<DevkitDatabase> {

@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 
-import { spawn } from "node:child_process";
-import { existsSync, statSync, watch } from "node:fs";
-import { resolve } from "node:path";
+import { execFileSync, spawn } from "node:child_process";
+import { existsSync, readFileSync, statSync, unlinkSync, watch, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join, resolve } from "node:path";
 
 const root = resolve(import.meta.dirname, "..");
 const changeSettleMilliseconds = 1_200;
@@ -44,6 +45,9 @@ if (!service) {
   process.exit(1);
 }
 
+const supervisorFile = join(tmpdir(), `cxshop-${serviceName}-supervisor.pid`);
+claimServiceOwnership();
+
 let child;
 let debounceTimer;
 let restartQueued = false;
@@ -68,6 +72,7 @@ for (const signal of ["SIGINT", "SIGTERM"]) {
     clearTimeout(debounceTimer);
     watchers.forEach((watcher) => watcher.close());
     await stop();
+    releaseServiceOwnership();
     process.exit(0);
   });
 }
@@ -97,8 +102,68 @@ function stopSupervisor(reason) {
   stopping = true;
   clearTimeout(debounceTimer);
   watchers.forEach((watcher) => watcher.close());
+  releaseServiceOwnership();
   console.log(`[${service.label}] ${reason}; supervisor stopped`);
   process.exit(0);
+}
+
+function claimServiceOwnership() {
+  const previousPid = readSupervisorPid();
+  if (previousPid && previousPid !== process.pid && isOwnedSupervisor(previousPid)) {
+    stopProcessTree(previousPid);
+    console.log(`[${service.label}] replaced supervisor PID ${previousPid}`);
+  }
+  writeFileSync(supervisorFile, String(process.pid), "utf8");
+}
+
+function releaseServiceOwnership() {
+  if (readSupervisorPid() !== process.pid) return;
+  try {
+    unlinkSync(supervisorFile);
+  } catch {
+    // The owner file can already be gone during forced shutdown.
+  }
+}
+
+function readSupervisorPid() {
+  try {
+    const pid = Number(readFileSync(supervisorFile, "utf8").trim());
+    return Number.isInteger(pid) && pid > 0 ? pid : null;
+  } catch {
+    return null;
+  }
+}
+
+function isOwnedSupervisor(pid) {
+  if (process.platform !== "win32") {
+    try {
+      process.kill(pid, 0);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+  try {
+    const command = `(Get-CimInstance Win32_Process -Filter "ProcessId=${pid}").CommandLine`;
+    const commandLine = execFileSync(
+      "powershell.exe",
+      ["-NoProfile", "-NonInteractive", "-Command", command],
+      { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }
+    );
+    return commandLine.includes("tools/dev-restart.mjs") && commandLine.includes(serviceName);
+  } catch {
+    return false;
+  }
+}
+
+function stopProcessTree(pid) {
+  if (process.platform === "win32") {
+    execFileSync("taskkill", ["/PID", String(pid), "/T", "/F"], {
+      stdio: ["ignore", "pipe", "pipe"]
+    });
+    return;
+  }
+  process.kill(pid, "SIGTERM");
 }
 
 function queueRestart(filename) {

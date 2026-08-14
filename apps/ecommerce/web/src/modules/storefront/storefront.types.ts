@@ -63,4 +63,5 @@ export type StorefrontBranding = {
   brandName: string;
   logoDarkUrl: string | null;
   logoUrl: string | null;
+  primaryPhone: string | null;
 };

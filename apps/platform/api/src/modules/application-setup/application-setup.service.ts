@@ -39,7 +39,8 @@ export class ApplicationSetupService {
       logoDarkUrl: hasStoredLogo(company?.logoDarkPath)
         ? `/api/platform/public/company-logo/logo-dark${version}`
         : logoUrl,
-      logoUrl
+      logoUrl,
+      primaryPhone: company?.primaryPhone?.trim() || null
     };
   }
 }

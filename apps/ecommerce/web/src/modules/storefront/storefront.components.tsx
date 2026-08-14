@@ -50,7 +50,9 @@ export function HeroSlider({ products }: { products: StorefrontProduct[] }) {
           {[product.brand, "Featured system"].filter(Boolean).join(" · ")}
         </span>
         <h1 className="cx-store__hero-reveal">{product.name}</h1>
-        {product.description ? <p className="cx-store__hero-reveal">{product.description}</p> : null}
+        {product.description ? (
+          <p className="cx-store__hero-reveal">{product.description}</p>
+        ) : null}
         <a className="cx-store__hero-reveal" href={`/shop/product/${product.slug}`}>
           Explore this product
         </a>
@@ -83,27 +85,37 @@ export function PromotionsSection({ products }: { products: StorefrontProduct[] 
         {products.map((product) => {
           const metadata = [product.brand, product.category].filter(Boolean).join(" · ");
           const priced = hasStorefrontPrice(product.price);
-          return <a
-            className="cx-store__promotion-card"
-            href={`/shop/product/${product.slug}`}
-            key={product.slug}
-          >
-            <span className="cx-store__promotion-media">
-              <img alt={product.imageAlt || product.name} loading="lazy" src={product.imageUrl} />
-              {priced && hasStorefrontPrice(product.compareAtPrice) ? <span className="cx-store__promotion-saving">
-                Save {money((product.compareAtPrice ?? product.price) - product.price)}
-              </span> : null}
-            </span>
-            <span className="cx-store__promotion-copy">
-              {metadata ? <small>{metadata}</small> : null}
-              <strong>{product.name}</strong>
-              {priced ? <span className="cx-store__promotion-price">
-                <b>{money(product.price)}</b>
-                {hasStorefrontPrice(product.compareAtPrice) ? <del>{money(product.compareAtPrice ?? product.price)}</del> : null}
-              </span> : null}
-              <span className="cx-store__promotion-link">{priced ? "View offer" : "Enquire"}</span>
-            </span>
-          </a>;
+          return (
+            <a
+              className="cx-store__promotion-card"
+              href={`/shop/product/${product.slug}`}
+              key={product.slug}
+            >
+              <span className="cx-store__promotion-media">
+                <img alt={product.imageAlt || product.name} loading="lazy" src={product.imageUrl} />
+                {priced && hasStorefrontPrice(product.compareAtPrice) ? (
+                  <span className="cx-store__promotion-saving">
+                    Save {money((product.compareAtPrice ?? product.price) - product.price)}
+                  </span>
+                ) : null}
+              </span>
+              <span className="cx-store__promotion-copy">
+                {metadata ? <small>{metadata}</small> : null}
+                <strong>{product.name}</strong>
+                {priced ? (
+                  <span className="cx-store__promotion-price">
+                    <b>{money(product.price)}</b>
+                    {hasStorefrontPrice(product.compareAtPrice) ? (
+                      <del>{money(product.compareAtPrice ?? product.price)}</del>
+                    ) : null}
+                  </span>
+                ) : null}
+                <span className="cx-store__promotion-link">
+                  {priced ? "View offer" : "Enquire"}
+                </span>
+              </span>
+            </a>
+          );
         })}
       </div>
     </section>
@@ -306,10 +318,12 @@ export function CatalogFilters({ discovery, filters, onFilters }: FilterProps) {
 
 export function ProductCard({
   brandName = "",
-  product
+  product,
+  whatsappNumber
 }: {
   brandName?: string | undefined;
   product: StorefrontProduct;
+  whatsappNumber?: string | null | undefined;
 }) {
   const metadata = [product.brand, product.category].filter(Boolean).join(" · ");
   const priced = hasStorefrontPrice(product.price);
@@ -336,7 +350,10 @@ export function ProductCard({
       </a>
       <a
         className="cx-product-card__enquiry"
-        href={whatsappLink(`Hello ${brandName}, please share details for ${product.name}.`)}
+        href={whatsappLink(
+          `Hello ${brandName}, please share details for ${product.name}.`,
+          whatsappNumber
+        )}
         rel="noreferrer"
         target="_blank"
       >
@@ -453,7 +470,8 @@ export function StoreFooter({
         </a>
         <a
           href={whatsappLink(
-            `Hello${branding?.brandName ? ` ${branding.brandName}` : ""}, I need help choosing a product.`
+            `Hello${branding?.brandName ? ` ${branding.brandName}` : ""}, I need help choosing a product.`,
+            branding?.primaryPhone
           )}
           rel="noreferrer"
           target="_blank"

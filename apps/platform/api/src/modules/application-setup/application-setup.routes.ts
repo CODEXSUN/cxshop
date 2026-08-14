@@ -41,7 +41,8 @@ const response = z.object({
 const publicBrandingResponse = z.object({
   brandName: z.string(),
   logoDarkUrl: z.string().nullable(),
-  logoUrl: z.string().nullable()
+  logoUrl: z.string().nullable(),
+  primaryPhone: z.string().nullable()
 });
 
 export async function registerApplicationSetupRoutes(app: FastifyInstance) {
