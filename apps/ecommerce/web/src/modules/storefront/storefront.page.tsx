@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeftIcon, ArrowRightIcon } from "lucide-react";
 import {
   getStorefrontAnnouncement,
@@ -36,6 +36,7 @@ import "./storefront.css";
 import { PikoStoreAssistant } from "./storefront.assistant";
 import { addStorefrontCartItem } from "./storefront.cart";
 import { StorefrontCartPage } from "./storefront.cart.page";
+import { useStorefrontCatalog } from "./storefront.catalog";
 
 const emptyDiscovery: StorefrontDiscovery = {
   brands: [],
@@ -67,13 +68,12 @@ export function StorefrontPage() {
 function CatalogPage({ category, searchPage = false }: { category: string; searchPage?: boolean }) {
   const initialSearch = new URLSearchParams(window.location.search).get("q") ?? "";
   const initialScope = searchScope();
-  const [products, setProducts] = useState<StorefrontProduct[]>([]);
   const [discovery, setDiscovery] = useState<StorefrontDiscovery>(emptyDiscovery);
   const [filters, setFilters] = useState<StorefrontFilters>({
     ...defaultFilters(category, searchPage ? initialSearch : ""),
     scope: searchPage ? initialScope : "all"
   });
-  const [loading, setLoading] = useState(true);
+  const loadMoreMarker = useRef<HTMLDivElement>(null);
   const [blogPosts, setBlogPosts] = useState<StorefrontBlogPost[]>([]);
   const [siteNavigation, setSiteNavigation] = useState<StorefrontSiteNavigation | null>(null);
   const [announcement, setAnnouncement] = useState<StorefrontAnnouncement | null>(null);
@@ -89,12 +89,20 @@ function CatalogPage({ category, searchPage = false }: { category: string; searc
   useEffect(() => {
     if (branding?.brandName) document.title = branding.brandName;
   }, [branding?.brandName]);
+  const { error, hasMore, loading, loadingMore, loadMore, products } =
+    useStorefrontCatalog(filters);
   useEffect(() => {
-    setLoading(true);
-    listStorefrontProducts(filters)
-      .then(setProducts)
-      .finally(() => setLoading(false));
-  }, [filters]);
+    const marker = loadMoreMarker.current;
+    if (!marker || !hasMore) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) void loadMore();
+      },
+      { rootMargin: "600px 0px" }
+    );
+    observer.observe(marker);
+    return () => observer.disconnect();
+  }, [hasMore, loadMore]);
 
   const featured = useMemo(() => products.filter((item) => item.featured).slice(0, 4), [products]);
   const promotions = useMemo(
@@ -140,6 +148,7 @@ function CatalogPage({ category, searchPage = false }: { category: string; searc
             ) : null}
             <div>
               <div className="cx-store__grid">
+                {loading ? <ProductSkeletons count={8} /> : null}
                 {products.map((item) => (
                   <ProductCard
                     brandName={branding?.brandName}
@@ -148,9 +157,13 @@ function CatalogPage({ category, searchPage = false }: { category: string; searc
                     whatsappNumber={branding?.primaryPhone}
                   />
                 ))}
+                {loadingMore ? <ProductSkeletons count={4} /> : null}
               </div>
+              <div ref={loadMoreMarker} className="cx-store__load-marker" aria-hidden="true" />
               {!loading && products.length === 0 ? (
-                <p className="cx-store__empty">No products match this selection.</p>
+                <p className="cx-store__empty">
+                  {error || "No products match this selection."}
+                </p>
               ) : null}
             </div>
           </div>
@@ -164,6 +177,17 @@ function CatalogPage({ category, searchPage = false }: { category: string; searc
       <StoreFooter branding={branding} navigation={siteNavigation} />
     </div>
   );
+}
+
+function ProductSkeletons({ count }: { count: number }) {
+  return Array.from({ length: count }, (_, index) => (
+    <div className="cx-product-skeleton" key={index} aria-hidden="true">
+      <div className="cx-product-skeleton__image" />
+      <div className="cx-product-skeleton__line cx-product-skeleton__line--short" />
+      <div className="cx-product-skeleton__line" />
+      <div className="cx-product-skeleton__line" />
+    </div>
+  ));
 }
 
 function ProductPage({ slug }: { slug: string }) {

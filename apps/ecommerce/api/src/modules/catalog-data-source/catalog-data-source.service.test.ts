@@ -53,3 +53,20 @@ test("scheduled Frappe refresh runs only from 8 AM until 10 PM India time", () =
   assert.equal(isFrappeOperatingWindow(new Date("2026-08-14T16:29:00.000Z")), true);
   assert.equal(isFrappeOperatingWindow(new Date("2026-08-14T16:30:00.000Z")), false);
 });
+
+test("empty Frappe cache falls back to the complete local catalog", async () => {
+  const repository = {
+    moduleProviders: async () => [{ module: "products", provider: "frappe" }]
+  };
+  const service = new CatalogDataSourceService(
+    {} as ConstructorParameters<typeof CatalogDataSourceService>[0],
+    repository as ConstructorParameters<typeof CatalogDataSourceService>[1],
+    () => new Date("2026-08-14T17:00:00.000Z")
+  );
+  Object.assign(service as object, {
+    fallback: { catalog: async () => [] },
+    own: { catalog: async () => [{ name: "Available local product" }] }
+  });
+
+  assert.equal((await service.catalog({}))[0]?.name, "Available local product");
+});

@@ -17,7 +17,10 @@ async function get<T>(path: string) {
     throw new Error(body.success ? "Store request failed." : body.error.message);
   return body.data;
 }
-export const listStorefrontProducts = (filters: StorefrontFilters) => {
+export const listStorefrontProducts = (
+  filters: StorefrontFilters,
+  page?: { limit: number; offset: number }
+) => {
   const query = new URLSearchParams({
     brand: filters.brand,
     category: filters.category,
@@ -27,6 +30,10 @@ export const listStorefrontProducts = (filters: StorefrontFilters) => {
   });
   if (filters.minPrice != null) query.set("minPrice", String(filters.minPrice));
   if (filters.maxPrice != null) query.set("maxPrice", String(filters.maxPrice));
+  if (page) {
+    query.set("limit", String(page.limit));
+    query.set("offset", String(page.offset));
+  }
   return get<StorefrontProduct[]>(`/storefront/catalog?${query}`);
 };
 export const listStorefrontCategories = () => get<StorefrontCategory[]>("/storefront/categories");

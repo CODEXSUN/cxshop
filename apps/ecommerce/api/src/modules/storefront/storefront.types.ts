@@ -26,6 +26,8 @@ export type StorefrontCatalogFilters = {
   category?: string | undefined;
   maxPrice?: number | undefined;
   minPrice?: number | undefined;
+  limit?: number | undefined;
+  offset?: number | undefined;
   scope?: StorefrontSearchScope | undefined;
   search?: string | undefined;
   sort?: StorefrontSort | undefined;

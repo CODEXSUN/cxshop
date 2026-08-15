@@ -26,7 +26,9 @@ export class StorefrontRepository {
         AND (${category}='' OR LOWER(category.name)=${category.toLowerCase()})
         AND (${brand}='' OR LOWER(brand.name)=${brand})
         AND product.opening_price BETWEEN ${minPrice} AND ${maxPrice}
-      GROUP BY info.id ${sortProducts(filters.sort)}`.execute(getEcommerceDatabase());
+      GROUP BY info.id ${sortProducts(filters.sort)} ${paginateProducts(filters)}`.execute(
+      getEcommerceDatabase()
+    );
     return result.rows.map(toProduct);
   }
 
@@ -134,6 +136,11 @@ function sortProducts(sort: StorefrontCatalogFilters["sort"] = "featured") {
   if (sort === "discount")
     return sql`ORDER BY MAX(variant.compare_at_adjustment) DESC,info.storefront_title`;
   return sql`ORDER BY info.is_featured DESC,info.storefront_title`;
+}
+
+function paginateProducts(filters: StorefrontCatalogFilters) {
+  if (filters.limit == null) return sql``;
+  return sql`LIMIT ${filters.limit} OFFSET ${filters.offset ?? 0}`;
 }
 
 function selectProducts() {

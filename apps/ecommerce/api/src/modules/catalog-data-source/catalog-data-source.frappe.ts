@@ -31,10 +31,13 @@ export class FrappeCatalogSource implements StorefrontCatalogSource {
   async catalog(filters: StorefrontCatalogFilters) {
     const snapshot = await this.snapshot();
     const products = snapshot.items.map((item) => this.toProduct(item, snapshot));
-    return sortProducts(
+    const filtered = sortProducts(
       products.filter((product) => matches(product, filters)),
       filters.sort
     );
+    if (filters.limit == null) return filtered;
+    const offset = filters.offset ?? 0;
+    return filtered.slice(offset, offset + filters.limit);
   }
 
   async categories() {

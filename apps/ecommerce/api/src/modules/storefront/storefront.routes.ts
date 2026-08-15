@@ -52,6 +52,8 @@ export async function registerStorefrontRoutes(app: FastifyInstance, service: St
         category: z.string().max(120).optional(),
         maxPrice: z.coerce.number().nonnegative().optional(),
         minPrice: z.coerce.number().nonnegative().optional(),
+        limit: z.coerce.number().int().min(1).max(100).optional(),
+        offset: z.coerce.number().int().nonnegative().optional(),
         scope: searchScope.optional(),
         search: z.string().max(120).optional(),
         sort: sort.optional()

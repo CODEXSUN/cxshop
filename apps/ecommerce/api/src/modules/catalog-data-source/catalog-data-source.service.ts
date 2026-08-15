@@ -168,7 +168,7 @@ export class CatalogDataSourceService implements StorefrontCatalogSource {
       return operation(this.own);
     }
     if (!isFrappeOperatingWindow(this.now()) || Date.now() < this.frappeRetryAfter) {
-      return operation(this.fallback);
+      return this.cached(operation);
     }
     try {
       const result = await operation(this.frappe);
@@ -185,13 +185,23 @@ export class CatalogDataSourceService implements StorefrontCatalogSource {
       }
       this.frappeWasUnavailable = true;
       this.frappeRetryAfter = Date.now() + 60_000;
-      return operation(this.fallback);
+      return this.cached(operation);
     }
+  }
+
+  private async cached<T>(operation: (source: StorefrontCatalogSource) => Promise<T>) {
+    const cached = await operation(this.fallback);
+    if (!isEmptyCatalogResult(cached)) return cached;
+    return operation(this.own);
   }
 }
 
 function isFrappeUnavailable(error: unknown) {
   return isAppError(error) && error.code === "FRAPPE_CATALOG_UNAVAILABLE";
+}
+
+function isEmptyCatalogResult(value: unknown) {
+  return value == null || (Array.isArray(value) && value.length === 0);
 }
 
 function moduleDefinition(module: CatalogDataSourceModule) {

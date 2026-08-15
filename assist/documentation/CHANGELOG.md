@@ -2,11 +2,11 @@
 
 ## Version State
 
-Current version: 1.0.61
+Current version: 1.0.62
 
-Release tag: v-1.0.61
+Release tag: v-1.0.62
 
-Changelog label: v 1.0.61
+Changelog label: v 1.0.62
 
 This changelog starts fresh from the cleaned CODEXSUN foundation. Earlier copied application history was intentionally removed because it did not represent the current workspace.
 
@@ -19,6 +19,26 @@ Records schema, migration, seed, tenant provisioning, and data compatibility cha
 #### App Codebase Changes
 
 Records UI, API, service logic, tooling, packaging, and documentation changes.
+
+## v-1.0.62
+
+### [v 1.0.62] 2026-08-14 12:30 pm - Storefront catalog paging and cloud fallback safety
+
+#### Database Changes
+
+- Database update: No (auto-check).
+
+#### App Codebase Changes
+
+- Bumped the workspace version to 1.0.62.
+- Confirmed that the local catalog API returns all 155 products without response truncation.
+- Found that the deployed storefront returned an empty catalog from its unsynchronized local cache.
+- Added catalog `limit` and `offset` query parameters with a maximum page size of 100 products.
+- Loaded the first 24 storefront products before loading more products near the viewport.
+- Added product skeletons for the first request and later catalog pages.
+- Showed catalog request errors instead of silently presenting an empty product result.
+- Used the complete local catalog when the synchronized Frappe cache is empty.
+- Added a regression test for the empty synchronized-cache fallback.
 
 ## v-1.0.61
 
