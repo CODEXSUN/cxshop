@@ -85,7 +85,27 @@ Shared MariaDB listens inside Docker on `3306` and is exposed by CXApp at `127.0
 Shared infrastructure ownership is configurable through the
 `CXSHOP_SHARED_{MARIADB,REDIS,MEDIA}_{CONTAINER,PROJECT,SERVICE}` settings. The
 defaults preserve the CXApp topology. Compatible external services can use
-their existing Compose identity without renaming their containers.
+their existing Compose identity without renaming their containers. The selected
+Docker network must exist. MariaDB and Redis must be attached to it.
+A running shared container without a Docker health check is accepted. A container
+with a health check must report `healthy`.
+
+## TechMedia production domain
+
+Use `deploy/techmedia.in.env.example` as the non-secret domain override list for
+the private `.container/deploy.env` file. Do not copy credentials into this file.
+
+The deployment binds Web to `127.0.0.1:18020`. The maintained nginx server file
+is `deploy/techmedia.in.nginx.conf`. It proxies `techmedia.in` to that listener and
+redirects `www.techmedia.in` to the canonical HTTPS host. This file expects
+Cloudflare or another upstream proxy to supply `X-Forwarded-Proto`.
+
+Test the nginx configuration before reload:
+
+```bash
+sudo nginx -t
+sudo systemctl reload nginx
+```
 
 The API environment mount is read-only by default. Set
 `CXSHOP_RUNTIME_ENV_MODE=rw` only when Super Admin must save approved data-source

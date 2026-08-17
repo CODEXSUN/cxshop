@@ -2,11 +2,11 @@
 
 ## Version State
 
-Current version: 1.0.62
+Current version: 1.0.63
 
-Release tag: v-1.0.62
+Release tag: v-1.0.63
 
-Changelog label: v 1.0.62
+Changelog label: v 1.0.63
 
 This changelog starts fresh from the cleaned CODEXSUN foundation. Earlier copied application history was intentionally removed because it did not represent the current workspace.
 
@@ -20,6 +20,25 @@ Records schema, migration, seed, tenant provisioning, and data compatibility cha
 
 Records UI, API, service logic, tooling, packaging, and documentation changes.
 
+## v-1.0.63
+
+### [v 1.0.63] 2026-08-17 8:54 am - Storefront card layout and touch feedback
+
+#### Database Changes
+
+- Database update: No (manual).
+
+#### App Codebase Changes
+
+- Bumped workspace version to 1.0.63.
+- Changed mobile promotion cards to a full-width vertical layout with the image above the content.
+- Moved each product enquiry action beside its price and kept the action row at the card bottom.
+- Added a consistent border, medium corner radius, and a mild default shadow to storefront product cards.
+- Added a stronger shadow and a small lift for card hover and keyboard focus states.
+- Added white, padded image stages with rounded image corners across product and promotion cards.
+- Added enquiry hover, keyboard focus, and pressed feedback with larger mobile touch targets.
+- Replaced sticky mobile hover behavior with short touch feedback and respected reduced-motion settings.
+
 ## v-1.0.62
 
 ### [v 1.0.62] 2026-08-14 12:30 pm - Storefront catalog paging and cloud fallback safety
@@ -27,6 +46,8 @@ Records UI, API, service logic, tooling, packaging, and documentation changes.
 #### Database Changes
 
 - Database update: No (auto-check).
+- Updated the repeatable access seed to assign the protected admin role to every active admin.
+- Kept inactive and non-admin users out of the protected admin-role assignment.
 
 #### App Codebase Changes
 
@@ -39,6 +60,11 @@ Records UI, API, service logic, tooling, packaging, and documentation changes.
 - Showed catalog request errors instead of silently presenting an empty product result.
 - Used the complete local catalog when the synchronized Frappe cache is empty.
 - Added a regression test for the empty synchronized-cache fallback.
+- Replaced the hard-coded CODEXSUN alternate-host redirect with configured deployment hosts.
+- Accepted running shared containers without health checks. Containers with health checks must be healthy.
+- Allowed an explicit shared Docker network and verified MariaDB and Redis attachment before deployment.
+- Added tracked TechMedia domain overrides and an nginx proxy for `techmedia.in`.
+- Documented the TechMedia domain and shared-infrastructure deployment rules.
 
 ## v-1.0.61
 

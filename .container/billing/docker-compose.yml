@@ -91,8 +91,8 @@ services:
       traefik.http.routers.cxshop-web-www.tls: "true"
       traefik.http.routers.cxshop-web-www.tls.certresolver: letsencrypt
       traefik.http.routers.cxshop-web-www.middlewares: cxshop-www-redirect
-      traefik.http.middlewares.cxshop-www-redirect.redirectregex.regex: "^https://www\\.codexsun\\.com/(.*)"
-      traefik.http.middlewares.cxshop-www-redirect.redirectregex.replacement: "https://app.codexsun.com/$${1}"
+      traefik.http.middlewares.cxshop-www-redirect.redirectregex.regex: "^https?://[^/]+/(.*)"
+      traefik.http.middlewares.cxshop-www-redirect.redirectregex.replacement: "https://${CXSHOP_WEB_HOST:?CXSHOP_WEB_HOST is required}/$${1}"
       traefik.http.middlewares.cxshop-www-redirect.redirectregex.permanent: "true"
 
   platform-migrate:

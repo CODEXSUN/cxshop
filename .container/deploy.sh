@@ -76,15 +76,13 @@ require_stack_dependencies() {
   }
 
   for container in "$(mariadb_container_name)" "$(redis_container_name)"; do
-    state=$(docker inspect "$container" --format '{{.State.Status}}' 2>/dev/null || true)
-    health=$(docker inspect "$container" \
-      --format '{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}' \
-      2>/dev/null || true)
-    [ "$state" = "running" ] && [ "$health" = "healthy" ] || {
-      echo "Required dependency is not healthy: $container (state=${state:-missing}, health=${health:-missing})" >&2
+    container_is_ready "$container" || {
+      readiness=$(container_readiness "$container")
+      echo "Required dependency is not ready: $container ($readiness)" >&2
       echo "Run CXApp setup.sh before deploying CXShop." >&2
       exit 69
     }
+    require_container_network "$container" "$network"
   done
 }
 

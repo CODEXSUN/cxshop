@@ -102,16 +102,18 @@ export function PromotionsSection({ products }: { products: StorefrontProduct[] 
               <span className="cx-store__promotion-copy">
                 {metadata ? <small>{metadata}</small> : null}
                 <strong>{product.name}</strong>
-                {priced ? (
-                  <span className="cx-store__promotion-price">
-                    <b>{money(product.price)}</b>
-                    {hasStorefrontPrice(product.compareAtPrice) ? (
-                      <del>{money(product.compareAtPrice ?? product.price)}</del>
-                    ) : null}
+                <span className="cx-store__promotion-actions">
+                  {priced ? (
+                    <span className="cx-store__promotion-price">
+                      <b>{money(product.price)}</b>
+                      {hasStorefrontPrice(product.compareAtPrice) ? (
+                        <del>{money(product.compareAtPrice ?? product.price)}</del>
+                      ) : null}
+                    </span>
+                  ) : null}
+                  <span className="cx-store__promotion-link">
+                    {priced ? "View offer" : "Enquire"}
                   </span>
-                ) : null}
-                <span className="cx-store__promotion-link">
-                  {priced ? "View offer" : "Enquire"}
                 </span>
               </span>
             </a>
@@ -338,27 +340,29 @@ export function ProductCard({
           {metadata ? <small>{metadata}</small> : null}
           <h3>{product.name}</h3>
           {product.shortDescription ? <p>{product.shortDescription}</p> : null}
-          {priced ? (
-            <div>
-              <strong>{money(product.price)}</strong>
-              {hasStorefrontPrice(product.compareAtPrice) ? (
-                <del>{money(product.compareAtPrice ?? product.price)}</del>
-              ) : null}
-            </div>
-          ) : null}
         </div>
       </a>
-      <a
-        className="cx-product-card__enquiry"
-        href={whatsappLink(
-          `Hello ${brandName}, please share details for ${product.name}.`,
-          whatsappNumber
-        )}
-        rel="noreferrer"
-        target="_blank"
-      >
-        <MessageCircleIcon size={16} /> Enquire
-      </a>
+      <div className="cx-product-card__actions">
+        {priced ? (
+          <div className="cx-product-card__price">
+            <strong>{money(product.price)}</strong>
+            {hasStorefrontPrice(product.compareAtPrice) ? (
+              <del>{money(product.compareAtPrice ?? product.price)}</del>
+            ) : null}
+          </div>
+        ) : null}
+        <a
+          className="cx-product-card__enquiry"
+          href={whatsappLink(
+            `Hello ${brandName}, please share details for ${product.name}.`,
+            whatsappNumber
+          )}
+          rel="noreferrer"
+          target="_blank"
+        >
+          <MessageCircleIcon size={16} /> Enquire
+        </a>
+      </div>
     </article>
   );
 }

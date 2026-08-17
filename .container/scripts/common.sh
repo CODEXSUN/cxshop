@@ -198,20 +198,40 @@ require_shared_container() {
     echo "Run CXApp setup.sh before installing CXShop." >&2
     exit 69
   }
-  health=$(docker inspect "$container" \
-    --format '{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}')
-  [ "$health" = "healthy" ] || {
-    echo "Required shared CXApp service is not healthy: $container ($health)" >&2
+  container_is_ready "$container" || {
+    readiness=$(container_readiness "$container")
+    echo "Required shared CXApp service is not ready: $container ($readiness)" >&2
+    exit 69
+  }
+}
+
+container_readiness() {
+  docker inspect "$1" \
+    --format '{{.State.Status}}|{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}' \
+    2>/dev/null || printf 'missing|missing'
+}
+
+container_is_ready() {
+  readiness=$(container_readiness "$1")
+  state=${readiness%%|*}
+  health=${readiness#*|}
+  [ "$state" = "running" ] && { [ "$health" = "healthy" ] || [ "$health" = "none" ]; }
+}
+
+require_container_network() {
+  container="$1"
+  network="$2"
+  attached=$(docker inspect "$container" \
+    --format "{{if index .NetworkSettings.Networks \"$network\"}}yes{{else}}no{{end}}" \
+    2>/dev/null || true)
+  [ "$attached" = "yes" ] || {
+    echo "Required shared service is not attached to $network: $container" >&2
     exit 69
   }
 }
 
 require_shared_infrastructure() {
   network=$(env_value CXSHOP_DOCKER_NETWORK)
-  [ "$network" = "cxapp-network" ] || {
-    echo "CXSHOP_DOCKER_NETWORK must be cxapp-network; received: $network" >&2
-    exit 78
-  }
   docker network inspect "$network" >/dev/null 2>&1 || {
     echo "Required shared Docker network is missing: $network" >&2
     exit 69
@@ -227,6 +247,8 @@ require_shared_infrastructure() {
   require_shared_container "$(env_value CXSHOP_SHARED_MEDIA_CONTAINER)" \
     "$(env_value CXSHOP_SHARED_MEDIA_PROJECT)" \
     "$(env_value CXSHOP_SHARED_MEDIA_SERVICE)"
+  require_container_network "$mariadb_container" "$network"
+  require_container_network "$redis_container" "$network"
 }
 
 ensure_network() {

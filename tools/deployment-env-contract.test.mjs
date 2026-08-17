@@ -54,6 +54,30 @@ test("container tooling and Compose consume deploy.env only", async () => {
   assert.doesNotMatch(compose, /\.\.\/\.\.\/\.env/u);
   assert.match(compose, /CXSHOP_RUNTIME_ENV_MODE/u);
   assert.match(compose, /codex-data:\/app\/\.codex/u);
+  assert.match(compose, /redirectregex\.replacement: "https:\/\/\$\{CXSHOP_WEB_HOST/u);
+  assert.doesNotMatch(compose, /redirectregex\.(?:regex|replacement):.*codexsun\.com/u);
+  assert.doesNotMatch(compose, /platform-migrate:[\s\S]*deploy\.env:\/app\/\.env/u);
+});
+
+test("shared infrastructure supports an explicit attached network", async () => {
+  const common = await read(".container/scripts/common.sh");
+
+  assert.match(common, /container_is_ready/u);
+  assert.match(common, /require_container_network/u);
+  assert.doesNotMatch(common, /CXSHOP_DOCKER_NETWORK must be cxapp-network/u);
+});
+
+test("TechMedia domain templates keep secrets out of tracked configuration", async () => {
+  const domain = envValues(await read("deploy/techmedia.in.env.example"));
+  const nginx = await read("deploy/techmedia.in.nginx.conf");
+
+  assert.equal(domain.PLATFORM_WEB_ORIGIN, "https://techmedia.in");
+  assert.equal(domain.CXSHOP_WEB_HOST, "techmedia.in");
+  assert.equal(domain.CXSHOP_WEB_HOST_ALT, "www.techmedia.in");
+  assert.equal(domain.PLATFORM_WEB_PORT, "18020");
+  assert.equal(domain.DB_PASSWORD, undefined);
+  assert.match(nginx, /proxy_pass http:\/\/127\.0\.0\.1:18020/u);
+  assert.match(nginx, /return 301 https:\/\/techmedia\.in\$request_uri/u);
 });
 
 test("guarded updates enforce reproducible versions and recoverable deployment evidence", async () => {
