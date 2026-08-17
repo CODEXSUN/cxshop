@@ -1,6 +1,6 @@
 {
   "name": "@cxshop/billing-web",
-  "version": "1.0.63",
+  "version": "1.0.64",
   "private": true,
   "type": "module",
   "exports": {
@@ -22,9 +22,9 @@
     "lint": "eslint src --ext .ts,.tsx"
   },
   "dependencies": {
-    "@cxshop/core-web": "^1.0.63",
-    "@cxshop/ui": "^1.0.63",
-    "@cxshop/mail-web": "^1.0.63",
+    "@cxshop/core-web": "^1.0.64",
+    "@cxshop/ui": "^1.0.64",
+    "@cxshop/mail-web": "^1.0.64",
     "@tanstack/react-query": "^5.100.10",
     "@tanstack/react-router": "^1.91.3",
     "lucide-react": "^1.22.0",

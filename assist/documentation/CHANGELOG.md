@@ -2,11 +2,11 @@
 
 ## Version State
 
-Current version: 1.0.63
+Current version: 1.0.64
 
-Release tag: v-1.0.63
+Release tag: v-1.0.64
 
-Changelog label: v 1.0.63
+Changelog label: v 1.0.64
 
 This changelog starts fresh from the cleaned CODEXSUN foundation. Earlier copied application history was intentionally removed because it did not represent the current workspace.
 
@@ -19,6 +19,18 @@ Records schema, migration, seed, tenant provisioning, and data compatibility cha
 #### App Codebase Changes
 
 Records UI, API, service logic, tooling, packaging, and documentation changes.
+
+## v-1.0.64
+
+### [v 1.0.64] 2026-08-17 5:29 pm - #63 - Storefront card layout and touch feed back
+
+#### Database Changes
+
+- Database update: No (auto-check).
+
+#### App Codebase Changes
+
+- Bumped workspace version to 1.0.64.
 
 ## v-1.0.63
 

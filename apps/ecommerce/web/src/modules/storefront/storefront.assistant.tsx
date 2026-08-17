@@ -1,6 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { SendIcon, XIcon } from "lucide-react";
-import { DraggableSpritePet } from "@cxshop/ui/components/sprite-pet";
+import {
+  DraggableSpritePet,
+  type SpritePetBehavior,
+  type SpritePetPlacement
+} from "@cxshop/ui/components/sprite-pet";
 
 type PikoMessage = { body: string; id: string; role: "assistant" | "user" };
 type PikoConversation = { id: string; messages: PikoMessage[]; title: string };
@@ -15,6 +19,9 @@ export function PikoStoreAssistant() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [mascotSettings, setMascotSettings] = useState(defaultMascotSettings);
+  const [shopperPlacement, setShopperPlacement] = useState<SpritePetPlacement | undefined>(() =>
+    readShopperPlacement()
+  );
   const end = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -28,7 +35,10 @@ export function PikoStoreAssistant() {
           data?: PikoMascotSettings;
           success: boolean;
         };
-        if (response.ok && envelope.success && envelope.data) setMascotSettings(envelope.data);
+        if (response.ok && envelope.success && envelope.data) {
+          setMascotSettings(envelope.data);
+          setShopperPlacement((current) => current ?? readShopperPlacement());
+        }
       })
       .catch(() => undefined);
   }, []);
@@ -115,18 +125,49 @@ export function PikoStoreAssistant() {
       <DraggableSpritePet
         alt="Piko the panda storekeeper"
         behavior={mascotSettings.behavior}
+        canManage
         className="cx-piko__mascot"
+        onBehaviorChange={(behavior: SpritePetBehavior) =>
+          setMascotSettings((current) => ({ ...current, behavior }))
+        }
         onClick={() => setOpen(true)}
         onVoiceTranscript={(transcript) => {
           setMessage(transcript);
           setOpen(true);
         }}
-        placement={mascotSettings}
+        onPlacementChange={(placement) => {
+          setShopperPlacement(placement);
+          setMascotSettings((current) => ({ ...current, behavior: "stay" }));
+          window.localStorage.setItem(shopperPlacementKey, JSON.stringify(placement));
+        }}
+        placement={shopperPlacement ?? mascotSettings}
         src="/mascots/piko/spritesheet.webp"
         storageKey="cxshop.piko"
       />
     </aside>
   );
+}
+
+const shopperPlacementKey = "cxshop.piko.storefront-placement-v1";
+
+function readShopperPlacement(): SpritePetPlacement | undefined {
+  const raw = window.localStorage.getItem(shopperPlacementKey);
+  if (!raw) return undefined;
+  try {
+    const value = JSON.parse(raw) as Partial<SpritePetPlacement>;
+    if (
+      typeof value.xRatio === "number" &&
+      typeof value.yRatio === "number" &&
+      value.xRatio >= 0 &&
+      value.xRatio <= 1 &&
+      value.yRatio >= 0 &&
+      value.yRatio <= 1
+    )
+      return { xRatio: value.xRatio, yRatio: value.yRatio };
+  } catch {
+    window.localStorage.removeItem(shopperPlacementKey);
+  }
+  return undefined;
 }
 
 function visitorId() {
