@@ -1104,6 +1104,9 @@
   border-top: 1px solid var(--line);
   padding: 58px 0 22px;
 }
+.cx-store__featured-products .cx-store__grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
 .cx-store__section-title a {
   align-items: center;
   color: var(--ink);
