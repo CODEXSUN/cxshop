@@ -49,6 +49,11 @@ import {
 import { registerQueueJobHandler } from "./modules/queue-manager/queue-handler.registry.js";
 import { applicationSetupModule } from "./modules/application-setup/index.js";
 import { blogsApiModuleKeys, closeBlogsDatabase, registerBlogsApi } from "@cxshop/blogs-api";
+import {
+  closeFileManagerDatabase,
+  fileManagerApiModuleKeys,
+  registerFileManagerApi
+} from "@codexsun/file-manager/api";
 
 export async function createApp() {
   console.info("[platform.boot] bootstrap started");
@@ -67,6 +72,10 @@ export async function createApp() {
       title: "Welcome—your store is ready."
     },
     shutdownHooks: [
+      async () => {
+        console.info("[shutdown] closing File Manager MariaDB pool");
+        await closeFileManagerDatabase();
+      },
       async () => {
         console.info("[shutdown] closing Blogs MariaDB pool");
         await closeBlogsDatabase();
@@ -117,6 +126,7 @@ export async function createApp() {
             ...devkitApiModuleKeys,
             ...ecommerceApiModuleKeys,
             ...blogsApiModuleKeys,
+            ...fileManagerApiModuleKeys,
             appRegistryModule.key,
             applicationSetupModule.key,
             tenantUserModule.key,
@@ -155,6 +165,8 @@ export async function createApp() {
   console.info("[platform.routes] health ready");
   await registerAuthRoutes(app);
   console.info("[platform.routes] auth ready");
+  await registerFileManagerApi(app, { resolveContext: fileManagerContext });
+  console.info("[platform.routes] File Manager package ready");
   const industryService = new IndustryService();
   await registerCoreApi(app, {
     resolveIndustryName: (industryId) => industryService.resolveActiveIndustryName(industryId)
@@ -271,5 +283,15 @@ async function mailContext(request: FastifyRequest) {
     database: context.database as never,
     tenantDatabase: context.databaseName,
     tenantId: "application"
+  };
+}
+
+function fileManagerContext(request: FastifyRequest) {
+  const payload = request.authContext?.payload;
+  if (!payload) throw AppError.unauthorized("File Manager authentication is required.");
+  return {
+    actorId: payload.userId,
+    host: "cxshop" as const,
+    tenantId: payload.tenantId ?? payload.userType
   };
 }

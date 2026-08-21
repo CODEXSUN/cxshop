@@ -84,7 +84,8 @@ const generatedInfrastructureSecrets = new Set([
   "MARIADB_ROOT_PASSWORD",
   "REDIS_PASSWORD",
   "MEDIA_ADMIN_PASSWORD",
-  "JWT_SECRET"
+  "JWT_SECRET",
+  "FILE_MANAGER_ENCRYPTION_KEY"
 ]);
 if (!checkOnly) {
   for (const key of retiredKeys) {
@@ -160,6 +161,19 @@ if (!checkOnly) {
         ? `redis://:${encodeURIComponent(redisPassword)}@cxapp-redis:6379/2`
         : `redis://:${encodeURIComponent(redisPassword)}@127.0.0.1:6379/0`
     );
+  }
+
+  current.set("FILE_MANAGER_DB_HOST", current.get("DB_HOST") ?? "");
+  current.set("FILE_MANAGER_DB_PORT", current.get("DB_PORT") ?? "");
+  current.set("FILE_MANAGER_DB_USER", current.get("DB_USER") ?? "");
+  current.set("FILE_MANAGER_DB_PASSWORD", current.get("DB_PASSWORD") ?? "");
+  current.set("FILE_MANAGER_DB_NAME", current.get("DB_MASTER_NAME") ?? "");
+  current.set(
+    "FILE_MANAGER_LOCAL_ROOT",
+    deployment ? "/storage/app/file-manager" : "storage/app/file-manager"
+  );
+  if (isMissing(current.get("FILE_MANAGER_ENCRYPTION_KEY"))) {
+    current.set("FILE_MANAGER_ENCRYPTION_KEY", randomBytes(32).toString("hex"));
   }
 
   validate(current, deployment);

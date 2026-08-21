@@ -31,6 +31,8 @@
     "react-is": "^19.2.8",
     "recharts": "^3.10.1",
     "sonner": "^2.0.7",
-    "zod": "^4.4.3"
+    "zod": "^4.4.3",
+    "@codexsun/blog": "github:CODEXSUN/blog#v-1.0.0",
+    "@codexsun/file-manager": "github:CODEXSUN/file-manager#v-1.0.0"
   }
 }

@@ -381,6 +381,23 @@ export function appMenuFor(
             onSelect: () => onSelect("core.organisation.default-company")
           }
         ]
+      },
+      {
+        icon: ArchiveIcon,
+        title: "Storage",
+        isActive: activePage.startsWith("application.storage"),
+        items: [
+          {
+            title: "Files",
+            isActive: activePage === "application.storage.files",
+            onSelect: () => onSelect("application.storage.files")
+          },
+          {
+            title: "Storage Connections",
+            isActive: activePage === "application.storage.connections",
+            onSelect: () => onSelect("application.storage.connections")
+          }
+        ]
       }
     ]
   };

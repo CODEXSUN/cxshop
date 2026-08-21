@@ -12,6 +12,19 @@ This changelog starts fresh from the cleaned CODEXSUN foundation. Earlier copied
 
 New entries should keep database-facing work and application code work separate.
 
+## Unreleased
+
+### Database Changes
+
+- Database update: Yes.
+- Added File Manager owner tables through package-managed startup migrations.
+
+### App Codebase Changes
+
+- Added File Manager files and storage connections under the Application storage desk.
+- Reused the approved CXShop MariaDB connection and persistent application storage volume.
+- Added mandatory File Manager environment configuration and deployment validation.
+
 #### Database Changes
 
 Records schema, migration, seed, tenant provisioning, and data compatibility changes.

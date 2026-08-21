@@ -76,6 +76,11 @@ const loadCatalogDataSourceModule = () => import("@cxshop/ecommerce-web");
 const loadStorefrontProfileModule = () =>
   import("@cxshop/ecommerce-web/modules/storefront-profile");
 const loadBlogsEditorModule = () => import("@cxshop/blogs-web/modules/editor");
+const loadFileManagerModule = () =>
+  import("@codexsun/file-manager/web").then((module) => {
+    module.configureFileManagerClient({ baseUrl: "/api/platform/file-manager" });
+    return module;
+  });
 
 const billingWorkspacePreloaders = [
   loadBillingDashboardModule,
@@ -111,6 +116,12 @@ const StorefrontProfileWorkspace = lazyWorkspace(() =>
 );
 const BlogsEditorWorkspace = lazyWorkspace(() =>
   loadBlogsEditorModule().then((module) => module.BlogsEditorWorkspace)
+);
+const FileBrowserWorkspace = lazyWorkspace(() =>
+  loadFileManagerModule().then((module) => module.FileBrowserWorkspace)
+);
+const StorageConnectionsWorkspace = lazyWorkspace(() =>
+  loadFileManagerModule().then((module) => module.StorageConnectionsWorkspace)
 );
 
 const AddressTypesWorkspace = lazyWorkspace(() =>
@@ -356,6 +367,8 @@ type AppPage =
   | "application.landing"
   | "application.profile"
   | "application.settings"
+  | "application.storage.files"
+  | "application.storage.connections"
   | "application.access.users"
   | "application.access.roles"
   | "application.access.permissions"
@@ -782,6 +795,10 @@ export function AppDesk() {
             ) : null}
             {safePage === "application.profile" ? <ApplicationProfile /> : null}
             {safePage === "application.settings" ? <ApplicationSettings /> : null}
+            {safePage === "application.storage.files" ? <FileBrowserWorkspace /> : null}
+            {safePage === "application.storage.connections" ? (
+              <StorageConnectionsWorkspace />
+            ) : null}
             {safePage === "devkit.honey" ? (
               <DevkitWorkspaceHost initialPrompt={pikoDraft} workspaceId="honey" />
             ) : null}
@@ -909,6 +926,8 @@ function pageFromUrl(landingApp: PlatformAppId | null): AppPage {
     key === "application.landing" ||
     key === "application.profile" ||
     key === "application.settings" ||
+    key === "application.storage.files" ||
+    key === "application.storage.connections" ||
     key === "application.access.users" ||
     key === "application.access.roles" ||
     key === "application.access.permissions" ||

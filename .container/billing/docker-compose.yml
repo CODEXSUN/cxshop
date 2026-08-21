@@ -26,7 +26,7 @@ services:
     entrypoint: ["/bin/sh", "-c"]
     command:
       - |
-        mkdir -p /storage/app /storage/public /storage/tenants /storage/backups/database /codex
+        mkdir -p /storage/app/file-manager /storage/public /storage/tenants /storage/backups/database /codex
         chown -R 1000:1000 /storage/app /storage/public /storage/tenants /storage/backups
         chown -R 1000:1000 /codex
     volumes:
