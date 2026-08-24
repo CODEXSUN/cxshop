@@ -50,6 +50,20 @@ test("maps the LogicX iShop 1.0.9 snapshot into published storefront products", 
             name: "DRAFT-1",
             published: 0
           }
+        ],
+        sliders: [
+          {
+            action_label: "Shop now",
+            action_url: "/shop/product/web-1",
+            description: "Featured laptop",
+            display_order: 10,
+            eyebrow: "New arrival",
+            image: "/files/hero.png",
+            ishop_item: "WEB-1",
+            published: 1,
+            slider_code: "HOME-01",
+            title: "Laptop season"
+          }
         ]
       }
     });
@@ -69,6 +83,7 @@ test("maps the LogicX iShop 1.0.9 snapshot into published storefront products", 
     compareAtPrice: null,
     description: "",
     featured: true,
+    featuredOrder: 1,
     imageAlt: "Published laptop",
     imageUrl: "https://ishop.example.test/files/web-1.png",
     name: "Published laptop",
@@ -78,4 +93,18 @@ test("maps the LogicX iShop 1.0.9 snapshot into published storefront products", 
     subtitle: "",
     variantCount: 0
   });
+  assert.deepEqual(await source.sliders(), [
+    {
+      actionLabel: "Shop now",
+      actionUrl: "/shop/product/web-1",
+      description: "Featured laptop",
+      displayOrder: 10,
+      eyebrow: "New arrival",
+      imageAlt: "Laptop season",
+      imageUrl: "https://ishop.example.test/files/hero.png",
+      linkedItem: "WEB-1",
+      sliderCode: "HOME-01",
+      title: "Laptop season"
+    }
+  ]);
 });

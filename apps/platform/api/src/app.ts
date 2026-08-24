@@ -48,12 +48,12 @@ import {
 } from "@cxshop/ecommerce-api";
 import { registerQueueJobHandler } from "./modules/queue-manager/queue-handler.registry.js";
 import { applicationSetupModule } from "./modules/application-setup/index.js";
-import { blogsApiModuleKeys, closeBlogsDatabase, registerBlogsApi } from "@cxshop/blogs-api";
 import {
-  closeFileManagerDatabase,
-  fileManagerApiModuleKeys,
-  registerFileManagerApi
-} from "@codexsun/file-manager/api";
+  activePlatformAddons,
+  addonApiModuleKeys,
+  closePlatformAddons,
+  registerBlogAddon
+} from "./addon-host.js";
 
 export async function createApp() {
   console.info("[platform.boot] bootstrap started");
@@ -73,12 +73,8 @@ export async function createApp() {
     },
     shutdownHooks: [
       async () => {
-        console.info("[shutdown] closing File Manager MariaDB pool");
-        await closeFileManagerDatabase();
-      },
-      async () => {
-        console.info("[shutdown] closing Blogs MariaDB pool");
-        await closeBlogsDatabase();
+        console.info("[shutdown] closing add-on runtimes");
+        await closePlatformAddons();
       },
       async () => {
         console.info("[shutdown] closing Ecommerce MariaDB pools");
@@ -125,8 +121,7 @@ export async function createApp() {
             ...billingApiModuleKeys,
             ...devkitApiModuleKeys,
             ...ecommerceApiModuleKeys,
-            ...blogsApiModuleKeys,
-            ...fileManagerApiModuleKeys,
+            ...addonApiModuleKeys,
             appRegistryModule.key,
             applicationSetupModule.key,
             tenantUserModule.key,
@@ -145,6 +140,7 @@ export async function createApp() {
             appOrchestrationModule.key,
             mailModule.key
           ],
+          addons: activePlatformAddons(),
           runtime: "platform-foundation"
         },
         status: "ok"
@@ -165,8 +161,6 @@ export async function createApp() {
   console.info("[platform.routes] health ready");
   await registerAuthRoutes(app);
   console.info("[platform.routes] auth ready");
-  await registerFileManagerApi(app, { resolveContext: fileManagerContext });
-  console.info("[platform.routes] File Manager package ready");
   const industryService = new IndustryService();
   await registerCoreApi(app, {
     resolveIndustryName: (industryId) => industryService.resolveActiveIndustryName(industryId)
@@ -201,7 +195,11 @@ export async function createApp() {
   });
   startCatalogMatchingOutboxRelay(app, (payload) => queueService.enqueue(payload));
   console.info("[platform.routes] Ecommerce package ready");
-  await registerBlogsApi(app);
+  await registerBlogAddon(app, {
+    enqueue: (payload) => queueService.enqueue(payload),
+    registerJobHandler: registerQueueJobHandler,
+    resolveActorEmail: (request) => request.authContext?.payload.email ?? "application-admin"
+  });
   console.info("[platform.routes] Blogs package ready");
   await registerModules(
     [
@@ -283,15 +281,5 @@ async function mailContext(request: FastifyRequest) {
     database: context.database as never,
     tenantDatabase: context.databaseName,
     tenantId: "application"
-  };
-}
-
-function fileManagerContext(request: FastifyRequest) {
-  const payload = request.authContext?.payload;
-  if (!payload) throw AppError.unauthorized("File Manager authentication is required.");
-  return {
-    actorId: payload.userId,
-    host: "cxshop" as const,
-    tenantId: payload.tenantId ?? payload.userType
   };
 }

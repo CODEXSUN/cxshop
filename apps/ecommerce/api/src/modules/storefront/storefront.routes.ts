@@ -10,6 +10,7 @@ const product = z.object({
   compareAtPrice: z.number().nullable(),
   description: z.string(),
   featured: z.boolean(),
+  featuredOrder: z.number().nullable(),
   imageAlt: z.string(),
   imageUrl: z.string(),
   name: z.string(),
@@ -21,8 +22,26 @@ const product = z.object({
 });
 const searchScope = z.enum(["all", "products", "brands", "categories"]);
 const sort = z.enum(["featured", "name", "price-asc", "price-desc", "discount"]);
+const slider = z.object({
+  actionLabel: z.string(),
+  actionUrl: z.string(),
+  description: z.string(),
+  displayOrder: z.number(),
+  eyebrow: z.string(),
+  imageAlt: z.string(),
+  imageUrl: z.string(),
+  linkedItem: z.string().nullable(),
+  sliderCode: z.string(),
+  title: z.string()
+});
 
 export async function registerStorefrontRoutes(app: FastifyInstance, service: StorefrontService) {
+  registerContractRoute(app, {
+    method: "GET",
+    url: "/storefront/sliders",
+    schemas: { response: z.array(slider) },
+    handler: () => service.sliders()
+  });
   registerContractRoute(app, {
     method: "GET",
     url: "/storefront/site-navigation",

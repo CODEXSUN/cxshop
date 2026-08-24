@@ -29,10 +29,19 @@ export function PublicBlogPage() {
         <p>Field notes on digital commerce, operations, customer trust, and sustainable growth.</p>
       </section>
       <section className="public-blog-grid" aria-live="polite">
+        {query.isLoading ? <p className="public-blog-state">Loading journal…</p> : null}
+        {query.isError ? (
+          <p className="public-blog-state" role="alert">
+            The journal could not be loaded. Please try again shortly.
+          </p>
+        ) : null}
+        {!query.isLoading && !query.isError && query.data?.length === 0 ? (
+          <p className="public-blog-state">No stories match this search.</p>
+        ) : null}
         {query.data?.map((article, index) => (
           <article className={index === 0 ? "featured" : ""} key={article.id}>
             {article.featuredImage ? (
-              <img src={article.featuredImage} alt={article.imageAlt} />
+              <img src={article.featuredImage} alt={article.imageAlt} loading="lazy" />
             ) : null}
             <div>
               <span>

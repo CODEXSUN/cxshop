@@ -1,6 +1,6 @@
 import { createConnection } from "mysql2/promise";
 import { closeAllBillingDatabases } from "@cxshop/billing-api";
-import { closeBlogsDatabase } from "@cxshop/blogs-api";
+import { closeBlogsDatabase, migrateBlogsDatabase, seedBlogsDatabase } from "@cxshop/blogs-api";
 import { closeCoreDatabase } from "@cxshop/core-api";
 import { closeAllEcommerceDatabases } from "@cxshop/ecommerce-api";
 import {
@@ -136,6 +136,7 @@ async function migrateAll() {
   console.info("[database] running master and tenant migrations");
   await createMasterDatabase();
   await migratePlatformDatabase();
+  await migrateBlogsDatabase();
   await migrateTenantAppDatabases();
 }
 
@@ -158,6 +159,8 @@ async function seedAll() {
   await createMasterDatabase();
   await migratePlatformDatabase();
   await seedPlatformDatabase();
+  await migrateBlogsDatabase();
+  await seedBlogsDatabase();
   await seedDefaultTenant();
   await seedTenantAppDatabases();
 }

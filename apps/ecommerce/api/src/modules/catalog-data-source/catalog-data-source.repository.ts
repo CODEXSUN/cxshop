@@ -56,6 +56,20 @@ export class CatalogDataSourceRepository {
       for (const catalog of snapshot.catalogs) {
         await this.upsertCatalog(transaction, catalog, itemCodesByFrappeName);
       }
+      for (const slider of snapshot.sliders) {
+        await sql`INSERT INTO ecommerce_storefront_sliders
+          (slider_code,eyebrow,title,description,image_url,action_label,action_url,ishop_item,
+           display_order,published,starts_at,ends_at,frappe_document_name,frappe_modified_at,status)
+          VALUES (${slider.slider_code},${slider.eyebrow ?? ""},${slider.title},${slider.description ?? ""},
+            ${slider.image ?? ""},${slider.action_label ?? ""},${slider.action_url ?? ""},${slider.ishop_item ?? null},
+            ${slider.display_order ?? 0},${slider.published ? 1 : 0},${frappeDate(slider.starts_at)},
+            ${frappeDate(slider.ends_at)},${slider.name ?? slider.slider_code},${frappeDate(slider.modified)},'active')
+          ON DUPLICATE KEY UPDATE eyebrow=VALUES(eyebrow),title=VALUES(title),description=VALUES(description),
+            image_url=VALUES(image_url),action_label=VALUES(action_label),action_url=VALUES(action_url),
+            ishop_item=VALUES(ishop_item),display_order=VALUES(display_order),published=VALUES(published),
+            starts_at=VALUES(starts_at),ends_at=VALUES(ends_at),frappe_document_name=VALUES(frappe_document_name),
+            frappe_modified_at=VALUES(frappe_modified_at),status='active'`.execute(transaction);
+      }
       await this.deactivateMissingFrappeRecords(transaction, snapshot);
       await sql`INSERT INTO ecommerce_catalog_sync_runs
         (direction,status,item_count,catalog_count,details_json)
@@ -67,7 +81,7 @@ export class CatalogDataSourceRepository {
 
   async snapshot(): Promise<FrappeCatalogSnapshot> {
     const database = getEcommerceDatabase();
-    const [items, catalogs, memberships] = await Promise.all([
+    const [items, catalogs, memberships, sliders] = await Promise.all([
       sql<Row>`SELECT info.*,product.name AS item_name,product.opening_price,category.name AS category_name,
         brand.name AS brand_name,image.url AS primary_image FROM ecommerce_product_information info
         INNER JOIN core_products product ON product.id=info.core_product_id AND product.deleted_at IS NULL
@@ -82,6 +96,9 @@ export class CatalogDataSourceRepository {
       ),
       sql<Row>`SELECT membership.*,catalog.catalog_code FROM ecommerce_catalog_items membership
         INNER JOIN ecommerce_ishop_catalogs catalog ON catalog.id=membership.catalog_id ORDER BY membership.display_order`.execute(
+        database
+      ),
+      sql<Row>`SELECT * FROM ecommerce_storefront_sliders WHERE status='active' ORDER BY display_order,slider_code`.execute(
         database
       )
     ]);
@@ -101,6 +118,22 @@ export class CatalogDataSourceRepository {
             display_order: Number(row.display_order ?? 0),
             ishop_item: String(row.ishop_item)
           }))
+      })),
+      sliders: sliders.rows.map((slider) => ({
+        action_label: String(slider.action_label ?? ""),
+        action_url: String(slider.action_url ?? ""),
+        description: String(slider.description ?? ""),
+        display_order: Number(slider.display_order ?? 0),
+        ends_at: dateString(slider.ends_at),
+        eyebrow: String(slider.eyebrow ?? ""),
+        image: String(slider.image_url ?? ""),
+        ishop_item: slider.ishop_item ? String(slider.ishop_item) : null,
+        modified: dateString(slider.frappe_modified_at),
+        name: String(slider.frappe_document_name || slider.slider_code),
+        published: Number(slider.published ?? 0),
+        slider_code: String(slider.slider_code),
+        starts_at: dateString(slider.starts_at),
+        title: String(slider.title)
       }))
     };
   }
@@ -166,23 +199,21 @@ export class CatalogDataSourceRepository {
        erpnext_description,erpnext_disabled,erpnext_is_stock_item,erpnext_standard_rate,erpnext_modified_at)
       VALUES (LOWER(SUBSTRING(MD5(UUID()),1,8)),${productId},${brandId},${item.item_name},${slug},
         ${item.short_description ?? ""},${item.full_description ?? ""},${JSON.stringify(highlights(item.highlights))},
-        ${item.published ? "published" : "draft"},1,'active',${item.item_code},${item.erpnext_item ?? item.item_code},
+        ${item.published ? "published" : "draft"},0,'active',${item.item_code},${item.erpnext_item ?? item.item_code},
         ${item.availability ?? "Immediately"},${categoryName},${Number(item.web_price ?? 0)},${Number(item.mrp ?? 0)},
         ${item.image ?? ""},${item.highlights ?? ""},${item.published ? 1 : 0},${item.name ?? item.item_code},
         ${frappeDate(item.modified)},${erp?.stock_uom ?? ""},${erp?.description ?? ""},${Number(erp?.disabled ?? 0)},
         ${Number(erp?.is_stock_item ?? 1)},${Number(erp?.standard_rate ?? 0)},${frappeDate(erp?.modified)})
       ON DUPLICATE KEY UPDATE core_product_id=VALUES(core_product_id),brand_id=VALUES(brand_id),
         storefront_title=VALUES(storefront_title),slug=VALUES(slug),short_description=VALUES(short_description),description=VALUES(description),
-        bullet_points_json=VALUES(bullet_points_json),publication_status=VALUES(publication_status),
+        bullet_points_json=VALUES(bullet_points_json),publication_status=VALUES(publication_status),is_featured=0,
         erpnext_item=VALUES(erpnext_item),availability=VALUES(availability),item_group=VALUES(item_group),
         web_price=VALUES(web_price),mrp=VALUES(mrp),frappe_image=VALUES(frappe_image),highlights=VALUES(highlights),
         published=VALUES(published),frappe_document_name=VALUES(frappe_document_name),
         frappe_modified_at=VALUES(frappe_modified_at),erpnext_stock_uom=VALUES(erpnext_stock_uom),
         erpnext_description=VALUES(erpnext_description),erpnext_disabled=VALUES(erpnext_disabled),
         erpnext_is_stock_item=VALUES(erpnext_is_stock_item),erpnext_standard_rate=VALUES(erpnext_standard_rate),
-        erpnext_modified_at=VALUES(erpnext_modified_at),status='active'`.execute(
-      transaction
-    );
+        erpnext_modified_at=VALUES(erpnext_modified_at),status='active'`.execute(transaction);
     const info = await sql<{
       id: number;
     }>`SELECT id FROM ecommerce_product_information WHERE frappe_item_code=${item.item_code} LIMIT 1`.execute(
@@ -290,7 +321,18 @@ export class CatalogDataSourceRepository {
       await sql`UPDATE ecommerce_ishop_catalogs SET status='inactive',published=0
         WHERE catalog_code NOT IN (${sql.join(catalogCodes)})`.execute(transaction);
     } else {
-      await sql`UPDATE ecommerce_ishop_catalogs SET status='inactive',published=0`.execute(transaction);
+      await sql`UPDATE ecommerce_ishop_catalogs SET status='inactive',published=0`.execute(
+        transaction
+      );
+    }
+    const sliderCodes = snapshot.sliders.map((slider) => slider.slider_code);
+    if (sliderCodes.length) {
+      await sql`UPDATE ecommerce_storefront_sliders SET status='inactive',published=0
+        WHERE slider_code NOT IN (${sql.join(sliderCodes)})`.execute(transaction);
+    } else {
+      await sql`UPDATE ecommerce_storefront_sliders SET status='inactive',published=0`.execute(
+        transaction
+      );
     }
   }
 }

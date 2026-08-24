@@ -2,7 +2,8 @@ import type {
   StorefrontCatalogFilters,
   StorefrontDiscovery,
   StorefrontProduct,
-  StorefrontProductDetail
+  StorefrontProductDetail,
+  StorefrontSlider
 } from "../storefront/storefront.types.js";
 
 export type CatalogDataSourceProvider = "frappe" | "own";
@@ -13,7 +14,8 @@ export const catalogDataSourceModules = [
   "products",
   "product-details",
   "variants",
-  "product-images"
+  "product-images",
+  "sliders"
 ] as const;
 export type CatalogDataSourceModule = (typeof catalogDataSourceModules)[number];
 
@@ -109,10 +111,28 @@ export type FrappeIShopCatalog = {
   published?: number;
 };
 
+export type FrappeIShopSlider = {
+  action_label?: string | null;
+  action_url?: string | null;
+  description?: string | null;
+  display_order?: number;
+  ends_at?: string | null;
+  eyebrow?: string | null;
+  image?: string | null;
+  ishop_item?: string | null;
+  modified?: string | null;
+  name?: string;
+  published?: number;
+  slider_code: string;
+  starts_at?: string | null;
+  title: string;
+};
+
 export type FrappeCatalogSnapshot = {
   catalogs: FrappeIShopCatalog[];
   erpnext_items: FrappeErpItem[];
   items: FrappeIShopItem[];
+  sliders: FrappeIShopSlider[];
 };
 
 export type CatalogSyncResult = {
@@ -120,6 +140,7 @@ export type CatalogSyncResult = {
   direction: "frappe-to-own" | "own-to-frappe";
   erpnextItems: number;
   items: number;
+  sliders: number;
   message: string;
 };
 
@@ -139,4 +160,5 @@ export interface StorefrontCatalogSource {
   categories(): Promise<StorefrontDiscovery["categories"]>;
   discovery(): Promise<StorefrontDiscovery>;
   product(slug: string): Promise<StorefrontProductDetail | null>;
+  sliders(): Promise<StorefrontSlider[]>;
 }

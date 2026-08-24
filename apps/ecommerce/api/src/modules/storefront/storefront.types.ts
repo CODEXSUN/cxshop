@@ -4,6 +4,7 @@ export type StorefrontProduct = {
   compareAtPrice: number | null;
   description: string;
   featured: boolean;
+  featuredOrder: number | null;
   imageAlt: string;
   imageUrl: string;
   name: string;
@@ -12,6 +13,19 @@ export type StorefrontProduct = {
   slug: string;
   subtitle: string;
   variantCount: number;
+};
+
+export type StorefrontSlider = {
+  actionLabel: string;
+  actionUrl: string;
+  description: string;
+  displayOrder: number;
+  eyebrow: string;
+  imageAlt: string;
+  imageUrl: string;
+  linkedItem: string | null;
+  sliderCode: string;
+  title: string;
 };
 
 export type StorefrontProductDetail = StorefrontProduct & {

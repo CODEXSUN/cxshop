@@ -6,6 +6,7 @@ import {
   getStorefrontDiscovery,
   getStorefrontProduct,
   getStorefrontSiteNavigation,
+  getStorefrontSliders,
   listLatestBlogPosts,
   listStorefrontProducts
 } from "./storefront.services";
@@ -29,7 +30,8 @@ import type {
   StorefrontProduct,
   StorefrontProductDetail,
   StorefrontBlogPost,
-  StorefrontSiteNavigation
+  StorefrontSiteNavigation,
+  StorefrontSlider
 } from "./storefront.types";
 import { hasStorefrontPrice, money, whatsappLink } from "./storefront.formatters";
 import "./storefront.css";
@@ -78,12 +80,14 @@ function CatalogPage({ category, searchPage = false }: { category: string; searc
   const [siteNavigation, setSiteNavigation] = useState<StorefrontSiteNavigation | null>(null);
   const [announcement, setAnnouncement] = useState<StorefrontAnnouncement | null>(null);
   const [branding, setBranding] = useState<StorefrontBranding | null>(null);
+  const [slides, setSlides] = useState<StorefrontSlider[]>([]);
 
   useEffect(() => {
     getStorefrontDiscovery().then(setDiscovery);
     getStorefrontSiteNavigation().then(setSiteNavigation);
     getStorefrontAnnouncement().then(setAnnouncement);
     getStorefrontBranding().then(setBranding);
+    if (!searchPage) getStorefrontSliders().then(setSlides);
     if (!searchPage) listLatestBlogPosts().then((items) => setBlogPosts(items.slice(0, 3)));
   }, [searchPage]);
   useEffect(() => {
@@ -118,7 +122,7 @@ function CatalogPage({ category, searchPage = false }: { category: string; searc
         filters={filters}
       />
       <main className={searchPage ? "cx-store__search-main" : undefined}>
-        {!searchPage ? <HeroSlider products={featured} /> : null}
+        {!searchPage ? <HeroSlider slides={slides} /> : null}
         {!searchPage ? <PromotionsSection products={promotions} /> : null}
         {!searchPage ? <BrandsSection brands={discovery.brands} /> : null}
         {!searchPage && featured.length ? (
@@ -161,9 +165,7 @@ function CatalogPage({ category, searchPage = false }: { category: string; searc
               </div>
               <div ref={loadMoreMarker} className="cx-store__load-marker" aria-hidden="true" />
               {!loading && products.length === 0 ? (
-                <p className="cx-store__empty">
-                  {error || "No products match this selection."}
-                </p>
+                <p className="cx-store__empty">{error || "No products match this selection."}</p>
               ) : null}
             </div>
           </div>

@@ -186,7 +186,7 @@ const blogArticleRoute = createRoute({
 function BlogArticleRoute() {
   const { slug } = useParams({ from: "/blog/$slug" });
   return (
-    <TenantSiteTemplate activePage="blog">
+    <TenantSiteTemplate activePage="blog" manageDocumentTitle={false}>
       <PublicArticlePage slug={slug} />
     </TenantSiteTemplate>
   );

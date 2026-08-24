@@ -40,6 +40,7 @@ const syncResult = z.object({
   direction: z.enum(["frappe-to-own", "own-to-frappe"]),
   erpnextItems: z.number().int().nonnegative(),
   items: z.number().int().nonnegative(),
+  sliders: z.number().int().nonnegative(),
   message: z.string()
 });
 const frappeItem = z.object({

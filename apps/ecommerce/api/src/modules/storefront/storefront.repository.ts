@@ -35,9 +35,7 @@ export class StorefrontRepository {
   async find(slug: string): Promise<StorefrontProductDetail | null> {
     const result = await sql<Row>`${selectProducts()} WHERE info.slug=${slug}
       AND info.publication_status='published' AND info.status='active'
-      AND ${this.sourceCondition()} GROUP BY info.id LIMIT 1`.execute(
-      getEcommerceDatabase()
-    );
+      AND ${this.sourceCondition()} GROUP BY info.id LIMIT 1`.execute(getEcommerceDatabase());
     if (!result.rows[0]) return null;
     const variants =
       await sql<Row>`SELECT id,sku,title,price_adjustment FROM ecommerce_product_variants
@@ -67,6 +65,26 @@ export class StorefrontRepository {
       WHERE ${this.sourceCondition("info")}
       GROUP BY category.id,category.name ORDER BY category.name`.execute(getEcommerceDatabase());
     return result.rows.map((row) => ({ name: row.name, productCount: Number(row.product_count) }));
+  }
+
+  async sliders() {
+    const result = await sql<Row>`SELECT * FROM ecommerce_storefront_sliders
+      WHERE status='active' AND published=1
+      AND (starts_at IS NULL OR starts_at<=CURRENT_TIMESTAMP)
+      AND (ends_at IS NULL OR ends_at>=CURRENT_TIMESTAMP)
+      ORDER BY display_order,slider_code`.execute(getEcommerceDatabase());
+    return result.rows.map((row) => ({
+      actionLabel: String(row.action_label || "Explore now"),
+      actionUrl: String(row.action_url || "#catalog"),
+      description: sliderText(row.description),
+      displayOrder: Number(row.display_order ?? 0),
+      eyebrow: String(row.eyebrow ?? ""),
+      imageAlt: String(row.title),
+      imageUrl: String(row.image_url ?? ""),
+      linkedItem: row.ishop_item ? String(row.ishop_item) : null,
+      sliderCode: String(row.slider_code),
+      title: String(row.title)
+    }));
   }
 
   async discovery(): Promise<StorefrontDiscovery> {
@@ -164,6 +182,7 @@ function toProduct(row: Row): StorefrontProduct {
     compareAtPrice: compareAdjustment > 0 ? price + compareAdjustment : null,
     description: String(row.description ?? ""),
     featured: Boolean(row.is_featured),
+    featuredOrder: null,
     imageAlt: String(row.image_alt ?? row.storefront_title),
     imageUrl: String(row.image_url ?? ""),
     name: String(row.storefront_title),
@@ -182,4 +201,13 @@ function jsonList(value: unknown) {
   } catch {
     return [];
   }
+}
+
+function sliderText(value: unknown) {
+  return String(value ?? "")
+    .replace(/<[^>]+>/gu, " ")
+    .replace(/&nbsp;|&#160;/giu, " ")
+    .replace(/&amp;/giu, "&")
+    .replace(/\s+/gu, " ")
+    .trim();
 }

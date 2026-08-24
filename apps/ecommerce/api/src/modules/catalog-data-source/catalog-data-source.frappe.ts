@@ -23,6 +23,7 @@ type CatalogSnapshot = {
   erpItems: Map<string, FrappeErpItem>;
   items: IShopItem[];
   memberships: Map<string, CatalogMembership[]>;
+  sliders: FrappeCatalogSnapshot["sliders"];
 };
 
 export class FrappeCatalogSource implements StorefrontCatalogSource {
@@ -72,6 +73,34 @@ export class FrappeCatalogSource implements StorefrontCatalogSource {
     };
   }
 
+  async sliders() {
+    const snapshot = await this.snapshot();
+    const now = Date.now();
+    return snapshot.sliders
+      .filter((slider) => {
+        const startsAt = slider.starts_at ? new Date(slider.starts_at).getTime() : null;
+        const endsAt = slider.ends_at ? new Date(slider.ends_at).getTime() : null;
+        return (
+          Boolean(slider.published) &&
+          (startsAt == null || startsAt <= now) &&
+          (endsAt == null || endsAt >= now)
+        );
+      })
+      .sort((left, right) => (left.display_order ?? 0) - (right.display_order ?? 0))
+      .map((slider) => ({
+        actionLabel: slider.action_label?.trim() || "Explore now",
+        actionUrl: slider.action_url?.trim() || "#catalog",
+        description: plainText(slider.description),
+        displayOrder: slider.display_order ?? 0,
+        eyebrow: slider.eyebrow?.trim() || "",
+        imageAlt: slider.title,
+        imageUrl: absoluteUrl(slider.image, this.currentBaseUrl),
+        linkedItem: slider.ishop_item?.trim() || null,
+        sliderCode: slider.slider_code,
+        title: slider.title
+      }));
+  }
+
   async integrationSnapshot(): Promise<FrappeCatalogSnapshot> {
     const credentials = await this.resolveCredentials();
     return this.method<FrappeCatalogSnapshot>(credentials, "get_catalog_snapshot", "GET");
@@ -79,7 +108,7 @@ export class FrappeCatalogSource implements StorefrontCatalogSource {
 
   async upsert(snapshot: FrappeCatalogSnapshot) {
     const credentials = await this.resolveCredentials();
-    return this.method<{ catalogs: number; erpnext_items: number; items: number }>(
+    return this.method<{ catalogs: number; erpnext_items: number; items: number; sliders: number }>(
       credentials,
       "upsert_catalog_snapshot",
       "POST",
@@ -89,7 +118,7 @@ export class FrappeCatalogSource implements StorefrontCatalogSource {
 
   async seedDemo() {
     const credentials = await this.resolveCredentials();
-    return this.method<{ catalogs: number; erpnext_items: number; items: number }>(
+    return this.method<{ catalogs: number; erpnext_items: number; items: number; sliders: number }>(
       credentials,
       "seed_dummy_catalog",
       "POST"
@@ -151,7 +180,8 @@ export class FrappeCatalogSource implements StorefrontCatalogSource {
       catalogs,
       erpItems: new Map(payload.erpnext_items.map((item) => [item.item_code, item])),
       items,
-      memberships: membershipsFrom(catalogs)
+      memberships: membershipsFrom(catalogs),
+      sliders: payload.sliders ?? []
     };
   }
 
@@ -214,12 +244,14 @@ export class FrappeCatalogSource implements StorefrontCatalogSource {
       item.item_group ||
       erpItem?.item_group ||
       "Uncategorised";
+    const firstMembership = snapshot.memberships.get(item.name)?.[0];
     return {
       brand: item.brand?.trim() || erpItem?.brand?.trim() || null,
       category,
       compareAtPrice: mrp > price ? mrp : null,
       description: plainText(item.full_description),
-      featured: snapshot.memberships.has(item.name),
+      featured: Boolean(firstMembership),
+      featuredOrder: firstMembership?.displayOrder ?? null,
       imageAlt: item.item_name,
       imageUrl: absoluteUrl(item.image || erpItem?.image, this.currentBaseUrl),
       name: item.item_name,
@@ -280,6 +312,12 @@ function sortProducts(products: StorefrontProduct[], sort: StorefrontCatalogFilt
     if (sort === "price-asc") return left.price - right.price;
     if (sort === "price-desc") return right.price - left.price;
     if (sort === "featured" && left.featured !== right.featured) return left.featured ? -1 : 1;
+    if (sort === "featured" && left.featuredOrder !== right.featuredOrder) {
+      return (
+        (left.featuredOrder ?? Number.MAX_SAFE_INTEGER) -
+        (right.featuredOrder ?? Number.MAX_SAFE_INTEGER)
+      );
+    }
     return left.name.localeCompare(right.name);
   });
 }

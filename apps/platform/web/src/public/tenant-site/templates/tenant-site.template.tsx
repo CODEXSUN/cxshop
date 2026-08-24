@@ -8,14 +8,16 @@ import "../tenant-site.css";
 export function TenantSiteTemplate({
   activePage,
   children,
+  manageDocumentTitle = true,
   pageTitle
 }: {
   activePage: TenantPublicPageKey;
   children: ReactNode;
+  manageDocumentTitle?: boolean;
   pageTitle?: string;
 }) {
   return (
-    <TenantSiteProvider pageTitle={pageTitle}>
+    <TenantSiteProvider manageDocumentTitle={manageDocumentTitle} pageTitle={pageTitle}>
       <TenantSiteFrame activePage={activePage}>{children}</TenantSiteFrame>
     </TenantSiteProvider>
   );

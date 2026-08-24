@@ -5,10 +5,7 @@ import { CatalogDataSourceService } from "./catalog-data-source.service.js";
 const refreshIntervalMilliseconds = 15 * 60 * 1_000;
 const startupDelayMilliseconds = 10_000;
 
-export function startCatalogCacheRefresh(
-  app: FastifyInstance,
-  service: CatalogDataSourceService
-) {
+export function startCatalogCacheRefresh(app: FastifyInstance, service: CatalogDataSourceService) {
   let refreshing = false;
   const refresh = async () => {
     if (refreshing || !isFrappeOperatingWindow(new Date())) return;

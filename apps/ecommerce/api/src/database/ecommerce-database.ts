@@ -46,6 +46,7 @@ import { seedStorefrontProfileModule } from "../modules/storefront-profile/store
 import {
   catalogDataSourceCompatibilityMigration,
   catalogDataSourceSeedCompatibilityMigration,
+  catalogStorefrontSliderMigration,
   catalogModuleDataSourceMigration,
   catalogDataSourceAuditMigration,
   catalogDataSourceSyncMigration,
@@ -53,8 +54,13 @@ import {
   migrateCatalogDataSourceSync,
   upgradeCatalogDataSourceAudit,
   upgradeCatalogDataSourceCompatibility,
-  upgradeCatalogDataSourceSeedCompatibility
+  upgradeCatalogDataSourceSeedCompatibility,
+  upgradeCatalogStorefrontSlider
 } from "../modules/catalog-data-source/catalog-data-source.migration.js";
+import {
+  migrateStorefrontSliderModule,
+  storefrontSliderMigration
+} from "../modules/storefront-slider/storefront-slider.migration.js";
 
 export type EcommerceDatabase = Record<string, unknown>;
 type ConnectionOptions = {
@@ -82,6 +88,8 @@ export const ecommerceTenantMigrations = [
   catalogModuleDataSourceMigration,
   catalogDataSourceCompatibilityMigration,
   catalogDataSourceSeedCompatibilityMigration,
+  catalogStorefrontSliderMigration,
+  storefrontSliderMigration,
   storefrontProfileMigration
 ] as const;
 export const ecommerceMigrationBatch: MigrationBatch<EcommerceDatabase> = {
@@ -239,6 +247,36 @@ const ecommerceCatalogSeedCompatibilityMigrationBatch: MigrationBatch<EcommerceD
     }
   ]
 };
+const ecommerceCatalogStorefrontSliderMigrationBatch: MigrationBatch<EcommerceDatabase> = {
+  batch: 9,
+  description: "LogicX iShop storefront slider catalog selection.",
+  scope: "ecommerce",
+  version: "1.0.64",
+  steps: [
+    {
+      checksum: `${catalogStorefrontSliderMigration.key}:v1`,
+      description: catalogStorefrontSliderMigration.description,
+      name: catalogStorefrontSliderMigration.key,
+      up: upgradeCatalogStorefrontSlider,
+      version: 1
+    }
+  ]
+};
+const ecommerceStorefrontSliderDocumentMigrationBatch: MigrationBatch<EcommerceDatabase> = {
+  batch: 10,
+  description: "Dedicated LogicX iShop Slider document cache.",
+  scope: "ecommerce",
+  version: "1.0.64",
+  steps: [
+    {
+      checksum: `${storefrontSliderMigration.key}:v1`,
+      description: storefrontSliderMigration.description,
+      name: storefrontSliderMigration.key,
+      up: migrateStorefrontSliderModule,
+      version: 1
+    }
+  ]
+};
 
 export function resolveEcommerceDatabaseName(value: unknown) {
   void value;
@@ -296,6 +334,14 @@ export async function bootstrapEcommerceDatabase(databaseName: string) {
     getEcommerceDatabase(name),
     ecommerceCatalogSeedCompatibilityMigrationBatch
   );
+  await runMigrationBatch(
+    getEcommerceDatabase(name),
+    ecommerceCatalogStorefrontSliderMigrationBatch
+  );
+  await runMigrationBatch(
+    getEcommerceDatabase(name),
+    ecommerceStorefrontSliderDocumentMigrationBatch
+  );
   await runWithEcommerceDatabase(name, seedProductInformationModule);
   await runWithEcommerceDatabase(name, seedProductVariantModule);
   await runWithEcommerceDatabase(name, seedProductImageModule);
@@ -319,6 +365,14 @@ export async function migrateEcommerceTenantDatabase(databaseName: string) {
     getEcommerceDatabase(name),
     ecommerceCatalogSeedCompatibilityMigrationBatch
   );
+  await runMigrationBatch(
+    getEcommerceDatabase(name),
+    ecommerceCatalogStorefrontSliderMigrationBatch
+  );
+  await runMigrationBatch(
+    getEcommerceDatabase(name),
+    ecommerceStorefrontSliderDocumentMigrationBatch
+  );
 }
 
 export async function seedEcommerceTenantDatabase(databaseName: string) {
@@ -333,6 +387,14 @@ export async function seedEcommerceTenantDatabase(databaseName: string) {
 }
 
 export async function rollbackEcommerceTenantDatabase(databaseName: string) {
+  await rollbackMigrationBatch(
+    getEcommerceDatabase(databaseName),
+    ecommerceStorefrontSliderDocumentMigrationBatch
+  );
+  await rollbackMigrationBatch(
+    getEcommerceDatabase(databaseName),
+    ecommerceCatalogStorefrontSliderMigrationBatch
+  );
   await rollbackMigrationBatch(
     getEcommerceDatabase(databaseName),
     ecommerceCatalogSeedCompatibilityMigrationBatch

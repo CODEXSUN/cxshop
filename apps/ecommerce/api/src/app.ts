@@ -27,6 +27,10 @@ import {
   registerStorefrontProfileRoutes,
   storefrontProfileModuleKey
 } from "./modules/storefront-profile/index.js";
+import {
+  registerStorefrontSliderImageRoutes,
+  storefrontSliderModule
+} from "./modules/storefront-slider/index.js";
 
 export const ecommerceApiModuleKeys = [
   productInformationModule.key,
@@ -34,6 +38,7 @@ export const ecommerceApiModuleKeys = [
   productImageModule.key,
   catalogMatchingModule.key,
   storefrontAnnouncementModule.key,
+  storefrontSliderModule.key,
   catalogDataSourceModuleKey,
   storefrontProfileModuleKey
 ];
@@ -50,6 +55,7 @@ export async function registerEcommerceApi(
   await registerStorefrontRoutes(app, new StorefrontService(catalogDataSource));
   await registerStorefrontAnnouncementPublicRoutes(app);
   await registerStorefrontProfilePublicRoutes(app);
+  await registerStorefrontSliderImageRoutes(app);
   await app.register(async (ecommerceApp) => {
     ecommerceApp.addHook("preHandler", async (request) => {
       const database = resolveEcommerceDatabaseName(undefined);
@@ -65,6 +71,7 @@ export async function registerEcommerceApi(
     await productImageModule.register(ecommerceApp);
     await catalogMatchingModule.register(ecommerceApp);
     await storefrontAnnouncementModule.register(ecommerceApp);
+    await storefrontSliderModule.register(ecommerceApp);
     await registerStorefrontProfileRoutes(ecommerceApp, dependencies.resolveActorEmail);
     await registerCatalogDataSourceRoutes(
       ecommerceApp,

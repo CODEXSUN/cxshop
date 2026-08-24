@@ -15,4 +15,5 @@ export * from "./modules/catalog-matching/index.js";
 export * from "./modules/storefront/index.js";
 export * from "./modules/storefront-announcement/index.js";
 export * from "./modules/storefront-profile/index.js";
+export * from "./modules/storefront-slider/index.js";
 export * from "./modules/catalog-data-source/index.js";

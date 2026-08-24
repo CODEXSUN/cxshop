@@ -31,9 +31,11 @@ function loadTenantPortal() {
 
 export function TenantSiteProvider({
   children,
+  manageDocumentTitle = true,
   pageTitle
 }: {
   children: ReactNode;
+  manageDocumentTitle?: boolean;
   pageTitle?: string | undefined;
 }) {
   const [portal, setPortal] = useState(cachedPortal ?? fallbackTenantPortal);
@@ -70,10 +72,11 @@ export function TenantSiteProvider({
   }, []);
 
   useEffect(() => {
+    if (!manageDocumentTitle) return;
     document.title = pageTitle
       ? `${pageTitle} | ${portal.brandName}`
       : `${portal.brandName} | Billing & Accounts`;
-  }, [pageTitle, portal.brandName]);
+  }, [manageDocumentTitle, pageTitle, portal.brandName]);
 
   const value = useMemo(
     () => ({

@@ -2,11 +2,11 @@
 
 ## Version State
 
-Current version: 1.0.64
+Current version: 1.0.65
 
-Release tag: v-1.0.64
+Release tag: v-1.0.65
 
-Changelog label: v 1.0.64
+Changelog label: v 1.0.65
 
 This changelog starts fresh from the cleaned CODEXSUN foundation. Earlier copied application history was intentionally removed because it did not represent the current workspace.
 
@@ -16,22 +16,34 @@ New entries should keep database-facing work and application code work separate.
 
 ### Database Changes
 
-- Database update: Yes.
-- Added File Manager owner tables through package-managed startup migrations.
+Records schema, migration, seed, tenant provisioning, and data compatibility changes.
 
 ### App Codebase Changes
 
-- Added File Manager files and storage connections under the Application storage desk.
-- Reused the approved CXShop MariaDB connection and persistent application storage volume.
-- Added mandatory File Manager environment configuration and deployment validation.
+Records UI, API, service logic, tooling, packaging, and documentation changes.
+
+## v-1.0.65
+
+### [v 1.0.65] 2026-08-24 9:19 pm - CXShop Blog add-on and local cloud publishing
 
 #### Database Changes
 
-Records schema, migration, seed, tenant provisioning, and data compatibility changes.
+- Database update: Yes (manual).
+- Added encrypted production-site connection and Blog publication history tables.
+- Added the Frappe session and cloud pull migration for existing Blog databases.
 
 #### App Codebase Changes
 
-Records UI, API, service logic, tooling, packaging, and documentation changes.
+- Bumped the CXShop workspace and all owned packages to version 1.0.65.
+- Added the versioned add-on host contract with capability and compatibility checks.
+- Kept Blog as the only active Platform add-on.
+- Kept the unfinished File Manager package inactive for later testing.
+- Added the missing framework add-on runtime export.
+- Added a shared Application production-site connection with encrypted Frappe password and session storage.
+- Added local-to-cloud Blog publishing and cloud-to-local article refresh actions.
+- Added automatic Blog pull and publish method selection.
+- Added the Blog side menu and the separate Production Site Connection menu group.
+- Added add-on contract tests for activation, rejection, cleanup, and shutdown behavior.
 
 ## v-1.0.64
 
@@ -165,6 +177,7 @@ Records UI, API, service logic, tooling, packaging, and documentation changes.
   item grid adapts from four columns to two columns and then one column.
 - Expanded the search results layout to 80 percent of the desktop viewport. Smaller screens use the
   available width with responsive page padding.
+
 ### [v 1.0.59] 2026-08-14 8:30 am - Global Piko mascot placement
 
 #### Database Changes

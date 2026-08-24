@@ -1,6 +1,6 @@
 {
   "name": "cxshop",
-  "version": "1.0.64",
+  "version": "1.0.65",
   "private": true,
   "packageManager": "npm@12.0.1",
   "description": "CODEXSUN",
@@ -16,6 +16,7 @@
     "dev:web": "node tools/dev-restart.mjs platform-web",
     "test:product-stacks": "node --test tools/product-stack-contract.test.mjs",
     "test:platform-runtime": "npm run build -w @cxshop/framework && node --test tools/platform-runtime-contract.test.mjs",
+    "test:addon-contract": "npm run build -w @cxshop/framework && node --test tools/addon-contract.test.mjs",
     "test:platform-persistence": "node --test tools/platform-persistence-contract.test.mjs",
     "test:deployment-env": "node --test tools/deployment-env-contract.test.mjs",
     "test:migration-contract": "npm run build -w @cxshop/framework && node --test tools/migration-contract.test.mjs",

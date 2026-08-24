@@ -159,6 +159,14 @@ export function appMenuFor(
   onSelect: (page: string) => void,
   billingFeatures?: BillingNavigationFeatures
 ): SidemenuItem {
+  if (appId === "blogs") {
+    return {
+      icon: FileTextIcon,
+      isActive: activePage.startsWith("blogs"),
+      title: "Blogs",
+      items: appMenuItemsFor(appId, activePage, onSelect, billingFeatures)
+    };
+  }
   if (appId === "mail") {
     return {
       icon: MailIcon,
@@ -329,6 +337,18 @@ export function appMenuFor(
         ]
       },
       {
+        icon: Globe2Icon,
+        title: "Production Site Connection",
+        isActive: activePage.startsWith("application.connections"),
+        items: [
+          {
+            title: "Connection Settings",
+            isActive: activePage === "application.connections.production",
+            onSelect: () => onSelect("application.connections.production")
+          }
+        ]
+      },
+      {
         icon: ShieldCheckIcon,
         title: "Access Control",
         isActive: activePage.startsWith("application.access"),
@@ -416,6 +436,18 @@ export function appMenuItemsFor(
         isActive: activePage === "blogs.editor",
         onSelect: () => onSelect("blogs.editor"),
         title: "Articles"
+      },
+      {
+        icon: Globe2Icon,
+        isActive: activePage.startsWith("blogs.cloud"),
+        title: "Publishing",
+        items: [
+          {
+            title: "Local ↔ Cloud",
+            isActive: activePage === "blogs.cloud.publications",
+            onSelect: () => onSelect("blogs.cloud.publications")
+          }
+        ]
       }
     ];
   }
@@ -461,6 +493,11 @@ export function appMenuItemsFor(
             title: "Product Images",
             isActive: activePage === "ecommerce.catalog.images",
             onSelect: () => onSelect("ecommerce.catalog.images")
+          },
+          {
+            title: "Home Slider",
+            isActive: activePage === "ecommerce.catalog.home-slider",
+            onSelect: () => onSelect("ecommerce.catalog.home-slider")
           }
         ]
       },
@@ -798,6 +835,18 @@ export function appMenuItemsFor(
       ]
     },
     {
+      icon: Globe2Icon,
+      isActive: activePage.startsWith("application.connections"),
+      title: "Production Site Connection",
+      items: [
+        {
+          title: "Connection Settings",
+          isActive: activePage === "application.connections.production",
+          onSelect: () => onSelect("application.connections.production")
+        }
+      ]
+    },
+    {
       icon: Building2Icon,
       isActive: activePage.startsWith("core.organisation"),
       title: "Organisation",
@@ -830,7 +879,7 @@ export function appWorkspaceItems(enabledApps: PlatformAppId[], activeApp: Platf
       description: app.description,
       icon: app.icon,
       title: app.label,
-      url: `/admin/${app.id}/overview`
+      url: app.id === "blogs" ? "/admin/blogs/editor" : `/admin/${app.id}/overview`
     }));
 }
 

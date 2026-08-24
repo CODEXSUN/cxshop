@@ -31,6 +31,7 @@ export function PageTitle() {
   useEffect(() => {
     void loadCompanyName().then((value) => {
       companyName = value;
+      if (window.location.pathname.startsWith("/blog/")) return;
       setPlatformDocumentTitle(currentPageTitle);
     });
     const updateTitle = () => {
@@ -40,6 +41,7 @@ export function PageTitle() {
       ) {
         return;
       }
+      if (window.location.pathname.startsWith("/blog/")) return;
       setPlatformDocumentTitle(resolvePageTitle(window.location.pathname));
     };
 

@@ -17,7 +17,8 @@ import type {
   StorefrontFilters,
   StorefrontProduct,
   StorefrontBlogPost,
-  StorefrontSiteNavigation
+  StorefrontSiteNavigation,
+  StorefrontSlider
 } from "./storefront.types";
 import { hasStorefrontPrice, money, whatsappLink } from "./storefront.formatters";
 
@@ -27,45 +28,38 @@ type FilterProps = {
   onFilters: (value: StorefrontFilters) => void;
 };
 
-export function HeroSlider({ products }: { products: StorefrontProduct[] }) {
+export function HeroSlider({ slides }: { slides: StorefrontSlider[] }) {
   const [active, setActive] = useState(0);
   useEffect(() => {
-    if (products.length < 2) return;
-    const timer = window.setInterval(
-      () => setActive((value) => (value + 1) % products.length),
-      6800
-    );
+    if (slides.length < 2) return;
+    const timer = window.setInterval(() => setActive((value) => (value + 1) % slides.length), 6800);
     return () => window.clearInterval(timer);
-  }, [products.length]);
-  const product = products[active];
-  if (!product) return null;
+  }, [slides.length]);
+  const slide = slides[active];
+  if (!slide) return null;
   return (
     <section
-      aria-label="Featured products"
+      aria-label="Storefront highlights"
       aria-roledescription="carousel"
       className="cx-store__hero"
     >
-      <div className="cx-store__hero-copy" key={`copy-${product.slug}`}>
-        <span className="cx-store__hero-reveal">
-          {[product.brand, "Featured system"].filter(Boolean).join(" · ")}
-        </span>
-        <h1 className="cx-store__hero-reveal">{product.name}</h1>
-        {product.description ? (
-          <p className="cx-store__hero-reveal">{product.description}</p>
-        ) : null}
-        <a className="cx-store__hero-reveal" href={`/shop/product/${product.slug}`}>
-          Explore this product
+      <div className="cx-store__hero-copy" key={`copy-${slide.sliderCode}`}>
+        {slide.eyebrow ? <span className="cx-store__hero-reveal">{slide.eyebrow}</span> : null}
+        <h1 className="cx-store__hero-reveal">{slide.title}</h1>
+        {slide.description ? <p className="cx-store__hero-reveal">{slide.description}</p> : null}
+        <a className="cx-store__hero-reveal" href={slide.actionUrl}>
+          {slide.actionLabel}
         </a>
       </div>
-      <div className="cx-store__hero-media" key={`media-${product.slug}`}>
-        <img src={product.imageUrl} alt={product.imageAlt || product.name} />
-        <div aria-label="Choose featured product" className="cx-store__hero-bullets">
-          {products.map((item, index) => (
+      <div className="cx-store__hero-media" key={`media-${slide.sliderCode}`}>
+        <img src={slide.imageUrl} alt={slide.imageAlt || slide.title} />
+        <div aria-label="Choose storefront highlight" className="cx-store__hero-bullets">
+          {slides.map((item, index) => (
             <button
-              aria-label={`Show ${item.name}`}
+              aria-label={`Show ${item.title}`}
               aria-current={index === active ? "true" : undefined}
               className={index === active ? "is-active" : undefined}
-              key={item.slug}
+              key={item.sliderCode}
               onClick={() => setActive(index)}
               type="button"
             />

@@ -75,7 +75,9 @@ const loadProductImageModule = () => import("@cxshop/ecommerce-web/modules/produ
 const loadCatalogDataSourceModule = () => import("@cxshop/ecommerce-web");
 const loadStorefrontProfileModule = () =>
   import("@cxshop/ecommerce-web/modules/storefront-profile");
+const loadStorefrontSliderModule = () => import("@cxshop/ecommerce-web/modules/storefront-slider");
 const loadBlogsEditorModule = () => import("@cxshop/blogs-web/modules/editor");
+const loadCloudPublishingModule = () => import("@cxshop/blogs-web/modules/cloud-publishing");
 const loadFileManagerModule = () =>
   import("@codexsun/file-manager/web").then((module) => {
     module.configureFileManagerClient({ baseUrl: "/api/platform/file-manager" });
@@ -114,8 +116,14 @@ const CatalogDataSourceWorkspace = lazyWorkspace(() =>
 const StorefrontProfileWorkspace = lazyWorkspace(() =>
   loadStorefrontProfileModule().then((module) => module.StorefrontProfileWorkspace)
 );
+const StorefrontSliderWorkspace = lazyWorkspace(() =>
+  loadStorefrontSliderModule().then((module) => module.StorefrontSliderWorkspace)
+);
 const BlogsEditorWorkspace = lazyWorkspace(() =>
   loadBlogsEditorModule().then((module) => module.BlogsEditorWorkspace)
+);
+const CloudPublishingWorkspace = lazyWorkspace(() =>
+  loadCloudPublishingModule().then((module) => module.CloudPublishingWorkspace)
 );
 const FileBrowserWorkspace = lazyWorkspace(() =>
   loadFileManagerModule().then((module) => module.FileBrowserWorkspace)
@@ -367,6 +375,7 @@ type AppPage =
   | "application.landing"
   | "application.profile"
   | "application.settings"
+  | "application.connections.production"
   | "application.storage.files"
   | "application.storage.connections"
   | "application.access.users"
@@ -398,9 +407,11 @@ type AppPage =
   | "ecommerce.catalog.product-information"
   | "ecommerce.catalog.variants"
   | "ecommerce.catalog.images"
+  | "ecommerce.catalog.home-slider"
   | "ecommerce.settings.data-source"
   | "ecommerce.settings.storefront-profile"
   | "blogs.editor"
+  | "blogs.cloud.publications"
   | "mail.inbox"
   | "mail.outbox"
   | "mail.drafts"
@@ -646,11 +657,13 @@ export function AppDesk() {
       ? "Billing"
       : activeApp === "ecommerce"
         ? "Ecommerce"
-        : activeApp === "mail"
-          ? "Mail"
-          : activeApp === "task-manager"
-            ? "Task Manager"
-            : "Application";
+        : activeApp === "blogs"
+          ? "Blogs"
+          : activeApp === "mail"
+            ? "Mail"
+            : activeApp === "task-manager"
+              ? "Task Manager"
+              : "Application";
   const menuItems = appMenuItemsFor(
     activeApp,
     safePage,
@@ -667,9 +680,11 @@ export function AppDesk() {
             ? "billing.overview"
             : item.title === "Ecommerce"
               ? "ecommerce.overview"
-              : item.title === "Mail"
-                ? "mail.inbox"
-                : "task-manager.overview"
+              : item.title === "Blogs"
+                ? "blogs.editor"
+                : item.title === "Mail"
+                  ? "mail.inbox"
+                  : "task-manager.overview"
       ),
     url:
       item.title === "Application"
@@ -678,9 +693,11 @@ export function AppDesk() {
           ? "/admin/billing/overview"
           : item.title === "Ecommerce"
             ? "/admin/ecommerce/overview"
-            : item.title === "Mail"
-              ? "/admin/mail/inbox"
-              : "/admin/task-manager/overview"
+            : item.title === "Blogs"
+              ? "/admin/blogs/editor"
+              : item.title === "Mail"
+                ? "/admin/mail/inbox"
+                : "/admin/task-manager/overview"
   }));
 
   const contextError =
@@ -795,6 +812,9 @@ export function AppDesk() {
             ) : null}
             {safePage === "application.profile" ? <ApplicationProfile /> : null}
             {safePage === "application.settings" ? <ApplicationSettings /> : null}
+            {safePage === "application.connections.production" ? (
+              <CloudPublishingWorkspace view="connection" />
+            ) : null}
             {safePage === "application.storage.files" ? <FileBrowserWorkspace /> : null}
             {safePage === "application.storage.connections" ? (
               <StorageConnectionsWorkspace />
@@ -854,11 +874,15 @@ export function AppDesk() {
             {safePage === "ecommerce.catalog.products" ? <ProductWorkspace /> : null}
             {safePage === "ecommerce.catalog.variants" ? <ProductVariantWorkspace /> : null}
             {safePage === "ecommerce.catalog.images" ? <ProductImageWorkspace /> : null}
+            {safePage === "ecommerce.catalog.home-slider" ? <StorefrontSliderWorkspace /> : null}
             {safePage === "ecommerce.settings.data-source" ? <CatalogDataSourceWorkspace /> : null}
             {safePage === "ecommerce.settings.storefront-profile" ? (
               <StorefrontProfileWorkspace />
             ) : null}
             {safePage === "blogs.editor" ? <BlogsEditorWorkspace /> : null}
+            {safePage === "blogs.cloud.publications" ? (
+              <CloudPublishingWorkspace view="publications" />
+            ) : null}
             {safePage.startsWith("mail.") ? (
               <MailWorkspace mailbox={mailboxForPage(safePage)} />
             ) : null}
@@ -926,6 +950,7 @@ function pageFromUrl(landingApp: PlatformAppId | null): AppPage {
     key === "application.landing" ||
     key === "application.profile" ||
     key === "application.settings" ||
+    key === "application.connections.production" ||
     key === "application.storage.files" ||
     key === "application.storage.connections" ||
     key === "application.access.users" ||
@@ -960,9 +985,11 @@ function pageFromUrl(landingApp: PlatformAppId | null): AppPage {
     key === "ecommerce.catalog.product-information" ||
     key === "ecommerce.catalog.variants" ||
     key === "ecommerce.catalog.images" ||
+    key === "ecommerce.catalog.home-slider" ||
     key === "ecommerce.settings.data-source" ||
     key === "ecommerce.settings.storefront-profile" ||
     key === "blogs.editor" ||
+    key === "blogs.cloud.publications" ||
     key === "mail.inbox" ||
     key === "mail.outbox" ||
     key === "mail.drafts" ||
@@ -1437,6 +1464,7 @@ function titleForPage(page: AppPage) {
     "application.landing": "Landing Desk",
     "application.profile": "Application Profile",
     "application.settings": "Application Settings",
+    "application.connections.production": "Production Site Connection",
     "application.access.users": "Users",
     "application.access.roles": "Roles",
     "application.access.permissions": "Permissions",
@@ -1464,8 +1492,11 @@ function titleForPage(page: AppPage) {
     "ecommerce.catalog.product-information": "Items",
     "ecommerce.catalog.variants": "Product Variants",
     "ecommerce.catalog.images": "Product Images",
+    "ecommerce.catalog.home-slider": "Home Slider",
     "ecommerce.settings.data-source": "Data Source",
     "ecommerce.settings.storefront-profile": "Storefront Profile",
+    "blogs.editor": "Articles",
+    "blogs.cloud.publications": "Local ↔ Cloud",
     "mail.inbox": "Inbox",
     "mail.outbox": "Outbox",
     "mail.drafts": "Drafts",

@@ -28,6 +28,9 @@ class OwnCatalogSource implements StorefrontCatalogSource {
   product(slug: string) {
     return this.repository.find(slug);
   }
+  sliders() {
+    return this.repository.sliders();
+  }
 }
 
 export class CatalogDataSourceService implements StorefrontCatalogSource {
@@ -159,6 +162,10 @@ export class CatalogDataSourceService implements StorefrontCatalogSource {
     };
   }
 
+  sliders() {
+    return this.read("sliders", (source) => source.sliders());
+  }
+
   private async read<T>(
     module: CatalogDataSourceModule,
     operation: (source: StorefrontCatalogSource) => Promise<T>
@@ -223,6 +230,10 @@ function moduleDefinition(module: CatalogDataSourceModule) {
     "product-images": {
       description: "Primary storefront product images and alternative text.",
       label: "Product images"
+    },
+    sliders: {
+      description: "Home page slider content, imagery, links, scheduling, and display order.",
+      label: "Home slider"
     }
   }[module];
 }
@@ -237,6 +248,7 @@ function syncResult(
     direction,
     erpnextItems: snapshot.erpnext_items.length,
     items: snapshot.items.length,
+    sliders: snapshot.sliders.length,
     message
   };
 }

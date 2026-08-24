@@ -17,10 +17,13 @@ import {
 } from "../modules/taxonomy/taxonomy.migration.js";
 import { seedTaxonomyModule } from "../modules/taxonomy/taxonomy.seed.js";
 import { seedArticleModule } from "../modules/article/article.seed.js";
+import { blogsExperienceMigration, migrateBlogsExperience } from "./blogs-experience.migration.js";
 import {
-  blogsExperienceMigration,
-  migrateBlogsExperience
-} from "./blogs-experience.migration.js";
+  cloudPublishingMigration,
+  cloudPublishingSessionMigration,
+  migrateCloudPublishingSession,
+  migrateCloudPublishingModule
+} from "../modules/cloud-publishing/index.js";
 
 export type BlogsDatabase = Record<string, unknown>;
 let database: Kysely<BlogsDatabase> | undefined;
@@ -42,6 +45,20 @@ export const blogsMigrationBatch: MigrationBatch<BlogsDatabase> = {
       name: blogsExperienceMigration.key,
       up: migrateBlogsExperience,
       version: 2
+    },
+    {
+      checksum: `${cloudPublishingMigration.key}:v1`,
+      description: cloudPublishingMigration.description,
+      name: cloudPublishingMigration.key,
+      up: migrateCloudPublishingModule,
+      version: 3
+    },
+    {
+      checksum: `${cloudPublishingSessionMigration.key}:v1`,
+      description: cloudPublishingSessionMigration.description,
+      name: cloudPublishingSessionMigration.key,
+      up: migrateCloudPublishingSession,
+      version: 4
     }
   ]
 };
@@ -65,10 +82,18 @@ export function getBlogsDatabase() {
 
 export async function bootstrapBlogsDatabase() {
   if (bootstrapped) return;
+  await migrateBlogsDatabase();
+  await seedBlogsDatabase();
+  bootstrapped = true;
+}
+
+export async function migrateBlogsDatabase() {
   await runMigrationBatch(getBlogsDatabase(), blogsMigrationBatch);
+}
+
+export async function seedBlogsDatabase() {
   await seedTaxonomyModule();
   await seedArticleModule();
-  bootstrapped = true;
 }
 
 export async function closeBlogsDatabase() {

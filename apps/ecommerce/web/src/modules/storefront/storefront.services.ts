@@ -3,7 +3,8 @@ import type {
   StorefrontDiscovery,
   StorefrontFilters,
   StorefrontProduct,
-  StorefrontProductDetail
+  StorefrontProductDetail,
+  StorefrontSlider
 } from "./storefront.types";
 import type { StorefrontBlogPost } from "./storefront.types";
 import type { StorefrontSiteNavigation } from "./storefront.types";
@@ -38,6 +39,7 @@ export const listStorefrontProducts = (
 };
 export const listStorefrontCategories = () => get<StorefrontCategory[]>("/storefront/categories");
 export const getStorefrontDiscovery = () => get<StorefrontDiscovery>("/storefront/discovery");
+export const getStorefrontSliders = () => get<StorefrontSlider[]>("/storefront/sliders");
 export const getStorefrontProduct = (slug: string) =>
   get<StorefrontProductDetail>(`/storefront/products/${encodeURIComponent(slug)}`);
 export const listLatestBlogPosts = () => get<StorefrontBlogPost[]>("/public/blog?kind=post");

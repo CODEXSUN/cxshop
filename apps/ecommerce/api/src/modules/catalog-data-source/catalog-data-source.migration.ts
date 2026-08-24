@@ -132,7 +132,8 @@ export async function migrateCatalogModuleDataSources(database: Kysely<Ecommerce
     "products",
     "product-details",
     "variants",
-    "product-images"
+    "product-images",
+    "sliders"
   ]) {
     await sql`INSERT IGNORE INTO ecommerce_catalog_module_data_sources
       (module_key,provider,updated_by) VALUES (${moduleKey},'own','system:seed')`.execute(database);
@@ -140,7 +141,8 @@ export async function migrateCatalogModuleDataSources(database: Kysely<Ecommerce
 }
 
 export const catalogDataSourceCompatibilityMigration = {
-  description: "Retain Frappe document identity, revision, and ERPNext item fields in the local cache.",
+  description:
+    "Retain Frappe document identity, revision, and ERPNext item fields in the local cache.",
   key: "ecommerce.catalog.frappe-cache-compatibility"
 } as const;
 
@@ -176,8 +178,19 @@ export async function upgradeCatalogDataSourceSeedCompatibility(
   database: Kysely<EcommerceDatabase>
 ) {
   await sql
+    .raw("ALTER TABLE ecommerce_product_information MODIFY COLUMN erpnext_description TEXT NULL")
+    .execute(database);
+}
+
+export const catalogStorefrontSliderMigration = {
+  description: "Retain the LogicX iShop storefront slider catalog selection.",
+  key: "ecommerce.catalog.storefront-slider"
+} as const;
+
+export async function upgradeCatalogStorefrontSlider(database: Kysely<EcommerceDatabase>) {
+  await sql
     .raw(
-      "ALTER TABLE ecommerce_product_information MODIFY COLUMN erpnext_description TEXT NULL"
+      "ALTER TABLE ecommerce_ishop_catalogs ADD COLUMN IF NOT EXISTS storefront_slider TINYINT(1) NOT NULL DEFAULT 0 AFTER published"
     )
     .execute(database);
 }

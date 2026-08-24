@@ -1,6 +1,6 @@
 {
   "name": "@cxshop/framework",
-  "version": "1.0.64",
+  "version": "1.0.65",
   "private": true,
   "type": "module",
   "exports": {
@@ -11,6 +11,10 @@
     "./api": {
       "types": "./src/api/index.ts",
       "default": "./api.js"
+    },
+    "./addons": {
+      "types": "./src/addons/index.ts",
+      "default": "./addons.js"
     },
     "./config": {
       "types": "./src/config/index.ts",
