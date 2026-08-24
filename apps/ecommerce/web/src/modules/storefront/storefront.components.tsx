@@ -19,6 +19,7 @@ import type {
   StorefrontBlogPost,
   StorefrontSiteNavigation,
   StorefrontSlider
+  ,StorefrontPromotion
 } from "./storefront.types";
 import { hasStorefrontPrice, money, whatsappLink } from "./storefront.formatters";
 
@@ -70,43 +71,39 @@ export function HeroSlider({ slides }: { slides: StorefrontSlider[] }) {
   );
 }
 
-export function PromotionsSection({ products }: { products: StorefrontProduct[] }) {
-  if (!products.length) return null;
+export function PromotionsSection({ promotions }: { promotions: StorefrontPromotion[] }) {
+  if (!promotions.length) return null;
   return (
     <section className="cx-store__promotions" id="promotions">
       <SectionTitle label="Current promotions" title="Better value on everyday technology" />
       <div className="cx-store__promotion-grid">
-        {products.map((product) => {
-          const metadata = [product.brand, product.category].filter(Boolean).join(" · ");
-          const priced = hasStorefrontPrice(product.price);
+        {promotions.map((promotion) => {
+          const priced = hasStorefrontPrice(promotion.offerPrice);
           return (
             <a
               className="cx-store__promotion-card"
-              href={`/shop/product/${product.slug}`}
-              key={product.slug}
+              href={promotion.actionUrl}
+              key={promotion.promotionCode}
             >
               <span className="cx-store__promotion-media">
-                <img alt={product.imageAlt || product.name} loading="lazy" src={product.imageUrl} />
-                {priced && hasStorefrontPrice(product.compareAtPrice) ? (
-                  <span className="cx-store__promotion-saving">
-                    Save {money((product.compareAtPrice ?? product.price) - product.price)}
-                  </span>
-                ) : null}
+                <img alt={promotion.imageAlt || promotion.title} loading="lazy" src={promotion.imageUrl} />
+                {promotion.badge ? <span className={`cx-store__promotion-saving is-${promotion.badgePosition} is-${promotion.badgeTint}`}>{promotion.badge}</span> : null}
               </span>
               <span className="cx-store__promotion-copy">
-                {metadata ? <small>{metadata}</small> : null}
-                <strong>{product.name}</strong>
+                {promotion.eyebrow ? <small>{promotion.eyebrow}</small> : null}
+                <strong>{promotion.title}</strong>
+                {promotion.description ? <span>{promotion.description}</span> : null}
                 <span className="cx-store__promotion-actions">
                   {priced ? (
                     <span className="cx-store__promotion-price">
-                      <b>{money(product.price)}</b>
-                      {hasStorefrontPrice(product.compareAtPrice) ? (
-                        <del>{money(product.compareAtPrice ?? product.price)}</del>
+                      <b>{money(promotion.offerPrice)}</b>
+                      {hasStorefrontPrice(promotion.originalPrice) ? (
+                        <del>{money(promotion.originalPrice ?? promotion.offerPrice)}</del>
                       ) : null}
                     </span>
                   ) : null}
                   <span className="cx-store__promotion-link">
-                    {priced ? "View offer" : "Enquire"}
+                    {promotion.actionLabel || (priced ? "View offer" : "Enquire")}
                   </span>
                 </span>
               </span>

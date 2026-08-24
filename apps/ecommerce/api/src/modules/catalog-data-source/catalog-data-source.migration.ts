@@ -133,7 +133,8 @@ export async function migrateCatalogModuleDataSources(database: Kysely<Ecommerce
     "product-details",
     "variants",
     "product-images",
-    "sliders"
+    "sliders",
+    "promotions"
   ]) {
     await sql`INSERT IGNORE INTO ecommerce_catalog_module_data_sources
       (module_key,provider,updated_by) VALUES (${moduleKey},'own','system:seed')`.execute(database);

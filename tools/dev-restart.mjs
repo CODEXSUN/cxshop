@@ -14,7 +14,6 @@ const services = {
     label: "api",
     paths: [
       "apps/billing/api/src",
-      "apps/blogs/api/src",
       "apps/core/api/src",
       "apps/devkit/api/src",
       "apps/ecommerce/api/src",
@@ -28,7 +27,6 @@ const services = {
     label: "web",
     paths: [
       "apps/billing/web/src",
-      "apps/blogs/web/src",
       "apps/core/web/src",
       "apps/devkit/web/src",
       "apps/ecommerce/web/src",

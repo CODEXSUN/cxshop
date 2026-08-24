@@ -41,6 +41,7 @@ const syncResult = z.object({
   erpnextItems: z.number().int().nonnegative(),
   items: z.number().int().nonnegative(),
   sliders: z.number().int().nonnegative(),
+  promotions: z.number().int().nonnegative(),
   message: z.string()
 });
 const frappeItem = z.object({

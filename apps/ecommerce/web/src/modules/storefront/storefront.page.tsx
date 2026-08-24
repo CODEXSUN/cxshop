@@ -7,6 +7,7 @@ import {
   getStorefrontProduct,
   getStorefrontSiteNavigation,
   getStorefrontSliders,
+  getStorefrontPromotions,
   listLatestBlogPosts,
   listStorefrontProducts
 } from "./storefront.services";
@@ -32,6 +33,7 @@ import type {
   StorefrontBlogPost,
   StorefrontSiteNavigation,
   StorefrontSlider
+  ,StorefrontPromotion
 } from "./storefront.types";
 import { hasStorefrontPrice, money, whatsappLink } from "./storefront.formatters";
 import "./storefront.css";
@@ -81,6 +83,7 @@ function CatalogPage({ category, searchPage = false }: { category: string; searc
   const [announcement, setAnnouncement] = useState<StorefrontAnnouncement | null>(null);
   const [branding, setBranding] = useState<StorefrontBranding | null>(null);
   const [slides, setSlides] = useState<StorefrontSlider[]>([]);
+  const [promotions, setPromotions] = useState<StorefrontPromotion[]>([]);
 
   useEffect(() => {
     getStorefrontDiscovery().then(setDiscovery);
@@ -88,6 +91,7 @@ function CatalogPage({ category, searchPage = false }: { category: string; searc
     getStorefrontAnnouncement().then(setAnnouncement);
     getStorefrontBranding().then(setBranding);
     if (!searchPage) getStorefrontSliders().then(setSlides);
+    if (!searchPage) getStorefrontPromotions().then(setPromotions);
     if (!searchPage) listLatestBlogPosts().then((items) => setBlogPosts(items.slice(0, 3)));
   }, [searchPage]);
   useEffect(() => {
@@ -109,10 +113,6 @@ function CatalogPage({ category, searchPage = false }: { category: string; searc
   }, [hasMore, loadMore]);
 
   const featured = useMemo(() => products.filter((item) => item.featured).slice(0, 4), [products]);
-  const promotions = useMemo(
-    () => products.filter((item) => item.compareAtPrice != null).slice(0, 4),
-    [products]
-  );
   return (
     <div className="cx-store">
       <StoreHeader
@@ -123,7 +123,7 @@ function CatalogPage({ category, searchPage = false }: { category: string; searc
       />
       <main className={searchPage ? "cx-store__search-main" : undefined}>
         {!searchPage ? <HeroSlider slides={slides} /> : null}
-        {!searchPage ? <PromotionsSection products={promotions} /> : null}
+        {!searchPage ? <PromotionsSection promotions={promotions} /> : null}
         {!searchPage ? <BrandsSection brands={discovery.brands} /> : null}
         {!searchPage && featured.length ? (
           <ProductSection

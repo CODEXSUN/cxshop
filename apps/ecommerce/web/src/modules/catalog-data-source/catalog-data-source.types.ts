@@ -1,6 +1,6 @@
 export type CatalogDataSourceProvider = "frappe" | "own";
 export type CatalogDataSourceModule =
-  "categories" | "brands" | "products" | "product-details" | "variants" | "product-images";
+  "categories" | "brands" | "products" | "product-details" | "variants" | "product-images" | "sliders" | "promotions";
 export type CatalogModuleDataSource = {
   description: string;
   label: string;
@@ -51,5 +51,7 @@ export type CatalogSyncResult = {
   direction: "frappe-to-own" | "own-to-frappe";
   erpnextItems: number;
   items: number;
+  sliders: number;
+  promotions: number;
   message: string;
 };

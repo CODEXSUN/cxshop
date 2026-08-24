@@ -27,6 +27,11 @@ export type StorefrontSlider = {
   sliderCode: string;
   title: string;
 };
+export type StorefrontPromotion = {
+  actionLabel: string; actionUrl: string; badge: string; badgePosition: "top-left" | "top-right" | "bottom-left" | "bottom-right";
+  badgeTint: string; description: string; displayOrder: number; eyebrow: string; imageAlt: string; imageUrl: string;
+  linkedItem: string | null; offerPrice: number; originalPrice: number | null; promotionCode: string; title: string;
+};
 
 export type StorefrontProductDetail = StorefrontProduct & {
   bulletPoints: string[];

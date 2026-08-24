@@ -34,8 +34,10 @@ const slider = z.object({
   sliderCode: z.string(),
   title: z.string()
 });
+const promotion = z.object({ actionLabel: z.string(), actionUrl: z.string(), badge: z.string(), badgePosition: z.enum(["top-left", "top-right", "bottom-left", "bottom-right"]), badgeTint: z.string(), description: z.string(), displayOrder: z.number(), eyebrow: z.string(), imageAlt: z.string(), imageUrl: z.string(), linkedItem: z.string().nullable(), offerPrice: z.number(), originalPrice: z.number().nullable(), promotionCode: z.string(), title: z.string() });
 
 export async function registerStorefrontRoutes(app: FastifyInstance, service: StorefrontService) {
+  registerContractRoute(app, { method: "GET", url: "/storefront/promotions", schemas: { response: z.array(promotion) }, handler: () => service.promotions() });
   registerContractRoute(app, {
     method: "GET",
     url: "/storefront/sliders",

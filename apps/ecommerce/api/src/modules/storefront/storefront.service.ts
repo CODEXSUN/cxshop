@@ -2,14 +2,9 @@ import type { StorefrontCatalogFilters } from "./storefront.types.js";
 import type { StorefrontCatalogSource } from "../catalog-data-source/catalog-data-source.types.js";
 import { StorefrontProfileService } from "../storefront-profile/storefront-profile.service.js";
 import { sliderContentUrl } from "../storefront-slider/storefront-slider.storage.js";
-import { StorefrontRepository } from "./storefront.repository.js";
 
 export class StorefrontService {
-  constructor(
-    private readonly source: StorefrontCatalogSource,
-    private readonly localSliderSource: Pick<StorefrontCatalogSource, "sliders"> =
-      new StorefrontRepository()
-  ) {}
+  constructor(private readonly source: StorefrontCatalogSource) {}
   catalog(filters: StorefrontCatalogFilters) {
     return this.source.catalog({
       ...filters,
@@ -28,11 +23,12 @@ export class StorefrontService {
     return this.source.product(slug.trim().toLowerCase());
   }
   async sliders() {
-    return (await this.localSliderSource.sliders()).map((slider) => ({
+    return (await this.source.sliders()).map((slider) => ({
       ...slider,
       imageUrl: sliderContentUrl(slider.imageUrl)
     }));
   }
+  promotions() { return this.source.promotions(); }
   async siteNavigation() {
     const profile = await new StorefrontProfileService().get();
     return {

@@ -24,6 +24,7 @@ type CatalogSnapshot = {
   items: IShopItem[];
   memberships: Map<string, CatalogMembership[]>;
   sliders: FrappeCatalogSnapshot["sliders"];
+  promotions: FrappeCatalogSnapshot["promotions"];
 };
 
 export class FrappeCatalogSource implements StorefrontCatalogSource {
@@ -81,6 +82,7 @@ export class FrappeCatalogSource implements StorefrontCatalogSource {
         const startsAt = slider.starts_at ? new Date(slider.starts_at).getTime() : null;
         const endsAt = slider.ends_at ? new Date(slider.ends_at).getTime() : null;
         return (
+          slider.status !== "inactive" &&
           Boolean(slider.published) &&
           (startsAt == null || startsAt <= now) &&
           (endsAt == null || endsAt >= now)
@@ -94,10 +96,23 @@ export class FrappeCatalogSource implements StorefrontCatalogSource {
         displayOrder: slider.display_order ?? 0,
         eyebrow: slider.eyebrow?.trim() || "",
         imageAlt: slider.title,
-        imageUrl: absoluteUrl(slider.image, this.currentBaseUrl),
+        imageUrl: absoluteUrl(slider.image_url, this.currentBaseUrl),
         linkedItem: slider.ishop_item?.trim() || null,
         sliderCode: slider.slider_code,
         title: slider.title
+      }));
+  }
+  async promotions() {
+    const snapshot = await this.snapshot(); const now = Date.now();
+    return snapshot.promotions.filter((item) => item.status !== "inactive" && Boolean(item.published)
+      && (!item.starts_at || new Date(item.starts_at).getTime() <= now) && (!item.ends_at || new Date(item.ends_at).getTime() >= now))
+      .sort((a,b) => (a.display_order ?? 0) - (b.display_order ?? 0)).map((item) => ({
+        actionLabel: item.action_label?.trim() || "View offer", actionUrl: item.action_url?.trim() || "#catalog", badge: item.badge?.trim() || "",
+        badgePosition: item.badge_position || "top-right", badgeTint: item.badge_tint?.trim() || "brand", description: plainText(item.description),
+        displayOrder: item.display_order ?? 0, eyebrow: item.eyebrow?.trim() || "", imageAlt: item.title,
+        imageUrl: absoluteUrl(item.image_url, this.currentBaseUrl), linkedItem: item.ishop_item?.trim() || null,
+        offerPrice: Number(item.offer_price ?? 0), originalPrice: item.original_price == null ? null : Number(item.original_price),
+        promotionCode: item.promotion_code, title: item.title
       }));
   }
 
@@ -182,6 +197,7 @@ export class FrappeCatalogSource implements StorefrontCatalogSource {
       items,
       memberships: membershipsFrom(catalogs),
       sliders: payload.sliders ?? []
+      ,promotions: payload.promotions ?? []
     };
   }
 

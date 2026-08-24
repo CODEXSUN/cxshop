@@ -61,14 +61,22 @@ export class CatalogDataSourceRepository {
           (slider_code,eyebrow,title,description,image_url,action_label,action_url,ishop_item,
            display_order,published,starts_at,ends_at,frappe_document_name,frappe_modified_at,status)
           VALUES (${slider.slider_code},${slider.eyebrow ?? ""},${slider.title},${slider.description ?? ""},
-            ${slider.image ?? ""},${slider.action_label ?? ""},${slider.action_url ?? ""},${slider.ishop_item ?? null},
+            ${slider.image_url ?? ""},${slider.action_label ?? ""},${slider.action_url ?? ""},${slider.ishop_item ?? null},
             ${slider.display_order ?? 0},${slider.published ? 1 : 0},${frappeDate(slider.starts_at)},
-            ${frappeDate(slider.ends_at)},${slider.name ?? slider.slider_code},${frappeDate(slider.modified)},'active')
+            ${frappeDate(slider.ends_at)},${slider.name ?? slider.slider_code},${frappeDate(slider.modified)},${slider.status ?? "active"})
           ON DUPLICATE KEY UPDATE eyebrow=VALUES(eyebrow),title=VALUES(title),description=VALUES(description),
             image_url=VALUES(image_url),action_label=VALUES(action_label),action_url=VALUES(action_url),
             ishop_item=VALUES(ishop_item),display_order=VALUES(display_order),published=VALUES(published),
             starts_at=VALUES(starts_at),ends_at=VALUES(ends_at),frappe_document_name=VALUES(frappe_document_name),
-            frappe_modified_at=VALUES(frappe_modified_at),status='active'`.execute(transaction);
+            frappe_modified_at=VALUES(frappe_modified_at),status=VALUES(status)`.execute(
+          transaction
+        );
+      }
+      for (const item of snapshot.promotions ?? []) {
+        await sql`INSERT INTO ecommerce_storefront_promotions
+          (promotion_code,eyebrow,title,description,image_url,action_label,action_url,offer_price,original_price,badge,badge_position,badge_tint,ishop_item,display_order,published,starts_at,ends_at,frappe_document_name,frappe_modified_at,status)
+          VALUES (${item.promotion_code},${item.eyebrow ?? ""},${item.title},${item.description ?? ""},${item.image_url ?? ""},${item.action_label ?? ""},${item.action_url ?? ""},${Number(item.offer_price ?? 0)},${item.original_price == null ? null : Number(item.original_price)},${item.badge ?? ""},${item.badge_position ?? "top-right"},${item.badge_tint ?? "brand"},${item.ishop_item ?? null},${item.display_order ?? 0},${item.published ? 1 : 0},${frappeDate(item.starts_at)},${frappeDate(item.ends_at)},${item.name ?? item.promotion_code},${frappeDate(item.modified)},${item.status ?? "active"})
+          ON DUPLICATE KEY UPDATE title=VALUES(title),description=VALUES(description),image_url=VALUES(image_url),action_label=VALUES(action_label),action_url=VALUES(action_url),offer_price=VALUES(offer_price),original_price=VALUES(original_price),badge=VALUES(badge),badge_position=VALUES(badge_position),badge_tint=VALUES(badge_tint),ishop_item=VALUES(ishop_item),display_order=VALUES(display_order),published=VALUES(published),starts_at=VALUES(starts_at),ends_at=VALUES(ends_at),frappe_document_name=VALUES(frappe_document_name),frappe_modified_at=VALUES(frappe_modified_at),status=VALUES(status)`.execute(transaction);
       }
       await this.deactivateMissingFrappeRecords(transaction, snapshot);
       await sql`INSERT INTO ecommerce_catalog_sync_runs
@@ -81,7 +89,7 @@ export class CatalogDataSourceRepository {
 
   async snapshot(): Promise<FrappeCatalogSnapshot> {
     const database = getEcommerceDatabase();
-    const [items, catalogs, memberships, sliders] = await Promise.all([
+    const [items, catalogs, memberships, sliders, promotions] = await Promise.all([
       sql<Row>`SELECT info.*,product.name AS item_name,product.opening_price,category.name AS category_name,
         brand.name AS brand_name,image.url AS primary_image FROM ecommerce_product_information info
         INNER JOIN core_products product ON product.id=info.core_product_id AND product.deleted_at IS NULL
@@ -100,7 +108,8 @@ export class CatalogDataSourceRepository {
       ),
       sql<Row>`SELECT * FROM ecommerce_storefront_sliders WHERE status='active' ORDER BY display_order,slider_code`.execute(
         database
-      )
+      ),
+      sql<Row>`SELECT * FROM ecommerce_storefront_promotions WHERE status='active' ORDER BY display_order,promotion_code`.execute(database)
     ]);
     const ishopItems = items.rows.map(toIShopItem);
     return {
@@ -126,15 +135,17 @@ export class CatalogDataSourceRepository {
         display_order: Number(slider.display_order ?? 0),
         ends_at: dateString(slider.ends_at),
         eyebrow: String(slider.eyebrow ?? ""),
-        image: String(slider.image_url ?? ""),
+        image_url: String(slider.image_url ?? ""),
         ishop_item: slider.ishop_item ? String(slider.ishop_item) : null,
         modified: dateString(slider.frappe_modified_at),
         name: String(slider.frappe_document_name || slider.slider_code),
         published: Number(slider.published ?? 0),
         slider_code: String(slider.slider_code),
         starts_at: dateString(slider.starts_at),
-        title: String(slider.title)
-      }))
+        title: String(slider.title),
+        status: slider.status === "inactive" ? "inactive" : "active"
+      })),
+      promotions: promotions.rows.map((item) => ({ action_label: String(item.action_label ?? ""), action_url: String(item.action_url ?? ""), badge: String(item.badge ?? ""), badge_position: String(item.badge_position ?? "top-right") as "top-left" | "top-right" | "bottom-left" | "bottom-right", badge_tint: String(item.badge_tint ?? "brand"), description: String(item.description ?? ""), display_order: Number(item.display_order ?? 0), ends_at: dateString(item.ends_at), eyebrow: String(item.eyebrow ?? ""), image_url: String(item.image_url ?? ""), ishop_item: item.ishop_item ? String(item.ishop_item) : null, modified: dateString(item.frappe_modified_at), name: String(item.frappe_document_name || item.promotion_code), offer_price: Number(item.offer_price ?? 0), original_price: item.original_price == null ? null : Number(item.original_price), promotion_code: String(item.promotion_code), published: Number(item.published ?? 0), starts_at: dateString(item.starts_at), status: item.status === "inactive" ? "inactive" : "active", title: String(item.title) }))
     };
   }
 
@@ -334,6 +345,9 @@ export class CatalogDataSourceRepository {
         transaction
       );
     }
+    const promotionCodes = (snapshot.promotions ?? []).map((item) => item.promotion_code);
+    if (promotionCodes.length) await sql`UPDATE ecommerce_storefront_promotions SET status='inactive',published=0 WHERE promotion_code NOT IN (${sql.join(promotionCodes)})`.execute(transaction);
+    else await sql`UPDATE ecommerce_storefront_promotions SET status='inactive',published=0`.execute(transaction);
   }
 }
 

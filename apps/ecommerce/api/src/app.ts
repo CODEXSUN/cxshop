@@ -31,6 +31,7 @@ import {
   registerStorefrontSliderImageRoutes,
   storefrontSliderModule
 } from "./modules/storefront-slider/index.js";
+import { promotionCardModule } from "./modules/promotion-card/index.js";
 
 export const ecommerceApiModuleKeys = [
   productInformationModule.key,
@@ -39,6 +40,7 @@ export const ecommerceApiModuleKeys = [
   catalogMatchingModule.key,
   storefrontAnnouncementModule.key,
   storefrontSliderModule.key,
+  promotionCardModule.key,
   catalogDataSourceModuleKey,
   storefrontProfileModuleKey
 ];
@@ -72,6 +74,7 @@ export async function registerEcommerceApi(
     await catalogMatchingModule.register(ecommerceApp);
     await storefrontAnnouncementModule.register(ecommerceApp);
     await storefrontSliderModule.register(ecommerceApp);
+    await promotionCardModule.register(ecommerceApp);
     await registerStorefrontProfileRoutes(ecommerceApp, dependencies.resolveActorEmail);
     await registerCatalogDataSourceRoutes(
       ecommerceApp,

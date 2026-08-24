@@ -1,9 +1,38 @@
-import type { FastifyInstance } from "fastify";
+import type { FastifyInstance, FastifyRequest } from "fastify";
+import type { Kysely } from "kysely";
+import {
+  blogsApiModuleKeys,
+  provisionBlogsDatabase,
+  registerBlogsApi,
+  type BlogRequestContext,
+  type BlogsDatabase
+} from "@codexsun/blog/api";
+import { blogPluginManifest } from "@codexsun/blog/contracts";
+import {
+  bootstrapBlogCloudDatabase as bootstrapCloudPublishingDatabase,
+  closeBlogCloudDatabase as closeCloudPublishingDatabase,
+  CloudPublishingService,
+  cloudArticlePublishJobName,
+  createCloudPublishingModule,
+  type CloudPublishingQueuePort
+} from "./modules/cloud-publishing/index.js";
+import { requireApplicationAccess } from "@cxshop/framework/api";
 import { AddonHostRegistry, type AddonManifest } from "@cxshop/framework/addons";
-import { blogsApiModuleKeys, closeBlogsDatabase, registerBlogsApi } from "@cxshop/blogs-api";
+import { runMigrationBatch } from "@cxshop/framework/db";
+import { applicationAccessContext } from "./auth/application-access-context.js";
+import { getPlatformDatabase } from "./database/platform-database.js";
+import { env } from "./env.js";
 
-type BlogDependencies = Parameters<typeof registerBlogsApi>[1];
+type BlogDependencies = {
+  enqueue: CloudPublishingQueuePort;
+  registerJobHandler: (
+    name: string,
+    handler: (payload: Record<string, unknown>) => Promise<Record<string, unknown>>
+  ) => void;
+  resolveActorEmail: (request: FastifyRequest) => string;
+};
 
+const cloudPublishingModuleKey = "blogs.cloud-publishing";
 const registry = new AddonHostRegistry({
   capabilities: [
     "identity",
@@ -17,33 +46,28 @@ const registry = new AddonHostRegistry({
   runtimeMode: "single-client"
 });
 
-export const addonApiModuleKeys = [...blogsApiModuleKeys] as const;
+export const addonApiModuleKeys = [...blogsApiModuleKeys, cloudPublishingModuleKey] as const;
 
 export async function registerBlogAddon(app: FastifyInstance, dependencies: BlogDependencies) {
   try {
     await registry.register({
-      activate: () => registerBlogsApi(app, dependencies),
-      close: closeBlogsDatabase,
-      databaseMode: "dedicated",
+      activate: async () => {
+        await provisionBlogDatabase();
+        await registerBlogsApi(app, {
+          authorize: ({ permission, request }) =>
+            applicationAccessContext(request).authorize(permission),
+          resolveContext: resolveBlogContext
+        });
+        await registerCloudPublishing(app, dependencies);
+      },
+      close: closeCloudPublishingDatabase,
+      databaseMode: "host-database",
       manifest: blogManifest,
-      moduleKeys: blogsApiModuleKeys
+      moduleKeys: addonApiModuleKeys
     });
   } catch (error) {
     await closeAfterActivationFailure(error);
   }
-}
-
-async function closeAfterActivationFailure(activationError: unknown): Promise<never> {
-  try {
-    await registry.close();
-  } catch (closeError) {
-    throw new AggregateError(
-      [activationError, closeError],
-      "Add-on activation failed and cleanup was incomplete.",
-      { cause: closeError }
-    );
-  }
-  throw activationError;
 }
 
 export function activePlatformAddons() {
@@ -60,23 +84,65 @@ export async function closePlatformAddons() {
   await registry.close();
 }
 
+async function provisionBlogDatabase() {
+  await provisionBlogsDatabase({
+    context: blogContext(null, "https://cxshop.local"),
+    runMigrationBatch: (database, batch) => runMigrationBatch(database, batch)
+  });
+}
+
+function resolveBlogContext(request: FastifyRequest) {
+  const authority = request.headers.host ?? "localhost";
+  const origin = request.headers.origin ?? `${request.protocol}://${authority}`;
+  return blogContext(request.authContext?.payload.email ?? null, origin);
+}
+
+function blogContext(actorId: string | null, origin: string): BlogRequestContext {
+  return {
+    actorId,
+    database: getPlatformDatabase() as unknown as Kysely<BlogsDatabase>,
+    host: "cxshop",
+    origin,
+    scopeId: env.DB_MASTER_NAME
+  };
+}
+
+async function registerCloudPublishing(app: FastifyInstance, dependencies: BlogDependencies) {
+  await bootstrapCloudPublishingDatabase();
+  const module = createCloudPublishingModule(dependencies.enqueue, dependencies.resolveActorEmail);
+  dependencies.registerJobHandler(cloudArticlePublishJobName, async (payload) => {
+    const publicationId = Number(payload.publicationId);
+    const result = await new CloudPublishingService(dependencies.enqueue).process(publicationId);
+    return result
+      ? { publicationId: result.id, publicUrl: result.publicUrl, status: result.status }
+      : { publicationId, status: "missing" };
+  });
+  await app.register(async (cloudApp) => {
+    cloudApp.addHook("preHandler", (request) => {
+      requireApplicationAccess({
+        applicationDatabase: env.DB_MASTER_NAME,
+        authorization: request.headers.authorization,
+        secret: env.JWT_SECRET
+      });
+    });
+    await module.register(cloudApp);
+  });
+}
+
+async function closeAfterActivationFailure(activationError: unknown): Promise<never> {
+  try {
+    await registry.close();
+  } catch (closeError) {
+    throw new AggregateError(
+      [activationError, closeError],
+      "Add-on activation failed and cleanup was incomplete.",
+      { cause: closeError }
+    );
+  }
+  throw activationError;
+}
+
 const blogManifest: AddonManifest = {
-  capabilities: {
-    optional: ["media.public", "queue"],
-    required: ["identity", "authorization", "database", "migration-ledger"]
-  },
-  compatibleHosts: "host-adapter",
-  databaseModes: ["dedicated", "host-database"],
-  displayName: "Blog",
-  hostApi: "^1.0.0",
-  key: "codexsun.blog",
-  kind: "composable-addon-application",
-  packages: {
-    api: "@cxshop/blogs-api",
-    contracts: "@codexsun/blog/contracts",
-    web: "@cxshop/blogs-web"
-  },
-  runtimeModes: ["multi-tenant", "single-client"],
-  schemaVersion: 1,
-  version: "1.0.65"
+  ...blogPluginManifest,
+  packages: { ...blogPluginManifest.packages }
 };

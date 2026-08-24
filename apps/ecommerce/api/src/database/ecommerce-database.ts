@@ -61,6 +61,7 @@ import {
   migrateStorefrontSliderModule,
   storefrontSliderMigration
 } from "../modules/storefront-slider/storefront-slider.migration.js";
+import { migratePromotionCardModule, promotionCardMigration } from "../modules/promotion-card/promotion-card.migration.js";
 
 export type EcommerceDatabase = Record<string, unknown>;
 type ConnectionOptions = {
@@ -90,6 +91,7 @@ export const ecommerceTenantMigrations = [
   catalogDataSourceSeedCompatibilityMigration,
   catalogStorefrontSliderMigration,
   storefrontSliderMigration,
+  promotionCardMigration,
   storefrontProfileMigration
 ] as const;
 export const ecommerceMigrationBatch: MigrationBatch<EcommerceDatabase> = {
@@ -277,6 +279,19 @@ const ecommerceStorefrontSliderDocumentMigrationBatch: MigrationBatch<EcommerceD
     }
   ]
 };
+const ecommercePromotionCardMigrationBatch: MigrationBatch<EcommerceDatabase> = {
+  batch: 11,
+  description: "Dedicated LogicX iShop Promotion Card document cache.",
+  scope: "ecommerce",
+  version: "1.0.66",
+  steps: [{
+    checksum: `${promotionCardMigration.key}:v1`,
+    description: promotionCardMigration.description,
+    name: promotionCardMigration.key,
+    up: migratePromotionCardModule,
+    version: 1
+  }]
+};
 
 export function resolveEcommerceDatabaseName(value: unknown) {
   void value;
@@ -342,6 +357,7 @@ export async function bootstrapEcommerceDatabase(databaseName: string) {
     getEcommerceDatabase(name),
     ecommerceStorefrontSliderDocumentMigrationBatch
   );
+  await runMigrationBatch(getEcommerceDatabase(name), ecommercePromotionCardMigrationBatch);
   await runWithEcommerceDatabase(name, seedProductInformationModule);
   await runWithEcommerceDatabase(name, seedProductVariantModule);
   await runWithEcommerceDatabase(name, seedProductImageModule);
@@ -373,6 +389,7 @@ export async function migrateEcommerceTenantDatabase(databaseName: string) {
     getEcommerceDatabase(name),
     ecommerceStorefrontSliderDocumentMigrationBatch
   );
+  await runMigrationBatch(getEcommerceDatabase(name), ecommercePromotionCardMigrationBatch);
 }
 
 export async function seedEcommerceTenantDatabase(databaseName: string) {
@@ -387,6 +404,7 @@ export async function seedEcommerceTenantDatabase(databaseName: string) {
 }
 
 export async function rollbackEcommerceTenantDatabase(databaseName: string) {
+  await rollbackMigrationBatch(getEcommerceDatabase(databaseName), ecommercePromotionCardMigrationBatch);
   await rollbackMigrationBatch(
     getEcommerceDatabase(databaseName),
     ecommerceStorefrontSliderDocumentMigrationBatch

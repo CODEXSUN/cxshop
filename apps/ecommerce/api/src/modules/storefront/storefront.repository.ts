@@ -86,6 +86,19 @@ export class StorefrontRepository {
       title: String(row.title)
     }));
   }
+  async promotions() {
+    const result = await sql<Row>`SELECT * FROM ecommerce_storefront_promotions WHERE status='active' AND published=1
+      AND (starts_at IS NULL OR starts_at<=CURRENT_TIMESTAMP) AND (ends_at IS NULL OR ends_at>=CURRENT_TIMESTAMP)
+      ORDER BY display_order,promotion_code`.execute(getEcommerceDatabase());
+    return result.rows.map((row) => ({
+      actionLabel: String(row.action_label || "View offer"), actionUrl: String(row.action_url || "#catalog"),
+      badge: String(row.badge || ""), badgePosition: String(row.badge_position || "top-right") as "top-left" | "top-right" | "bottom-left" | "bottom-right",
+      badgeTint: String(row.badge_tint || "brand"), description: String(row.description || ""), displayOrder: Number(row.display_order || 0),
+      eyebrow: String(row.eyebrow || ""), imageAlt: String(row.title), imageUrl: String(row.image_url || ""),
+      linkedItem: row.ishop_item ? String(row.ishop_item) : null, offerPrice: Number(row.offer_price || 0),
+      originalPrice: row.original_price == null ? null : Number(row.original_price), promotionCode: String(row.promotion_code), title: String(row.title)
+    }));
+  }
 
   async discovery(): Promise<StorefrontDiscovery> {
     const [categories, brands, prices] = await Promise.all([

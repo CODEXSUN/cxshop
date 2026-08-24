@@ -31,6 +31,7 @@ class OwnCatalogSource implements StorefrontCatalogSource {
   sliders() {
     return this.repository.sliders();
   }
+  promotions() { return this.repository.promotions(); }
 }
 
 export class CatalogDataSourceService implements StorefrontCatalogSource {
@@ -165,6 +166,7 @@ export class CatalogDataSourceService implements StorefrontCatalogSource {
   sliders() {
     return this.read("sliders", (source) => source.sliders());
   }
+  promotions() { return this.read("promotions", (source) => source.promotions()); }
 
   private async read<T>(
     module: CatalogDataSourceModule,
@@ -234,6 +236,10 @@ function moduleDefinition(module: CatalogDataSourceModule) {
     sliders: {
       description: "Home page slider content, imagery, links, scheduling, and display order.",
       label: "Home slider"
+    },
+    promotions: {
+      description: "Promotion cards, offer prices, badges, placement, tint, links, and scheduling.",
+      label: "Promotion cards"
     }
   }[module];
 }
@@ -249,6 +255,7 @@ function syncResult(
     erpnextItems: snapshot.erpnext_items.length,
     items: snapshot.items.length,
     sliders: snapshot.sliders.length,
+    promotions: snapshot.promotions.length,
     message
   };
 }

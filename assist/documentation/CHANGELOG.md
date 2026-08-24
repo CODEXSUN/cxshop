@@ -2,11 +2,11 @@
 
 ## Version State
 
-Current version: 1.0.65
+Current version: 1.0.66
 
-Release tag: v-1.0.65
+Release tag: v-1.0.66
 
-Changelog label: v 1.0.65
+Changelog label: v 1.0.66
 
 This changelog starts fresh from the cleaned CODEXSUN foundation. Earlier copied application history was intentionally removed because it did not represent the current workspace.
 
@@ -21,6 +21,25 @@ Records schema, migration, seed, tenant provisioning, and data compatibility cha
 ### App Codebase Changes
 
 Records UI, API, service logic, tooling, packaging, and documentation changes.
+
+## v-1.0.66
+
+### [v 1.0.66] 2026-08-24 9:59 pm - patch Central Blog GitHub package integration
+
+#### Database Changes
+
+- Database update: Yes (auto-check).
+- Registered the standalone Blog migration batch against the CXShop host database.
+- Retained the CXShop-owned production connection and publication history migrations.
+
+#### App Codebase Changes
+
+- Bumped workspace version to 1.0.66.
+- Replaced the internal Blog API and web packages with `CODEXSUN/blog` release `v-1.0.10`.
+- Added the CXShop database, authorization, origin, and request-scope host adapter.
+- Kept local-to-cloud publishing as Platform-owned modules without another Blog package.
+- Removed the unfinished File Manager dependency, routes, workspaces, and Storage menu group.
+- Wired the standalone editor and public Blog pages into the existing Blog desk and routes.
 
 ## v-1.0.65
 

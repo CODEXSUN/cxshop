@@ -54,6 +54,15 @@ import {
   publishAccountingYear,
   publishCompanyContext
 } from "../../shared/application/runtime-context";
+import type { BlogsEditorHost } from "@codexsun/blog/web";
+
+const blogEditorHost: BlogsEditorHost = {
+  listAuthors: async () => [],
+  listImages: async () => [],
+  uploadImage: async () => {
+    throw new Error("Blog media uploads are unavailable until storage integration is enabled.");
+  }
+};
 
 function lazyWorkspace<Props>(loader: () => Promise<ComponentType<Props>>) {
   return lazy(async () => ({ default: await loader() }));
@@ -76,13 +85,8 @@ const loadCatalogDataSourceModule = () => import("@cxshop/ecommerce-web");
 const loadStorefrontProfileModule = () =>
   import("@cxshop/ecommerce-web/modules/storefront-profile");
 const loadStorefrontSliderModule = () => import("@cxshop/ecommerce-web/modules/storefront-slider");
-const loadBlogsEditorModule = () => import("@cxshop/blogs-web/modules/editor");
-const loadCloudPublishingModule = () => import("@cxshop/blogs-web/modules/cloud-publishing");
-const loadFileManagerModule = () =>
-  import("@codexsun/file-manager/web").then((module) => {
-    module.configureFileManagerClient({ baseUrl: "/api/platform/file-manager" });
-    return module;
-  });
+const loadBlogsEditorModule = () => import("@codexsun/blog/web");
+const loadCloudPublishingModule = () => import("../../modules/blog-cloud-publishing");
 
 const billingWorkspacePreloaders = [
   loadBillingDashboardModule,
@@ -125,13 +129,6 @@ const BlogsEditorWorkspace = lazyWorkspace(() =>
 const CloudPublishingWorkspace = lazyWorkspace(() =>
   loadCloudPublishingModule().then((module) => module.CloudPublishingWorkspace)
 );
-const FileBrowserWorkspace = lazyWorkspace(() =>
-  loadFileManagerModule().then((module) => module.FileBrowserWorkspace)
-);
-const StorageConnectionsWorkspace = lazyWorkspace(() =>
-  loadFileManagerModule().then((module) => module.StorageConnectionsWorkspace)
-);
-
 const AddressTypesWorkspace = lazyWorkspace(() =>
   import("@cxshop/core-web/modules/common/contacts/address-types").then(
     (module) => module.AddressTypesWorkspace
@@ -376,8 +373,6 @@ type AppPage =
   | "application.profile"
   | "application.settings"
   | "application.connections.production"
-  | "application.storage.files"
-  | "application.storage.connections"
   | "application.access.users"
   | "application.access.roles"
   | "application.access.permissions"
@@ -815,10 +810,6 @@ export function AppDesk() {
             {safePage === "application.connections.production" ? (
               <CloudPublishingWorkspace view="connection" />
             ) : null}
-            {safePage === "application.storage.files" ? <FileBrowserWorkspace /> : null}
-            {safePage === "application.storage.connections" ? (
-              <StorageConnectionsWorkspace />
-            ) : null}
             {safePage === "devkit.honey" ? (
               <DevkitWorkspaceHost initialPrompt={pikoDraft} workspaceId="honey" />
             ) : null}
@@ -879,7 +870,7 @@ export function AppDesk() {
             {safePage === "ecommerce.settings.storefront-profile" ? (
               <StorefrontProfileWorkspace />
             ) : null}
-            {safePage === "blogs.editor" ? <BlogsEditorWorkspace /> : null}
+            {safePage === "blogs.editor" ? <BlogsEditorWorkspace host={blogEditorHost} /> : null}
             {safePage === "blogs.cloud.publications" ? (
               <CloudPublishingWorkspace view="publications" />
             ) : null}
@@ -951,8 +942,6 @@ function pageFromUrl(landingApp: PlatformAppId | null): AppPage {
     key === "application.profile" ||
     key === "application.settings" ||
     key === "application.connections.production" ||
-    key === "application.storage.files" ||
-    key === "application.storage.connections" ||
     key === "application.access.users" ||
     key === "application.access.roles" ||
     key === "application.access.permissions" ||

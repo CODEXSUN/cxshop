@@ -37,12 +37,12 @@ const TenantSecurityPage = lazy(() =>
   }))
 );
 const PublicBlogPage = lazy(() =>
-  import("@cxshop/blogs-web/modules/public-blog").then((module) => ({
+  import("@codexsun/blog/web").then((module) => ({
     default: module.PublicBlogPage
   }))
 );
 const PublicArticlePage = lazy(() =>
-  import("@cxshop/blogs-web/modules/public-blog").then((module) => ({
+  import("@codexsun/blog/web").then((module) => ({
     default: module.PublicArticlePage
   }))
 );

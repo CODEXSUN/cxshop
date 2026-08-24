@@ -3,6 +3,7 @@ import type {
   StorefrontDiscovery,
   StorefrontProduct,
   StorefrontProductDetail,
+  StorefrontPromotion,
   StorefrontSlider
 } from "../storefront/storefront.types.js";
 
@@ -16,6 +17,7 @@ export const catalogDataSourceModules = [
   "variants",
   "product-images",
   "sliders"
+  ,"promotions"
 ] as const;
 export type CatalogDataSourceModule = (typeof catalogDataSourceModules)[number];
 
@@ -118,7 +120,7 @@ export type FrappeIShopSlider = {
   display_order?: number;
   ends_at?: string | null;
   eyebrow?: string | null;
-  image?: string | null;
+  image_url?: string | null;
   ishop_item?: string | null;
   modified?: string | null;
   name?: string;
@@ -126,6 +128,7 @@ export type FrappeIShopSlider = {
   slider_code: string;
   starts_at?: string | null;
   title: string;
+  status?: "active" | "inactive";
 };
 
 export type FrappeCatalogSnapshot = {
@@ -133,6 +136,13 @@ export type FrappeCatalogSnapshot = {
   erpnext_items: FrappeErpItem[];
   items: FrappeIShopItem[];
   sliders: FrappeIShopSlider[];
+  promotions: FrappeIShopPromotion[];
+};
+export type FrappeIShopPromotion = {
+  action_label?: string | null; action_url?: string | null; badge?: string | null; badge_position?: "top-left" | "top-right" | "bottom-left" | "bottom-right";
+  badge_tint?: string | null; description?: string | null; display_order?: number; ends_at?: string | null; eyebrow?: string | null;
+  image_url?: string | null; ishop_item?: string | null; modified?: string | null; name?: string; offer_price?: number | string;
+  original_price?: number | string | null; promotion_code: string; published?: number; starts_at?: string | null; status?: "active" | "inactive"; title: string;
 };
 
 export type CatalogSyncResult = {
@@ -141,6 +151,7 @@ export type CatalogSyncResult = {
   erpnextItems: number;
   items: number;
   sliders: number;
+  promotions: number;
   message: string;
 };
 
@@ -161,4 +172,5 @@ export interface StorefrontCatalogSource {
   discovery(): Promise<StorefrontDiscovery>;
   product(slug: string): Promise<StorefrontProductDetail | null>;
   sliders(): Promise<StorefrontSlider[]>;
+  promotions(): Promise<StorefrontPromotion[]>;
 }

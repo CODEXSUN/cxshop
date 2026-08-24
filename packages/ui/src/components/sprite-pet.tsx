@@ -38,10 +38,14 @@ type SpritePetAttention = "shopping-help" | "welcome";
 
 const IDLE_HELP_DELAY = 120_000;
 const HELP_MESSAGE_DURATION = 10_000;
+// Side-facing atlas cells touch their source crop edge. Keep a clear gutter in the viewport.
+const SPRITE_SCALE = 0.82;
+// Align the alpha bounds of row-0 look frames to the center standing frame.
+const idleFrameOffsets = [-3, 0, -3];
 
 const animationRows: Record<SpritePetState, { frames: number; row: number; startFrame?: number }> =
   {
-    idle: { frames: 1, row: 0, startFrame: 5 },
+    idle: { frames: 3, row: 0, startFrame: 4 },
     "running-right": { frames: 8, row: 1 },
     "running-left": { frames: 8, row: 2 },
     waving: { frames: 4, row: 3 },
@@ -69,11 +73,20 @@ export function SpritePet({
 }) {
   const [frame, setFrame] = useState(0);
   const animation = animationRows[state];
-  const frameInterval = interval ?? (state === "idle" || state === "sitting" ? 420 : 180);
+  const frameInterval = interval ?? (state === "idle" ? 900 : state === "sitting" ? 420 : 180);
 
   useEffect(() => {
     setFrame(0);
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (state === "idle") {
+      let timer: number | undefined;
+      const pauseAndLook = () => {
+        setFrame((current) => (current + 1) % animation.frames);
+        timer = window.setTimeout(pauseAndLook, 1700 + Math.random() * 2800);
+      };
+      timer = window.setTimeout(pauseAndLook, 2200 + Math.random() * 2600);
+      return () => window.clearTimeout(timer);
+    }
     const timer = window.setInterval(
       () => setFrame((current) => (current + 1) % animation.frames),
       frameInterval
@@ -84,16 +97,24 @@ export function SpritePet({
   return (
     <span
       aria-label={alt}
-      className={cn("block shrink-0 bg-no-repeat", className)}
+      className={cn("block shrink-0 overflow-hidden", className)}
       role="img"
-      style={{
-        backgroundImage: `url(${src})`,
-        backgroundPosition: `${-(frame + (animation.startFrame ?? 0)) * 96}px ${-animation.row * 104}px`,
-        backgroundSize: "768px 1144px",
-        height: 104,
-        width: 96
-      }}
-    />
+      style={{ height: 104, width: 96 }}
+    >
+      <span
+        aria-hidden="true"
+        className="block bg-no-repeat"
+        style={{
+          backgroundImage: `url(${src})`,
+          backgroundPosition: `${-(frame + (animation.startFrame ?? 0)) * 96}px ${-animation.row * 104}px`,
+          backgroundSize: "768px 1144px",
+          height: 104,
+          transform: `translateX(${state === "idle" ? (idleFrameOffsets[frame] ?? 0) : 0}px) scale(${SPRITE_SCALE})`,
+          transformOrigin: "center",
+          width: 96
+        }}
+      />
+    </span>
   );
 }
 
