@@ -25,6 +25,7 @@ type CatalogSnapshot = {
   memberships: Map<string, CatalogMembership[]>;
   sliders: FrappeCatalogSnapshot["sliders"];
   promotions: FrappeCatalogSnapshot["promotions"];
+  featuredCards: FrappeCatalogSnapshot["featured_cards"];
 };
 
 export class FrappeCatalogSource implements StorefrontCatalogSource {
@@ -103,16 +104,66 @@ export class FrappeCatalogSource implements StorefrontCatalogSource {
       }));
   }
   async promotions() {
-    const snapshot = await this.snapshot(); const now = Date.now();
-    return snapshot.promotions.filter((item) => item.status !== "inactive" && Boolean(item.published)
-      && (!item.starts_at || new Date(item.starts_at).getTime() <= now) && (!item.ends_at || new Date(item.ends_at).getTime() >= now))
-      .sort((a,b) => (a.display_order ?? 0) - (b.display_order ?? 0)).map((item) => ({
-        actionLabel: item.action_label?.trim() || "View offer", actionUrl: item.action_url?.trim() || "#catalog", badge: item.badge?.trim() || "",
-        badgePosition: item.badge_position || "top-right", badgeTint: item.badge_tint?.trim() || "brand", description: plainText(item.description),
-        displayOrder: item.display_order ?? 0, eyebrow: item.eyebrow?.trim() || "", imageAlt: item.title,
-        imageUrl: absoluteUrl(item.image_url, this.currentBaseUrl), linkedItem: item.ishop_item?.trim() || null,
-        offerPrice: Number(item.offer_price ?? 0), originalPrice: item.original_price == null ? null : Number(item.original_price),
-        promotionCode: item.promotion_code, title: item.title
+    const snapshot = await this.snapshot();
+    const now = Date.now();
+    return snapshot.promotions
+      .filter(
+        (item) =>
+          item.status !== "inactive" &&
+          Boolean(item.published) &&
+          (!item.starts_at || new Date(item.starts_at).getTime() <= now) &&
+          (!item.ends_at || new Date(item.ends_at).getTime() >= now)
+      )
+      .sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0))
+      .map((item) => ({
+        actionLabel: item.action_label?.trim() || "View offer",
+        actionUrl: item.action_url?.trim() || "#catalog",
+        badge: item.badge?.trim() || "",
+        badgePosition: item.badge_position || "top-right",
+        badgeTint: item.badge_tint?.trim() || "brand",
+        badgeTextColor: item.badge_text_color?.trim() || "#ffffff",
+        description: plainText(item.description),
+        displayOrder: item.display_order ?? 0,
+        eyebrow: item.eyebrow?.trim() || "",
+        imageAlt: item.title,
+        imageUrl: absoluteUrl(item.image_url, this.currentBaseUrl),
+        linkedItem: item.ishop_item?.trim() || null,
+        offerPrice: Number(item.offer_price ?? 0),
+        originalPrice: item.original_price == null ? null : Number(item.original_price),
+        promotionCode: item.promotion_code,
+        title: item.title
+      }));
+  }
+
+  async featuredCards() {
+    const snapshot = await this.snapshot();
+    const now = Date.now();
+    return snapshot.featuredCards
+      .filter(
+        (item) =>
+          item.status !== "inactive" &&
+          Boolean(item.published) &&
+          (!item.starts_at || new Date(item.starts_at).getTime() <= now) &&
+          (!item.ends_at || new Date(item.ends_at).getTime() >= now)
+      )
+      .sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0))
+      .map((item) => ({
+        actionLabel: item.action_label?.trim() || "Explore now",
+        actionUrl: item.action_url?.trim() || "#catalog",
+        badge: item.badge?.trim() || "",
+        badgePosition: item.badge_position || "top-right",
+        badgeTint: item.badge_tint?.trim() || "#0f766e",
+        badgeTextColor: item.badge_text_color?.trim() || "#ffffff",
+        description: plainText(item.description),
+        displayOrder: item.display_order ?? 0,
+        eyebrow: item.eyebrow?.trim() || "",
+        featuredCode: item.featured_code,
+        imageAlt: item.title,
+        imageUrl: absoluteUrl(item.image_url, this.currentBaseUrl),
+        linkedItem: item.ishop_item?.trim() || null,
+        offerPrice: Number(item.offer_price ?? 0),
+        originalPrice: item.original_price == null ? null : Number(item.original_price),
+        title: item.title
       }));
   }
 
@@ -123,21 +174,26 @@ export class FrappeCatalogSource implements StorefrontCatalogSource {
 
   async upsert(snapshot: FrappeCatalogSnapshot) {
     const credentials = await this.resolveCredentials();
-    return this.method<{ catalogs: number; erpnext_items: number; items: number; sliders: number }>(
-      credentials,
-      "upsert_catalog_snapshot",
-      "POST",
-      { payload: JSON.stringify(snapshot) }
-    );
+    return this.method<{
+      catalogs: number;
+      erpnext_items: number;
+      items: number;
+      featured_cards: number;
+      promotions: number;
+      sliders: number;
+    }>(credentials, "upsert_catalog_snapshot", "POST", { payload: JSON.stringify(snapshot) });
   }
 
   async seedDemo() {
     const credentials = await this.resolveCredentials();
-    return this.method<{ catalogs: number; erpnext_items: number; items: number; sliders: number }>(
-      credentials,
-      "seed_dummy_catalog",
-      "POST"
-    );
+    return this.method<{
+      catalogs: number;
+      erpnext_items: number;
+      items: number;
+      featured_cards: number;
+      promotions: number;
+      sliders: number;
+    }>(credentials, "seed_dummy_catalog", "POST");
   }
 
   async itemLookup(search: string) {
@@ -196,8 +252,9 @@ export class FrappeCatalogSource implements StorefrontCatalogSource {
       erpItems: new Map(payload.erpnext_items.map((item) => [item.item_code, item])),
       items,
       memberships: membershipsFrom(catalogs),
-      sliders: payload.sliders ?? []
-      ,promotions: payload.promotions ?? []
+      sliders: payload.sliders ?? [],
+      promotions: payload.promotions ?? [],
+      featuredCards: payload.featured_cards ?? []
     };
   }
 

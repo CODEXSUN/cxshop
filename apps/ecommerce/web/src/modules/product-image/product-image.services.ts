@@ -28,6 +28,11 @@ export const listProductImages = (search = "", status?: ImageStatus) =>
   );
 export const listImageProducts = () => request<ImageProductOption[]>(`${base}/products`);
 export const listImageVariants = () => request<ImageVariantOption[]>(`${base}/variants`);
+export const uploadProductImage = (fileName: string, contentBase64: string) =>
+  request<{ imageUrl: string; sizeBytes: number }>(`${base}/upload`, {
+    body: JSON.stringify({ contentBase64, fileName }),
+    method: "POST"
+  });
 export const createProductImage = (value: ProductImagePayload) =>
   request<ProductImageRecord>(base, { body: JSON.stringify(value), method: "POST" });
 export const updateProductImage = (id: number, value: ProductImagePayload) =>

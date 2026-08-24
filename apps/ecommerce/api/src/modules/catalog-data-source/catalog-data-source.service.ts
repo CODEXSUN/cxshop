@@ -31,7 +31,12 @@ class OwnCatalogSource implements StorefrontCatalogSource {
   sliders() {
     return this.repository.sliders();
   }
-  promotions() { return this.repository.promotions(); }
+  promotions() {
+    return this.repository.promotions();
+  }
+  featuredCards() {
+    return this.repository.featuredCards();
+  }
 }
 
 export class CatalogDataSourceService implements StorefrontCatalogSource {
@@ -92,6 +97,11 @@ export class CatalogDataSourceService implements StorefrontCatalogSource {
       ...connection,
       modules: modules.map((module) => ({ ...module, ...moduleDefinition(module.module) }))
     };
+  }
+
+  async hasLiveFrappeModules() {
+    const providers = await this.repository.moduleProviders();
+    return providers.some((module) => module.provider === "frappe");
   }
 
   async switchProvider(
@@ -166,7 +176,12 @@ export class CatalogDataSourceService implements StorefrontCatalogSource {
   sliders() {
     return this.read("sliders", (source) => source.sliders());
   }
-  promotions() { return this.read("promotions", (source) => source.promotions()); }
+  promotions() {
+    return this.read("promotions", (source) => source.promotions());
+  }
+  featuredCards() {
+    return this.read("featured-cards", (source) => source.featuredCards());
+  }
 
   private async read<T>(
     module: CatalogDataSourceModule,
@@ -240,6 +255,10 @@ function moduleDefinition(module: CatalogDataSourceModule) {
     promotions: {
       description: "Promotion cards, offer prices, badges, placement, tint, links, and scheduling.",
       label: "Promotion cards"
+    },
+    "featured-cards": {
+      description: "Featured cards, badges, colours, prices, links, imagery, and scheduling.",
+      label: "Featured cards"
     }
   }[module];
 }
@@ -256,6 +275,7 @@ function syncResult(
     items: snapshot.items.length,
     sliders: snapshot.sliders.length,
     promotions: snapshot.promotions.length,
+    featuredCards: snapshot.featured_cards.length,
     message
   };
 }

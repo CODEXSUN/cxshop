@@ -5,6 +5,7 @@ import { Input } from "@cxshop/ui/components/input";
 import { Label } from "@cxshop/ui/components/label";
 import { Textarea } from "@cxshop/ui/components/textarea";
 import { productImageSchema } from "./product-image.schema";
+import { ProductImageUpload } from "./product-image.upload";
 import type {
   ImageProductOption,
   ImageStatus,
@@ -90,8 +91,15 @@ export function ProductImageForm({
             ))}
           </select>
         </Field>
-        <Field label="Image URL">
-          <Input value={value.url} onChange={(event) => update("url", event.target.value)} />
+        <Field label="Image">
+          <ProductImageUpload
+            value={value.url}
+            productTitle={
+              products.find((item) => item.id === value.productInformationId)?.title ?? "product"
+            }
+            onChange={(url) => update("url", url)}
+            onError={setError}
+          />
         </Field>
         <Field label="Alternative text">
           <Input

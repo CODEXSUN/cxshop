@@ -85,6 +85,8 @@ const loadCatalogDataSourceModule = () => import("@cxshop/ecommerce-web");
 const loadStorefrontProfileModule = () =>
   import("@cxshop/ecommerce-web/modules/storefront-profile");
 const loadStorefrontSliderModule = () => import("@cxshop/ecommerce-web/modules/storefront-slider");
+const loadPromotionCardModule = () => import("@cxshop/ecommerce-web/modules/promotion-card");
+const loadFeaturedCardModule = () => import("@cxshop/ecommerce-web/modules/featured-card");
 const loadBlogsEditorModule = () => import("@codexsun/blog/web");
 const loadCloudPublishingModule = () => import("../../modules/blog-cloud-publishing");
 
@@ -122,6 +124,12 @@ const StorefrontProfileWorkspace = lazyWorkspace(() =>
 );
 const StorefrontSliderWorkspace = lazyWorkspace(() =>
   loadStorefrontSliderModule().then((module) => module.StorefrontSliderWorkspace)
+);
+const PromotionCardWorkspace = lazyWorkspace(() =>
+  loadPromotionCardModule().then((module) => module.PromotionCardWorkspace)
+);
+const FeaturedCardWorkspace = lazyWorkspace(() =>
+  loadFeaturedCardModule().then((module) => module.FeaturedCardWorkspace)
 );
 const BlogsEditorWorkspace = lazyWorkspace(() =>
   loadBlogsEditorModule().then((module) => module.BlogsEditorWorkspace)
@@ -403,6 +411,8 @@ type AppPage =
   | "ecommerce.catalog.variants"
   | "ecommerce.catalog.images"
   | "ecommerce.catalog.home-slider"
+  | "ecommerce.catalog.promotions"
+  | "ecommerce.catalog.featured-cards"
   | "ecommerce.settings.data-source"
   | "ecommerce.settings.storefront-profile"
   | "blogs.editor"
@@ -866,6 +876,8 @@ export function AppDesk() {
             {safePage === "ecommerce.catalog.variants" ? <ProductVariantWorkspace /> : null}
             {safePage === "ecommerce.catalog.images" ? <ProductImageWorkspace /> : null}
             {safePage === "ecommerce.catalog.home-slider" ? <StorefrontSliderWorkspace /> : null}
+            {safePage === "ecommerce.catalog.promotions" ? <PromotionCardWorkspace /> : null}
+            {safePage === "ecommerce.catalog.featured-cards" ? <FeaturedCardWorkspace /> : null}
             {safePage === "ecommerce.settings.data-source" ? <CatalogDataSourceWorkspace /> : null}
             {safePage === "ecommerce.settings.storefront-profile" ? (
               <StorefrontProfileWorkspace />
@@ -975,6 +987,8 @@ function pageFromUrl(landingApp: PlatformAppId | null): AppPage {
     key === "ecommerce.catalog.variants" ||
     key === "ecommerce.catalog.images" ||
     key === "ecommerce.catalog.home-slider" ||
+    key === "ecommerce.catalog.promotions" ||
+    key === "ecommerce.catalog.featured-cards" ||
     key === "ecommerce.settings.data-source" ||
     key === "ecommerce.settings.storefront-profile" ||
     key === "blogs.editor" ||
@@ -1482,6 +1496,8 @@ function titleForPage(page: AppPage) {
     "ecommerce.catalog.variants": "Product Variants",
     "ecommerce.catalog.images": "Product Images",
     "ecommerce.catalog.home-slider": "Home Slider",
+    "ecommerce.catalog.promotions": "Promotion Cards",
+    "ecommerce.catalog.featured-cards": "Featured Cards",
     "ecommerce.settings.data-source": "Data Source",
     "ecommerce.settings.storefront-profile": "Storefront Profile",
     "blogs.editor": "Articles",

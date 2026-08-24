@@ -11,7 +11,29 @@ export const ecommerceEnv = loadEnv(
     DB_PORT: z.coerce.number().int().positive(),
     DB_USER: z.string().min(1),
     JWT_SECRET: z.string().min(1),
-    ECOMMERCE_SLIDER_IMAGE_MAX_BYTES: z.coerce.number().int().positive().default(8 * 1024 * 1024),
+    ECOMMERCE_PRODUCT_IMAGE_MAX_BYTES: z.coerce
+      .number()
+      .int()
+      .positive()
+      .default(8 * 1024 * 1024),
+    ECOMMERCE_PRODUCT_IMAGE_ROOT: z
+      .string()
+      .min(1)
+      .default(
+        resolve(
+          fileURLToPath(new URL("../../../..", import.meta.url)),
+          "storage",
+          "app",
+          "public",
+          "images",
+          "products"
+        )
+      ),
+    ECOMMERCE_SLIDER_IMAGE_MAX_BYTES: z.coerce
+      .number()
+      .int()
+      .positive()
+      .default(8 * 1024 * 1024),
     ECOMMERCE_SLIDER_IMAGE_ROOT: z
       .string()
       .min(1)

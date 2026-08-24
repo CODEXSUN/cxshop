@@ -45,10 +45,10 @@ export class PromotionCardRepository {
 
   async create(input: PromotionCardSaveInput) {
     const result = await sql`INSERT INTO ecommerce_storefront_promotions
-      (uuid,promotion_code,eyebrow,title,description,image_url,action_label,action_url,offer_price,original_price,badge,badge_position,badge_tint,ishop_item,
+      (uuid,promotion_code,eyebrow,title,description,image_url,action_label,action_url,offer_price,original_price,badge,badge_position,badge_tint,badge_text_color,ishop_item,
        display_order,published,starts_at,ends_at,status)
       VALUES (${randomBytes(4).toString("hex")},${input.promotionCode},${input.eyebrow},${input.title},
-       ${input.description},${input.imageUrl},${input.actionLabel},${input.actionUrl},${input.offerPrice},${input.originalPrice},${input.badge},${input.badgePosition},${input.badgeTint},${input.ishopItem},
+       ${input.description},${input.imageUrl},${input.actionLabel},${input.actionUrl},${input.offerPrice},${input.originalPrice},${input.badge},${input.badgePosition},${input.badgeTint},${input.badgeTextColor},${input.ishopItem},
        ${input.displayOrder},${input.published ? 1 : 0},${dateValue(input.startsAt)},${dateValue(input.endsAt)},${input.status})`.execute(
       getEcommerceDatabase()
     );
@@ -59,7 +59,7 @@ export class PromotionCardRepository {
     await sql`UPDATE ecommerce_storefront_promotions SET promotion_code=${input.promotionCode},eyebrow=${input.eyebrow},
       title=${input.title},description=${input.description},image_url=${input.imageUrl},
       action_label=${input.actionLabel},action_url=${input.actionUrl},ishop_item=${input.ishopItem},
-      offer_price=${input.offerPrice},original_price=${input.originalPrice},badge=${input.badge},badge_position=${input.badgePosition},badge_tint=${input.badgeTint},
+      offer_price=${input.offerPrice},original_price=${input.originalPrice},badge=${input.badge},badge_position=${input.badgePosition},badge_tint=${input.badgeTint},badge_text_color=${input.badgeTextColor},
       display_order=${input.displayOrder},published=${input.published ? 1 : 0},
       starts_at=${dateValue(input.startsAt)},ends_at=${dateValue(input.endsAt)},status=${input.status},
       updated_at=CURRENT_TIMESTAMP WHERE id=${id}`.execute(getEcommerceDatabase());
@@ -90,8 +90,11 @@ function toRecord(row: Row): PromotionCardRecord {
     actionLabel: String(row.action_label ?? ""),
     actionUrl: String(row.action_url ?? ""),
     badge: String(row.badge ?? ""),
-    badgePosition: (["top-left", "bottom-left", "bottom-right"].includes(String(row.badge_position)) ? String(row.badge_position) : "top-right") as PromotionCardRecord["badgePosition"],
+    badgePosition: (["top-left", "bottom-left", "bottom-right"].includes(String(row.badge_position))
+      ? String(row.badge_position)
+      : "top-right") as PromotionCardRecord["badgePosition"],
     badgeTint: String(row.badge_tint ?? "brand"),
+    badgeTextColor: String(row.badge_text_color ?? "#ffffff"),
     createdAt: iso(row.created_at) ?? "",
     description: String(row.description ?? ""),
     displayOrder: Number(row.display_order ?? 0),

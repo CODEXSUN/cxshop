@@ -8,6 +8,7 @@ import { WorkspaceLookup } from "@cxshop/ui/workspace/lookup";
 import { WorkspaceFormBanner } from "@cxshop/ui/workspace/upsert";
 import { usePromotionCardFrappeItems } from "./promotion-card.hooks";
 import { promotionCardSchema } from "./promotion-card.schema";
+import { PromotionCardImageUpload } from "./promotion-card.image-upload";
 import { getFrappePromotionItem } from "./promotion-card.services";
 import type { PromotionCardPayload, PromotionCardRecord } from "./promotion-card.types";
 
@@ -16,7 +17,8 @@ const empty: PromotionCardPayload = {
   actionUrl: "#catalog",
   badge: "Offer",
   badgePosition: "top-right",
-  badgeTint: "brand",
+  badgeTextColor: "#ffffff",
+  badgeTint: "#b91c1c",
   description: "",
   displayOrder: 0,
   endsAt: null,
@@ -59,10 +61,8 @@ export function PromotionCardForm({
     [frappeItems.data]
   );
   useEffect(() => setValue(record ? payload(record) : empty), [record]);
-  const update = <K extends keyof PromotionCardPayload>(
-    key: K,
-    next: PromotionCardPayload[K]
-  ) => setValue((current) => ({ ...current, [key]: next }));
+  const update = <K extends keyof PromotionCardPayload>(key: K, next: PromotionCardPayload[K]) =>
+    setValue((current) => ({ ...current, [key]: next }));
   const submit = () => {
     const parsed = promotionCardSchema.safeParse(value);
     if (!parsed.success) return setError(parsed.error.issues[0]?.message ?? "Check the promotion.");
@@ -139,13 +139,15 @@ export function PromotionCardForm({
           />
         </Field>
         <Field label="Frappe iShop item code (auto-filled)">
-          <Input
-            readOnly
-            value={value.ishopItem ?? ""}
-          />
+          <Input readOnly value={value.ishopItem ?? ""} />
         </Field>
-        <Field label="Promotion image URL">
-          <Input value={value.imageUrl} onChange={(event) => update("imageUrl", event.target.value)} />
+        <Field label="Promotion image">
+          <PromotionCardImageUpload
+            code={value.promotionCode}
+            value={value.imageUrl}
+            onChange={(imageUrl) => update("imageUrl", imageUrl)}
+            onError={setError}
+          />
         </Field>
         <Field label="Display order">
           <Input
@@ -168,23 +170,55 @@ export function PromotionCardForm({
           />
         </Field>
         <Field label="Offer price *">
-          <Input min="0" step="0.01" type="number" value={value.offerPrice} onChange={(event) => update("offerPrice", Number(event.target.value))} />
+          <Input
+            min="0"
+            step="0.01"
+            type="number"
+            value={value.offerPrice}
+            onChange={(event) => update("offerPrice", Number(event.target.value))}
+          />
         </Field>
         <Field label="Original price">
-          <Input min="0" step="0.01" type="number" value={value.originalPrice ?? ""} onChange={(event) => update("originalPrice", event.target.value ? Number(event.target.value) : null)} />
+          <Input
+            min="0"
+            step="0.01"
+            type="number"
+            value={value.originalPrice ?? ""}
+            onChange={(event) =>
+              update("originalPrice", event.target.value ? Number(event.target.value) : null)
+            }
+          />
         </Field>
         <Field label="Badge">
           <Input value={value.badge} onChange={(event) => update("badge", event.target.value)} />
         </Field>
         <Field label="Badge position">
-          <select className="h-10 w-full rounded-md border bg-background px-3" value={value.badgePosition} onChange={(event) => update("badgePosition", event.target.value as PromotionCardPayload["badgePosition"])}>
-            <option value="top-left">Top left</option><option value="top-right">Top right</option><option value="bottom-left">Bottom left</option><option value="bottom-right">Bottom right</option>
+          <select
+            className="h-10 w-full rounded-md border bg-background px-3"
+            value={value.badgePosition}
+            onChange={(event) =>
+              update("badgePosition", event.target.value as PromotionCardPayload["badgePosition"])
+            }
+          >
+            <option value="top-left">Top left</option>
+            <option value="top-right">Top right</option>
+            <option value="bottom-left">Bottom left</option>
+            <option value="bottom-right">Bottom right</option>
           </select>
         </Field>
         <Field label="Badge tint">
-          <select className="h-10 w-full rounded-md border bg-background px-3" value={value.badgeTint} onChange={(event) => update("badgeTint", event.target.value)}>
-            <option value="brand">Brand</option><option value="success">Success</option><option value="warning">Warning</option><option value="danger">Danger</option><option value="neutral">Neutral</option>
-          </select>
+          <ColorField
+            value={value.badgeTint}
+            fallback="#b91c1c"
+            onChange={(color) => update("badgeTint", color)}
+          />
+        </Field>
+        <Field label="Badge text colour">
+          <ColorField
+            value={value.badgeTextColor}
+            fallback="#ffffff"
+            onChange={(color) => update("badgeTextColor", color)}
+          />
         </Field>
         <Field label="Starts at">
           <Input
@@ -252,6 +286,33 @@ function Field({ children, label }: { children: ReactNode; label: string }) {
     <div className="space-y-2">
       <Label>{label}</Label>
       {children}
+    </div>
+  );
+}
+function ColorField({
+  fallback,
+  onChange,
+  value
+}: {
+  fallback: string;
+  onChange: (value: string) => void;
+  value: string;
+}) {
+  const color = /^#[0-9a-f]{6}$/iu.test(value) ? value : fallback;
+  return (
+    <div className="flex items-center gap-2">
+      <Input
+        aria-label="Choose colour"
+        className="w-16 p-1"
+        type="color"
+        value={color}
+        onChange={(event) => onChange(event.target.value)}
+      />
+      <Input
+        aria-label="Colour value"
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+      />
     </div>
   );
 }

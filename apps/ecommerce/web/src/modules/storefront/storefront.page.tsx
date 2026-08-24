@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ArrowLeftIcon, ArrowRightIcon } from "lucide-react";
 import {
   getStorefrontAnnouncement,
@@ -8,6 +8,7 @@ import {
   getStorefrontSiteNavigation,
   getStorefrontSliders,
   getStorefrontPromotions,
+  getStorefrontFeaturedCards,
   listLatestBlogPosts,
   listStorefrontProducts
 } from "./storefront.services";
@@ -18,8 +19,10 @@ import {
   CatalogFilters,
   HeroSlider,
   HomeClosingCta,
+  TechMediaTrustSection,
   ProductCard,
   PromotionsSection,
+  FeaturedCardsSection,
   StoreFooter
 } from "./storefront.components";
 import { StoreHeader } from "./storefront.navigation";
@@ -32,13 +35,15 @@ import type {
   StorefrontProductDetail,
   StorefrontBlogPost,
   StorefrontSiteNavigation,
-  StorefrontSlider
-  ,StorefrontPromotion
+  StorefrontSlider,
+  StorefrontPromotion
 } from "./storefront.types";
+import type { StorefrontFeaturedCard } from "./storefront.types";
 import { hasStorefrontPrice, money, whatsappLink } from "./storefront.formatters";
 import "./storefront.css";
 import { PikoStoreAssistant } from "./storefront.assistant";
 import { addStorefrontCartItem } from "./storefront.cart";
+import { createProductStructuredData, setStorefrontSeo } from "./storefront.seo";
 import { StorefrontCartPage } from "./storefront.cart.page";
 import { useStorefrontCatalog } from "./storefront.catalog";
 
@@ -84,6 +89,7 @@ function CatalogPage({ category, searchPage = false }: { category: string; searc
   const [branding, setBranding] = useState<StorefrontBranding | null>(null);
   const [slides, setSlides] = useState<StorefrontSlider[]>([]);
   const [promotions, setPromotions] = useState<StorefrontPromotion[]>([]);
+  const [featuredCards, setFeaturedCards] = useState<StorefrontFeaturedCard[]>([]);
 
   useEffect(() => {
     getStorefrontDiscovery().then(setDiscovery);
@@ -92,11 +98,21 @@ function CatalogPage({ category, searchPage = false }: { category: string; searc
     getStorefrontBranding().then(setBranding);
     if (!searchPage) getStorefrontSliders().then(setSlides);
     if (!searchPage) getStorefrontPromotions().then(setPromotions);
+    if (!searchPage) getStorefrontFeaturedCards().then(setFeaturedCards);
     if (!searchPage) listLatestBlogPosts().then((items) => setBlogPosts(items.slice(0, 3)));
   }, [searchPage]);
   useEffect(() => {
-    if (branding?.brandName) document.title = branding.brandName;
-  }, [branding?.brandName]);
+    if (!branding?.brandName) return;
+    setStorefrontSeo({
+      description:
+        "Tech Media provides computers, laptops, networking, IT infrastructure, business technology, and dependable service in Tiruppur.",
+      path: searchPage ? "/search" : window.location.pathname,
+      ...(searchPage ? { robots: "noindex,follow" } : {}),
+      title: category
+        ? `${category} Products in Tiruppur | ${branding.brandName}`
+        : `${branding.brandName} | Computers and IT Solutions in Tiruppur`
+    });
+  }, [branding?.brandName, category, searchPage]);
   const { error, hasMore, loading, loadingMore, loadMore, products } =
     useStorefrontCatalog(filters);
   useEffect(() => {
@@ -112,7 +128,6 @@ function CatalogPage({ category, searchPage = false }: { category: string; searc
     return () => observer.disconnect();
   }, [hasMore, loadMore]);
 
-  const featured = useMemo(() => products.filter((item) => item.featured).slice(0, 4), [products]);
   return (
     <div className="cx-store">
       <StoreHeader
@@ -123,23 +138,20 @@ function CatalogPage({ category, searchPage = false }: { category: string; searc
       />
       <main className={searchPage ? "cx-store__search-main" : undefined}>
         {!searchPage ? <HeroSlider slides={slides} /> : null}
+        {!searchPage ? <TechMediaTrustSection /> : null}
         {!searchPage ? <PromotionsSection promotions={promotions} /> : null}
         {!searchPage ? <BrandsSection brands={discovery.brands} /> : null}
-        {!searchPage && featured.length ? (
-          <ProductSection
-            brandName={branding?.brandName}
-            label="Featured products"
-            products={featured}
-            title="Selected systems worth a closer look"
-            whatsappNumber={branding?.primaryPhone}
-          />
-        ) : null}
+        {!searchPage ? <FeaturedCardsSection cards={featuredCards} /> : null}
         <section className="cx-store__catalog" id="catalog">
           <div className="cx-store__section-title">
             <div>
               <span>{searchPage ? "Search and filter" : "The complete collection"}</span>
               <h2>
-                {loading ? "Loading products…" : `${products.length} products ready to explore`}
+                {loading
+                  ? "Loading products…"
+                  : searchPage
+                    ? "Find products that match what you need"
+                    : "Technology for work, life, and everything in between"}
               </h2>
             </div>
             {searchPage ? (
@@ -223,6 +235,23 @@ function ProductPage({ slug }: { slug: string }) {
       setBranding(activeBranding);
     });
   }, []);
+  useEffect(() => {
+    if (!product) return;
+    const description = product.shortDescription || product.description || `${product.name} from Tech Media, Tiruppur.`;
+    setStorefrontSeo({
+      description,
+      path: `/shop/product/${encodeURIComponent(product.slug)}`,
+      structuredData: createProductStructuredData({
+        brand: product.brand,
+        description,
+        imageUrl: product.imageUrl,
+        name: product.name,
+        price: product.price,
+        slug: product.slug
+      }),
+      title: `${product.name} | Tech Media Tiruppur`
+    });
+  }, [product]);
   const header = (
     <StoreHeader
       announcement={announcement}

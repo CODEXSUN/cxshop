@@ -252,9 +252,11 @@ function StoreNavigation({
             <MenuLink href="/contact">Contact</MenuLink>
           </MenuColumn>
           <MenuColumn title="Help and policy">
-            <MenuLink href="/shipping">Shipping</MenuLink>
-            <MenuLink href="/returns">Returns</MenuLink>
-            <MenuLink href="/privacy">Privacy and terms</MenuLink>
+            <MenuLink href="/support">Support</MenuLink>
+            <MenuLink href="/order-help">Order help</MenuLink>
+            <MenuLink href="/shipping">Shipping and delivery</MenuLink>
+            <MenuLink href="/returns">Returns and refunds</MenuLink>
+            <MenuLink href="/privacy">Privacy policy</MenuLink>
           </MenuColumn>
         </StoreMenu>
         <NavigationMenuItem>

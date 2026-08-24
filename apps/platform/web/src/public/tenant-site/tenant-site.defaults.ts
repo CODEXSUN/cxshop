@@ -1,75 +1,74 @@
 import type { TenantPublicPortal } from "../../modules/tenant-portal";
 
 export const fallbackTenantPortal: TenantPublicPortal = {
-  brandName: "CODEXSUN",
+  brandName: "Tech Media",
   configured: false,
   domain: "",
-  eyebrow: "Billing that keeps work moving",
+  eyebrow: "Your trusted technology partner in Tiruppur",
   features: [
     {
-      description: "Create clear sales documents with guided tax, totals, and payment details.",
+      description: "Computers, laptops, workstations, printers, accessories, and upgrades.",
       label: "01",
-      title: "Fast, accurate invoicing"
+      title: "Computers and laptops"
     },
     {
-      description: "Prepare e-way bills and e-invoices from organised billing information.",
+      description: "Networking, Wi-Fi, servers, storage, CCTV, attendance, POS, and communications.",
       label: "02",
-      title: "Compliance-ready documents"
+      title: "Business IT solutions"
     },
     {
-      description: "Follow receivables, document status, and staff activity as work happens.",
+      description: "Installation, troubleshooting, maintenance, warranty assistance, and upgrades.",
       label: "03",
-      title: "Real-time visibility"
+      title: "Service and support"
     }
   ],
   footerText:
-    "Billing, accounts, compliance documents, staff controls, and daily follow-up in one clear business flow.",
-  headline: "Invoice faster. Stay accurate. Know what happens next.",
+    "Computers, IT infrastructure, networking, business technology, and dependable local support.",
+  headline: "Technology that works for you.",
   loginPath: "/admin/login",
   logoDarkUrl: null,
   logoUrl: null,
   posts: [
     {
-      description: "A clear billing flow that a new team member can understand quickly.",
-      href: "/features",
-      label: "Billing guide",
-      title: "An invoice flow new staff can learn quickly"
+      description: "Choose a dependable computer around the workload, useful life, and upgrade path.",
+      href: "/blog/choose-business-computer-system",
+      label: "Buying guide",
+      title: "How to choose a business computer"
     },
     {
-      description: "Reuse checked invoice details to reduce repeated work during dispatch.",
-      href: "/features",
-      label: "E-way bill",
-      title: "Prepare movement documents without double entry"
+      description: "Compare performance, battery, display, ports, service, and ownership cost.",
+      href: "/blog/business-laptop-buying-guide",
+      label: "Laptop guide",
+      title: "Choose a laptop that fits the work"
     },
     {
       description:
-        "Keep pending work and document history clear when staff responsibilities change.",
-      href: "/security",
-      label: "Staff handover",
-      title: "Switch people without losing the billing trail"
+        "Reduce failures and extend useful life with a practical maintenance routine.",
+      href: "/blog/preventive-computer-maintenance-guide",
+      label: "Service guide",
+      title: "Preventive computer maintenance"
     }
   ],
   publicSiteUrl: null,
   slides: [
     {
-      description: "Bring customer, item, tax, discount, and payment details into one guided flow.",
-      label: "Invoice",
-      title: "Create a complete invoice without the usual friction"
+      description: "Laptops, desktops, workstations, printers, accessories, and technology upgrades.",
+      label: "Retail",
+      title: "Choose technology with practical guidance"
     },
     {
-      description: "Reuse checked billing details for e-way bills and e-invoices.",
-      label: "Compliance",
-      title: "Move from billing to compliance with confidence"
+      description: "Connected networking, infrastructure, security, attendance, POS, and communication solutions.",
+      label: "Business IT",
+      title: "Build a reliable technology environment"
     },
     {
-      description:
-        "Follow sales, receivables, staff activity, and document exceptions as work moves.",
-      label: "Live view",
-      title: "See billing work while it is happening"
+      description: "Dependable installation, maintenance, troubleshooting, and planned upgrades.",
+      label: "Support",
+      title: "Keep essential technology working"
     }
   ],
   summary:
-    "Create invoices, prepare e-way bills and e-invoices, follow accounts, and keep staff work visible from one clean business system.",
+    "25+ years helping Tiruppur customers choose, implement, maintain, and upgrade practical technology.",
   tenantCode: null,
   theme: "blue"
 };

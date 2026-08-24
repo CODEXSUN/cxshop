@@ -9,6 +9,7 @@ import {
 } from "./storefront.cart";
 import { money, whatsappLink } from "./storefront.formatters";
 import { StoreHeader } from "./storefront.navigation";
+import { setStorefrontSeo } from "./storefront.seo";
 import {
   getStorefrontAnnouncement,
   getStorefrontBranding,
@@ -50,6 +51,14 @@ export function StorefrontCartPage() {
     getStorefrontBranding().then(setBranding);
     getStorefrontAnnouncement().then(setAnnouncement);
     getStorefrontSiteNavigation().then(setNavigation);
+  }, []);
+  useEffect(() => {
+    setStorefrontSeo({
+      description: "Review products saved in your Tech Media shopping cart.",
+      path: "/cart",
+      robots: "noindex,follow",
+      title: "Shopping Cart | Tech Media"
+    });
   }, []);
 
   const total = useMemo(

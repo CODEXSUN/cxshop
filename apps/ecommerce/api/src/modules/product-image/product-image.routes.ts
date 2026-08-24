@@ -3,6 +3,8 @@ import { z } from "zod";
 import { AppError } from "@cxshop/framework/errors";
 import { registerContractRoute } from "@cxshop/framework/http";
 import { ProductImageService } from "./product-image.service.js";
+import { ecommerceEnv } from "../../env.js";
+import { ProductImageStorage } from "./product-image.storage.js";
 const base = "/ecommerce/catalog/images",
   service = new ProductImageService(),
   params = z.object({ id: z.coerce.number().int().positive() }),
@@ -10,7 +12,15 @@ const base = "/ecommerce/catalog/images",
   payload = z.object({
     productInformationId: z.number().int().positive(),
     variantId: z.number().int().positive().nullable().default(null),
-    url: z.string().url().max(1000),
+    url: z
+      .string()
+      .max(1000)
+      .refine(
+        (value) =>
+          z.url().safeParse(value).success ||
+          value.startsWith("/api/platform/storefront/product-images/"),
+        "Enter a valid image URL."
+      ),
     altText: z.string().trim().min(1).max(255),
     caption: z.string().max(500).default(""),
     sortOrder: z.number().int().min(0).default(1000),
@@ -26,6 +36,17 @@ const base = "/ecommerce/catalog/images",
     updatedAt: z.string()
   });
 export async function registerProductImageRoutes(app: FastifyInstance) {
+  const storage = new ProductImageStorage();
+  app.post(
+    `${base}/upload`,
+    { bodyLimit: Math.ceil(ecommerceEnv.ECOMMERCE_PRODUCT_IMAGE_MAX_BYTES * 1.4) + 1024 },
+    async (request) => {
+      const body = z
+        .object({ contentBase64: z.string().min(1), fileName: z.string().min(1).max(255) })
+        .parse(request.body);
+      return { data: await storage.upload(body.fileName, body.contentBase64), success: true };
+    }
+  );
   registerContractRoute(app, {
     method: "GET",
     url: base,
@@ -95,6 +116,15 @@ export async function registerProductImageRoutes(app: FastifyInstance) {
       schemas: { params, response: record },
       handler: async ({ params }) => required(await service.setActive(params.id, active))
     });
+}
+
+export async function registerProductImagePublicRoutes(app: FastifyInstance) {
+  const storage = new ProductImageStorage();
+  app.get("/storefront/product-images/:fileName", async (request, reply) => {
+    const { fileName } = z.object({ fileName: z.string().min(1).max(255) }).parse(request.params);
+    const image = await storage.content(fileName);
+    return reply.header("Cache-Control", "public, max-age=86400").type(image.mime).send(image.body);
+  });
 }
 function required<T>(v: T | null) {
   if (!v) throw AppError.notFound("Product image was not found.");

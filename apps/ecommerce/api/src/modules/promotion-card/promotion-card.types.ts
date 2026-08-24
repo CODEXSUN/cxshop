@@ -7,6 +7,7 @@ export type PromotionCardRecord = {
   badge: string;
   badgePosition: PromotionBadgePosition;
   badgeTint: string;
+  badgeTextColor: string;
   createdAt: string;
   description: string;
   displayOrder: number;

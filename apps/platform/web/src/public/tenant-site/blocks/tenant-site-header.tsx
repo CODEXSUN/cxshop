@@ -102,8 +102,9 @@ function PublicNavigation({ activePage }: { activePage: TenantPublicPageKey }) {
           </MenuColumn>
           <MenuColumn title="Information">
             <MenuLink href="/updates">Updates</MenuLink>
-            <MenuLink href="/status">Platform status</MenuLink>
-            <MenuLink href="/returns">Returns</MenuLink>
+            <MenuLink href="/support">Support</MenuLink>
+            <MenuLink href="/order-help">Order help</MenuLink>
+            <MenuLink href="/returns">Returns &amp; refunds</MenuLink>
           </MenuColumn>
         </PublicMenu>
         <NavigationMenuItem>

@@ -657,8 +657,39 @@
   color: #aeb9c9;
   font-size: 14px;
   line-height: 1.7;
-  margin: 24px 0 12px;
-  max-width: 390px;
+  margin: 24px 0 20px;
+  max-width: 440px;
+}
+.tenant-portal-footer-socials {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+.tenant-portal-footer-socials a {
+  align-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 50%;
+  color: #dce5f1;
+  display: inline-flex;
+  height: 38px;
+  justify-content: center;
+  transition:
+    background-color 180ms ease,
+    border-color 180ms ease,
+    color 180ms ease,
+    transform 180ms ease;
+  width: 38px;
+}
+.tenant-portal-footer-socials a:hover {
+  background: #fff;
+  border-color: #fff;
+  color: #0f1b2d;
+  transform: translateY(-3px);
+}
+.tenant-portal-footer-socials svg {
+  height: 16px;
+  width: 16px;
 }
 .tenant-portal-footer-brand small {
   color: #77869b;
@@ -704,6 +735,19 @@
   letter-spacing: 0.08em;
   padding-top: 25px;
   text-transform: uppercase;
+}
+.tenant-portal-footer-bottom a {
+  align-items: center;
+  color: #aeb9c9;
+  display: inline-flex;
+  gap: 7px;
+}
+.tenant-portal-footer-bottom a:hover {
+  color: #fff;
+}
+.tenant-portal-footer-bottom svg {
+  height: 11px;
+  width: 11px;
 }
 
 .tenant-page-intro {
@@ -926,6 +970,53 @@
 .tenant-contact-grid a svg {
   height: 13px;
   width: 13px;
+}
+
+.tenant-location-section {
+  display: grid;
+  grid-template-columns: minmax(260px, 0.7fr) minmax(0, 1.3fr);
+  gap: clamp(24px, 4vw, 56px);
+  align-items: center;
+}
+
+.tenant-location-copy {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.tenant-location-copy > span {
+  color: var(--tenant-accent, #0f766e);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.tenant-location-copy h2,
+.tenant-location-copy p {
+  margin: 0;
+}
+
+.tenant-location-copy p {
+  max-width: 42ch;
+  line-height: 1.7;
+}
+
+.tenant-location-map {
+  min-height: 420px;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, currentColor 14%, transparent);
+  border-radius: 24px;
+  background: #e7eceb;
+}
+
+.tenant-location-map iframe {
+  display: block;
+  width: 100%;
+  height: 420px;
+  border: 0;
 }
 .tenant-update-summary {
   background: #fff;
@@ -2338,6 +2429,16 @@
 }
 
 @media (max-width: 900px) {
+  .tenant-location-section {
+    grid-template-columns: 1fr;
+  }
+
+  .tenant-location-map,
+  .tenant-location-map iframe {
+    min-height: 340px;
+    height: 340px;
+  }
+
   .tenant-rich-heading {
     grid-template-columns: 1fr;
   }

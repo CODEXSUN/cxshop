@@ -46,6 +46,7 @@ import { seedStorefrontProfileModule } from "../modules/storefront-profile/store
 import {
   catalogDataSourceCompatibilityMigration,
   catalogDataSourceSeedCompatibilityMigration,
+  catalogStorefrontSourceCompatibilityMigration,
   catalogStorefrontSliderMigration,
   catalogModuleDataSourceMigration,
   catalogDataSourceAuditMigration,
@@ -55,13 +56,23 @@ import {
   upgradeCatalogDataSourceAudit,
   upgradeCatalogDataSourceCompatibility,
   upgradeCatalogDataSourceSeedCompatibility,
+  upgradeCatalogStorefrontSourceCompatibility,
   upgradeCatalogStorefrontSlider
 } from "../modules/catalog-data-source/catalog-data-source.migration.js";
 import {
   migrateStorefrontSliderModule,
   storefrontSliderMigration
 } from "../modules/storefront-slider/storefront-slider.migration.js";
-import { migratePromotionCardModule, promotionCardMigration } from "../modules/promotion-card/promotion-card.migration.js";
+import {
+  migratePromotionCardModule,
+  promotionCardBadgeTextColorMigration,
+  promotionCardMigration,
+  upgradePromotionCardBadgeTextColor
+} from "../modules/promotion-card/promotion-card.migration.js";
+import {
+  featuredCardMigration,
+  migrateFeaturedCardModule
+} from "../modules/featured-card/featured-card.migration.js";
 
 export type EcommerceDatabase = Record<string, unknown>;
 type ConnectionOptions = {
@@ -92,6 +103,9 @@ export const ecommerceTenantMigrations = [
   catalogStorefrontSliderMigration,
   storefrontSliderMigration,
   promotionCardMigration,
+  promotionCardBadgeTextColorMigration,
+  featuredCardMigration,
+  catalogStorefrontSourceCompatibilityMigration,
   storefrontProfileMigration
 ] as const;
 export const ecommerceMigrationBatch: MigrationBatch<EcommerceDatabase> = {
@@ -284,13 +298,60 @@ const ecommercePromotionCardMigrationBatch: MigrationBatch<EcommerceDatabase> = 
   description: "Dedicated LogicX iShop Promotion Card document cache.",
   scope: "ecommerce",
   version: "1.0.66",
-  steps: [{
-    checksum: `${promotionCardMigration.key}:v1`,
-    description: promotionCardMigration.description,
-    name: promotionCardMigration.key,
-    up: migratePromotionCardModule,
-    version: 1
-  }]
+  steps: [
+    {
+      checksum: `${promotionCardMigration.key}:v1`,
+      description: promotionCardMigration.description,
+      name: promotionCardMigration.key,
+      up: migratePromotionCardModule,
+      version: 1
+    }
+  ]
+};
+const ecommerceStorefrontSourceCompatibilityMigrationBatch: MigrationBatch<EcommerceDatabase> = {
+  batch: 12,
+  description: "Local-first storefront content source preferences.",
+  scope: "ecommerce",
+  version: "1.0.66",
+  steps: [
+    {
+      checksum: `${catalogStorefrontSourceCompatibilityMigration.key}:v1`,
+      description: catalogStorefrontSourceCompatibilityMigration.description,
+      name: catalogStorefrontSourceCompatibilityMigration.key,
+      up: upgradeCatalogStorefrontSourceCompatibility,
+      version: 1
+    }
+  ]
+};
+const ecommercePromotionBadgeColorMigrationBatch: MigrationBatch<EcommerceDatabase> = {
+  batch: 13,
+  description: "Editable promotion badge foreground colour.",
+  scope: "ecommerce",
+  version: "1.0.66",
+  steps: [
+    {
+      checksum: `${promotionCardBadgeTextColorMigration.key}:v1`,
+      description: promotionCardBadgeTextColorMigration.description,
+      name: promotionCardBadgeTextColorMigration.key,
+      up: upgradePromotionCardBadgeTextColor,
+      version: 1
+    }
+  ]
+};
+const ecommerceFeaturedCardMigrationBatch: MigrationBatch<EcommerceDatabase> = {
+  batch: 14,
+  description: "Dedicated LogicX iShop Featured Card document cache.",
+  scope: "ecommerce",
+  version: "1.0.66",
+  steps: [
+    {
+      checksum: `${featuredCardMigration.key}:v1`,
+      description: featuredCardMigration.description,
+      name: featuredCardMigration.key,
+      up: migrateFeaturedCardModule,
+      version: 1
+    }
+  ]
 };
 
 export function resolveEcommerceDatabaseName(value: unknown) {
@@ -358,6 +419,12 @@ export async function bootstrapEcommerceDatabase(databaseName: string) {
     ecommerceStorefrontSliderDocumentMigrationBatch
   );
   await runMigrationBatch(getEcommerceDatabase(name), ecommercePromotionCardMigrationBatch);
+  await runMigrationBatch(
+    getEcommerceDatabase(name),
+    ecommerceStorefrontSourceCompatibilityMigrationBatch
+  );
+  await runMigrationBatch(getEcommerceDatabase(name), ecommercePromotionBadgeColorMigrationBatch);
+  await runMigrationBatch(getEcommerceDatabase(name), ecommerceFeaturedCardMigrationBatch);
   await runWithEcommerceDatabase(name, seedProductInformationModule);
   await runWithEcommerceDatabase(name, seedProductVariantModule);
   await runWithEcommerceDatabase(name, seedProductImageModule);
@@ -390,6 +457,12 @@ export async function migrateEcommerceTenantDatabase(databaseName: string) {
     ecommerceStorefrontSliderDocumentMigrationBatch
   );
   await runMigrationBatch(getEcommerceDatabase(name), ecommercePromotionCardMigrationBatch);
+  await runMigrationBatch(
+    getEcommerceDatabase(name),
+    ecommerceStorefrontSourceCompatibilityMigrationBatch
+  );
+  await runMigrationBatch(getEcommerceDatabase(name), ecommercePromotionBadgeColorMigrationBatch);
+  await runMigrationBatch(getEcommerceDatabase(name), ecommerceFeaturedCardMigrationBatch);
 }
 
 export async function seedEcommerceTenantDatabase(databaseName: string) {
@@ -404,7 +477,22 @@ export async function seedEcommerceTenantDatabase(databaseName: string) {
 }
 
 export async function rollbackEcommerceTenantDatabase(databaseName: string) {
-  await rollbackMigrationBatch(getEcommerceDatabase(databaseName), ecommercePromotionCardMigrationBatch);
+  await rollbackMigrationBatch(
+    getEcommerceDatabase(databaseName),
+    ecommerceFeaturedCardMigrationBatch
+  );
+  await rollbackMigrationBatch(
+    getEcommerceDatabase(databaseName),
+    ecommercePromotionBadgeColorMigrationBatch
+  );
+  await rollbackMigrationBatch(
+    getEcommerceDatabase(databaseName),
+    ecommerceStorefrontSourceCompatibilityMigrationBatch
+  );
+  await rollbackMigrationBatch(
+    getEcommerceDatabase(databaseName),
+    ecommercePromotionCardMigrationBatch
+  );
   await rollbackMigrationBatch(
     getEcommerceDatabase(databaseName),
     ecommerceStorefrontSliderDocumentMigrationBatch

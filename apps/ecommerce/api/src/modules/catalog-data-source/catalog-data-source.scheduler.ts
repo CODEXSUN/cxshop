@@ -9,6 +9,7 @@ export function startCatalogCacheRefresh(app: FastifyInstance, service: CatalogD
   let refreshing = false;
   const refresh = async () => {
     if (refreshing || !isFrappeOperatingWindow(new Date())) return;
+    if (!(await service.hasLiveFrappeModules())) return;
     refreshing = true;
     try {
       const result = await service.pullFromFrappe();

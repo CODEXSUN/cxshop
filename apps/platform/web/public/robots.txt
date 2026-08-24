@@ -1,6 +1,10 @@
 User-agent: *
 Allow: /
-Disallow: /app/
 Disallow: /admin/
 Disallow: /sa/
-Sitemap: /sitemap.xml
+Disallow: /cart
+Disallow: /search
+Disallow: /forgot-password
+Disallow: /reset-password
+
+Sitemap: https://techmedia.in/sitemap.xml

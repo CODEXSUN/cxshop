@@ -4,6 +4,7 @@ import type {
   StorefrontProduct,
   StorefrontProductDetail,
   StorefrontPromotion,
+  StorefrontFeaturedCard,
   StorefrontSlider
 } from "../storefront/storefront.types.js";
 
@@ -16,8 +17,9 @@ export const catalogDataSourceModules = [
   "product-details",
   "variants",
   "product-images",
-  "sliders"
-  ,"promotions"
+  "sliders",
+  "promotions",
+  "featured-cards"
 ] as const;
 export type CatalogDataSourceModule = (typeof catalogDataSourceModules)[number];
 
@@ -137,12 +139,33 @@ export type FrappeCatalogSnapshot = {
   items: FrappeIShopItem[];
   sliders: FrappeIShopSlider[];
   promotions: FrappeIShopPromotion[];
+  featured_cards: FrappeIShopFeaturedCard[];
 };
 export type FrappeIShopPromotion = {
-  action_label?: string | null; action_url?: string | null; badge?: string | null; badge_position?: "top-left" | "top-right" | "bottom-left" | "bottom-right";
-  badge_tint?: string | null; description?: string | null; display_order?: number; ends_at?: string | null; eyebrow?: string | null;
-  image_url?: string | null; ishop_item?: string | null; modified?: string | null; name?: string; offer_price?: number | string;
-  original_price?: number | string | null; promotion_code: string; published?: number; starts_at?: string | null; status?: "active" | "inactive"; title: string;
+  action_label?: string | null;
+  action_url?: string | null;
+  badge?: string | null;
+  badge_position?: "top-left" | "top-right" | "bottom-left" | "bottom-right";
+  badge_tint?: string | null;
+  badge_text_color?: string | null;
+  description?: string | null;
+  display_order?: number;
+  ends_at?: string | null;
+  eyebrow?: string | null;
+  image_url?: string | null;
+  ishop_item?: string | null;
+  modified?: string | null;
+  name?: string;
+  offer_price?: number | string;
+  original_price?: number | string | null;
+  promotion_code: string;
+  published?: number;
+  starts_at?: string | null;
+  status?: "active" | "inactive";
+  title: string;
+};
+export type FrappeIShopFeaturedCard = Omit<FrappeIShopPromotion, "promotion_code"> & {
+  featured_code: string;
 };
 
 export type CatalogSyncResult = {
@@ -152,6 +175,7 @@ export type CatalogSyncResult = {
   items: number;
   sliders: number;
   promotions: number;
+  featuredCards: number;
   message: string;
 };
 
@@ -173,4 +197,5 @@ export interface StorefrontCatalogSource {
   product(slug: string): Promise<StorefrontProductDetail | null>;
   sliders(): Promise<StorefrontSlider[]>;
   promotions(): Promise<StorefrontPromotion[]>;
+  featuredCards(): Promise<StorefrontFeaturedCard[]>;
 }

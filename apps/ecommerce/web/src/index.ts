@@ -7,3 +7,4 @@ export * from "./modules/catalog-data-source/index";
 export * from "./modules/storefront-profile/index";
 export * from "./modules/storefront-slider/index";
 export * from "./modules/promotion-card/index";
+export * from "./modules/featured-card/index";

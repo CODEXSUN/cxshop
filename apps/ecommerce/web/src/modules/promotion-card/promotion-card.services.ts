@@ -42,9 +42,7 @@ export const listPromotionCards = (search = "", status?: PromotionCardStatus) =>
   );
 export const listFrappePromotionItems = async (search = "") =>
   (
-    await request<FrappeItemResponse[]>(
-      `${frappeItemsBase}?search=${encodeURIComponent(search)}`
-    )
+    await request<FrappeItemResponse[]>(`${frappeItemsBase}?search=${encodeURIComponent(search)}`)
   ).map(toFrappePromotionItem);
 export const getFrappePromotionItem = async (itemCode: string) =>
   toFrappePromotionItem(
@@ -52,16 +50,21 @@ export const getFrappePromotionItem = async (itemCode: string) =>
   );
 export const createPromotionCard = (value: PromotionCardPayload) =>
   request<PromotionCardRecord>(base, { body: JSON.stringify(value), method: "POST" });
+export const uploadPromotionImage = (fileName: string, contentBase64: string) =>
+  request<{ imageUrl: string; sizeBytes: number }>(
+    "/api/platform/ecommerce/catalog/images/upload",
+    { body: JSON.stringify({ contentBase64, fileName }), method: "POST" }
+  );
 export const updatePromotionCard = (id: number, value: PromotionCardPayload) =>
   request<PromotionCardRecord>(`${base}/${id}`, {
     body: JSON.stringify(value),
     method: "PUT"
   });
 export const changePromotionCardStatus = (id: number, status: PromotionCardStatus) =>
-  request<PromotionCardRecord>(
-    `${base}/${id}/${status === "active" ? "activate" : "deactivate"}`,
-    { body: "{}", method: "POST" }
-  );
+  request<PromotionCardRecord>(`${base}/${id}/${status === "active" ? "activate" : "deactivate"}`, {
+    body: "{}",
+    method: "POST"
+  });
 export const pullPromotionCardsFromFrappe = () =>
   request<FrappeCatalogSyncResult>("/api/platform/ecommerce/settings/data-source/sync/pull", {
     body: "{}",

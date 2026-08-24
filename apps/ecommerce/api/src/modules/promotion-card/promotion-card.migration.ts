@@ -24,6 +24,7 @@ export async function migratePromotionCardModule(database: Kysely<EcommerceDatab
         badge VARCHAR(120) NOT NULL DEFAULT '',
         badge_position VARCHAR(24) NOT NULL DEFAULT 'top-right',
         badge_tint VARCHAR(32) NOT NULL DEFAULT 'brand',
+        badge_text_color VARCHAR(32) NOT NULL DEFAULT '#ffffff',
         ishop_item VARCHAR(191) NULL,
         display_order INT NOT NULL DEFAULT 0,
         published TINYINT(1) NOT NULL DEFAULT 0,
@@ -37,6 +38,21 @@ export async function migratePromotionCardModule(database: Kysely<EcommerceDatab
         UNIQUE KEY ecommerce_storefront_promotions_code_unique (promotion_code),
         INDEX ecommerce_storefront_promotions_publication (published,status,display_order)
       ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`
+    )
+    .execute(database);
+  await sql`INSERT IGNORE INTO ecommerce_catalog_module_data_sources
+    (module_key,provider,updated_by) VALUES ('promotions','own','system:seed')`.execute(database);
+}
+
+export const promotionCardBadgeTextColorMigration = {
+  description: "Add editable promotion badge text colour.",
+  key: "ecommerce.storefront.promotion-badge-text-color"
+} as const;
+
+export async function upgradePromotionCardBadgeTextColor(database: Kysely<EcommerceDatabase>) {
+  await sql
+    .raw(
+      "ALTER TABLE ecommerce_storefront_promotions ADD COLUMN IF NOT EXISTS badge_text_color VARCHAR(32) NOT NULL DEFAULT '#ffffff' AFTER badge_tint"
     )
     .execute(database);
 }

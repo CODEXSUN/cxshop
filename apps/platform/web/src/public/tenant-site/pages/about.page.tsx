@@ -1,101 +1,79 @@
-import { ArrowRight, Calculator, ReceiptText, TrendingUp, UsersRound } from "lucide-react";
+import { ArrowRight, Building2, Handshake, History, Wrench } from "lucide-react";
 import { TenantPageIntro } from "../blocks/tenant-page-intro";
 import { TenantPortalCta } from "../blocks/tenant-portal-cta";
 import { TenantSectionHeading } from "../blocks/tenant-section-heading";
-import { TenantGrowthPathSection } from "../sections/growth-path.section";
-import { useTenantSite } from "../tenant-site.context";
 import { TenantSiteTemplate } from "../templates/tenant-site.template";
 
 export function TenantAboutPage() {
   return (
-    <TenantSiteTemplate activePage="about" pageTitle="About">
-      <AboutPageContent />
-    </TenantSiteTemplate>
-  );
-}
-
-function AboutPageContent() {
-  const { portal } = useTenantSite();
-
-  return (
-    <>
+    <TenantSiteTemplate activePage="about" pageTitle="About Tech Media">
       <TenantPageIntro
-        eyebrow={`About ${portal.brandName}`}
-        title="Built for businesses that need billing to stay simple as operations grow."
-        summary="CODEXSUN is designed around the work behind every sale: accurate documents, clear accounts, timely follow-up, responsible staff access, and records that remain understandable later."
+        eyebrow="About Tech Media"
+        title="Good technology starts with understanding what you really need."
+        summary="Since 2002, people and businesses in Tiruppur have come to Tech Media for straightforward advice, dependable products, careful installation, and support they can reach after the purchase."
         actions={
-          <a className="tenant-portal-primary" href={portal.loginPath}>
-            Open application <ArrowRight />
+          <a className="tenant-portal-primary" href="/contact">
+            Tell us what you need <ArrowRight />
           </a>
         }
       />
       <section className="tenant-page-section tenant-principle-grid">
         <article>
-          <ReceiptText />
-          <h3>Make daily billing feel natural</h3>
-          <p>
-            Keep the common invoice path obvious while advanced detail waits until it is needed.
-          </p>
+          <History />
+          <h3>Here since 2002</h3>
+          <p>More than 25 years of learning from real customers, changing technology, and everyday problems.</p>
         </article>
         <article>
-          <Calculator />
-          <h3>Make accuracy part of the workflow</h3>
-          <p>
-            Use reusable records, visible totals, validation, status, and review instead of memory.
-          </p>
+          <Building2 />
+          <h3>Built around your work</h3>
+          <p>From a student laptop to a factory network, we begin with how the technology will actually be used.</p>
         </article>
         <article>
-          <UsersRound />
-          <h3>Make staff change less disruptive</h3>
-          <p>Keep responsibility, pending work, documents, and history clear as people change.</p>
+          <Wrench />
+          <h3>Still here after the sale</h3>
+          <p>We help with setup, service, troubleshooting, maintenance, and the next upgrade.</p>
         </article>
       </section>
       <section className="tenant-page-section tenant-story-panel">
-        <span>Our product belief</span>
-        <h2>Business software should carry complexity without passing it to every user.</h2>
+        <span>How we grew</span>
+        <h2>We started with computers. Our customers taught us to solve the bigger picture.</h2>
         <p>
-          Start with an easy invoice, extend into e-way bills and e-invoices, connect accounts, and
-          add deeper automation while the everyday experience remains calm and recognisable.
+          A computer often needs a reliable network. A growing office needs security, storage,
+          communication, and support. Over the years, Tech Media grew from computer retail and
+          service into a complete business technology partner—one customer requirement at a time.
         </p>
       </section>
       <section className="tenant-page-section tenant-audience-section">
         <TenantSectionHeading
-          eyebrow="Made for the people behind the numbers"
-          title="One product experience, shaped around the different responsibilities in a billing office."
-          summary="Sales staff need speed, accounts staff need accuracy, and owners need a clear view of what is complete, pending, overdue, or exceptional."
+          eyebrow="What you can expect"
+          title="Clear advice. Practical choices. Support you can come back to."
+          summary="We look beyond specifications and consider reliability, compatibility, service, cost, and how your needs may change."
         />
         <div className="tenant-audience-grid">
           <article>
-            <ReceiptText />
-            <span>Billing staff</span>
-            <h3>Create and continue documents without losing momentum.</h3>
-            <p>
-              Keep customers, items, tax, totals, e-way bills, e-invoices, print, and sharing inside
-              a learnable daily rhythm.
-            </p>
+            <Handshake />
+            <span>Honest guidance</span>
+            <h3>A recommendation that fits you</h3>
+            <p>We compare suitable brands and options around your requirement and budget.</p>
           </article>
           <article>
-            <Calculator />
-            <span>Accounts staff</span>
-            <h3>Connect money movement to the documents that created it.</h3>
-            <p>
-              Review receipts, payments, outstanding balances, ledgers, reports, and exceptions with
-              the source transaction close by.
-            </p>
+            <Wrench />
+            <span>Complete support</span>
+            <h3>One place to buy, set up, and maintain</h3>
+            <p>You know whom to call when something needs attention or the system needs to grow.</p>
           </article>
           <article>
-            <TrendingUp />
-            <span>Business owners</span>
-            <h3>Understand daily performance without waiting for manual summaries.</h3>
-            <p>
-              Follow sales, collections, overdue work, document status, and staff activity through a
-              concise operating view.
-            </p>
+            <Building2 />
+            <span>Local experience</span>
+            <h3>We understand Tiruppur businesses</h3>
+            <p>We work with homes, offices, retailers, schools, textile businesses, and factories.</p>
           </article>
         </div>
       </section>
-      <TenantGrowthPathSection />
-      <TenantPortalCta />
-    </>
+      <TenantPortalCta
+        title="Not sure which product or solution is right?"
+        summary="Tell us what you are trying to do. We will help you find a sensible next step without making the conversation complicated."
+      />
+    </TenantSiteTemplate>
   );
 }

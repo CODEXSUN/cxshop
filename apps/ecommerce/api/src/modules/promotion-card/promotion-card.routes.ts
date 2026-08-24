@@ -11,8 +11,11 @@ const payload = z.object({
   actionLabel: z.string().trim().max(120).default(""),
   actionUrl: z.string().trim().max(1000).default(""),
   badge: z.string().trim().max(120).default(""),
-  badgePosition: z.enum(["top-left", "top-right", "bottom-left", "bottom-right"]).default("top-right"),
+  badgePosition: z
+    .enum(["top-left", "top-right", "bottom-left", "bottom-right"])
+    .default("top-right"),
   badgeTint: z.string().trim().min(1).max(32).default("brand"),
+  badgeTextColor: z.string().trim().min(1).max(32).default("#ffffff"),
   description: z.string().trim().max(500).default(""),
   displayOrder: z.number().int().min(0).default(0),
   endsAt: z.iso.datetime().nullable().default(null),

@@ -134,10 +134,27 @@ export async function migrateCatalogModuleDataSources(database: Kysely<Ecommerce
     "variants",
     "product-images",
     "sliders",
-    "promotions"
+    "promotions",
+    "featured-cards"
   ]) {
     await sql`INSERT IGNORE INTO ecommerce_catalog_module_data_sources
       (module_key,provider,updated_by) VALUES (${moduleKey},'own','system:seed')`.execute(database);
+  }
+}
+
+export const catalogStorefrontSourceCompatibilityMigration = {
+  description: "Add local-first source preferences for storefront sliders and promotion cards.",
+  key: "ecommerce.catalog.storefront-source-compatibility"
+} as const;
+
+export async function upgradeCatalogStorefrontSourceCompatibility(
+  database: Kysely<EcommerceDatabase>
+) {
+  for (const moduleKey of ["sliders", "promotions", "featured-cards"]) {
+    await sql`INSERT IGNORE INTO ecommerce_catalog_module_data_sources
+      (module_key,provider,updated_by) VALUES (${moduleKey},'own','system:compatibility')`.execute(
+      database
+    );
   }
 }
 

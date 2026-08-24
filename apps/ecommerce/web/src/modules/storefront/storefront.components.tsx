@@ -1,7 +1,10 @@
 import { useEffect, useState } from "react";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import {
   ArrowUpIcon,
   ArrowUpRightIcon,
+  CheckIcon,
+  ChevronRightIcon,
   HeadphonesIcon,
   AtSignIcon,
   CameraIcon,
@@ -9,6 +12,9 @@ import {
   MenuIcon,
   Globe2Icon,
   UserRoundIcon,
+  LaptopIcon,
+  NetworkIcon,
+  WrenchIcon,
   XIcon
 } from "lucide-react";
 import type {
@@ -18,9 +24,10 @@ import type {
   StorefrontProduct,
   StorefrontBlogPost,
   StorefrontSiteNavigation,
-  StorefrontSlider
-  ,StorefrontPromotion
+  StorefrontSlider,
+  StorefrontPromotion
 } from "./storefront.types";
+import type { StorefrontFeaturedCard } from "./storefront.types";
 import { hasStorefrontPrice, money, whatsappLink } from "./storefront.formatters";
 
 type FilterProps = {
@@ -71,23 +78,202 @@ export function HeroSlider({ slides }: { slides: StorefrontSlider[] }) {
   );
 }
 
-export function PromotionsSection({ promotions }: { promotions: StorefrontPromotion[] }) {
-  if (!promotions.length) return null;
+export function TechMediaTrustSection() {
+  const [activePanel, setActivePanel] = useState(0);
+  const reduceMotion = useReducedMotion();
+  const panels = [
+    {
+      action: "Explore products",
+      description: "Practical systems selected around your workload, budget, service needs, and future upgrades.",
+      details: ["Business and student laptops", "Desktops and workstations", "Custom systems and accessories"],
+      href: "/shop",
+      icon: LaptopIcon,
+      number: "01",
+      title: "Computers and laptops"
+    },
+    {
+      action: "Explore solutions",
+      description: "Connected technology for offices, factories, retailers, institutions, and growing teams.",
+      details: ["Networking, Wi-Fi and storage", "CCTV, biometric and access", "POS, VoIP and displays"],
+      href: "/features",
+      icon: NetworkIcon,
+      number: "02",
+      title: "Business IT solutions"
+    },
+    {
+      action: "Get local support",
+      description: "Reach a Tiruppur team that can help before the purchase and after the installation.",
+      details: ["Computer and laptop service", "Installation and upgrades", "Maintenance and warranty help"],
+      href: "/support",
+      icon: WrenchIcon,
+      number: "03",
+      title: "Service and support"
+    },
+    {
+      action: "Plan security",
+      description: "Practical protection and access systems designed for the site, people, and daily workflow.",
+      details: ["CCTV and remote monitoring", "Biometric attendance", "Face recognition and access control"],
+      href: "/features",
+      icon: CameraIcon,
+      number: "04",
+      title: "Security and access"
+    },
+    {
+      action: "Discuss infrastructure",
+      description: "A connected foundation for teams that depend on reliable systems, communication, and support.",
+      details: ["Servers, storage and backup", "VoIP and video conferencing", "AMC and planned maintenance"],
+      href: "/contact",
+      icon: Globe2Icon,
+      number: "05",
+      title: "Managed infrastructure"
+    }
+  ] as const;
+
   return (
-    <section className="cx-store__promotions" id="promotions">
-      <SectionTitle label="Current promotions" title="Better value on everyday technology" />
+    <section className="cx-store__tech-media" aria-labelledby="tech-media-title">
+      <div className="cx-store__tech-media-intro">
+        <span>Trusted in Tiruppur since 2002</span>
+        <h2 id="tech-media-title">25+ years of practical technology experience</h2>
+        <p>
+          We help you choose technology that fits the work, set it up properly, and keep it useful
+          as your needs grow.
+        </p>
+        <div className="cx-store__tech-media-proof" aria-label="Tech Media service strengths">
+          <span><CheckIcon /> Multi-brand guidance</span>
+          <span><CheckIcon /> Local technical support</span>
+          <span><CheckIcon /> Retail and business expertise</span>
+        </div>
+      </div>
+      <div className="cx-store__tech-media-accordion" aria-label="Technology services">
+        {panels.map((panel, index) => {
+          const Icon = panel.icon;
+          const active = activePanel === index;
+          return (
+            <motion.article
+              animate={{ flexBasis: active ? 390 : 74, flexGrow: active ? 1 : 0 }}
+              className={active ? "is-active" : undefined}
+              key={panel.title}
+              transition={
+                reduceMotion
+                  ? { duration: 0 }
+                  : { duration: 0.78, ease: [0.22, 1, 0.36, 1], type: "tween" }
+              }
+            >
+              <button
+                aria-controls={`tech-media-panel-${index}`}
+                aria-expanded={active}
+                onClick={() => setActivePanel(index)}
+                onFocus={() => setActivePanel(index)}
+                type="button"
+              >
+                <span className="cx-store__tech-media-number">{panel.number}</span>
+                <Icon aria-hidden="true" />
+                <strong>{panel.title}</strong>
+                <ChevronRightIcon className="cx-store__tech-media-chevron" aria-hidden="true" />
+              </button>
+              <AnimatePresence initial={false} mode="popLayout">
+                {active ? (
+                  <motion.div
+                    animate={{
+                      opacity: 1,
+                      transition: {
+                        delay: reduceMotion ? 0 : 0.38,
+                        duration: reduceMotion ? 0 : 0.34,
+                        ease: [0.22, 1, 0.36, 1]
+                      },
+                      x: 0
+                    }}
+                    className="cx-store__tech-media-panel"
+                    exit={{
+                      opacity: 0,
+                      transition: { duration: reduceMotion ? 0 : 0.16 },
+                      x: reduceMotion ? 0 : -10
+                    }}
+                    id={`tech-media-panel-${index}`}
+                    initial={{ opacity: 0, x: reduceMotion ? 0 : 28 }}
+                    key={panel.title}
+                  >
+                    <p>{panel.description}</p>
+                    <ul>
+                      {panel.details.map((detail) => <li key={detail}><CheckIcon /> {detail}</li>)}
+                    </ul>
+                    <a href={panel.href}>{panel.action} <ArrowUpRightIcon /></a>
+                  </motion.div>
+                ) : null}
+              </AnimatePresence>
+            </motion.article>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+export function PromotionsSection({ promotions }: { promotions: StorefrontPromotion[] }) {
+  return (
+    <StorefrontCardsSection
+      cards={promotions.map((item) => ({ ...item, cardCode: item.promotionCode }))}
+      id="promotions"
+      label="Current promotions"
+      title="Better value on everyday technology"
+    />
+  );
+}
+
+export function FeaturedCardsSection({ cards }: { cards: StorefrontFeaturedCard[] }) {
+  return (
+    <StorefrontCardsSection
+      cards={cards.map((item) => ({ ...item, cardCode: item.featuredCode }))}
+      id="featured"
+      label="Featured products"
+      title="Selected technology worth a closer look"
+    />
+  );
+}
+
+type StorefrontCard = Omit<StorefrontPromotion, "promotionCode"> & { cardCode: string };
+
+function StorefrontCardsSection({
+  cards,
+  id,
+  label,
+  title
+}: {
+  cards: StorefrontCard[];
+  id: string;
+  label: string;
+  title: string;
+}) {
+  if (!cards.length) return null;
+  return (
+    <section className="cx-store__promotions" id={id}>
+      <SectionTitle label={label} title={title} />
       <div className="cx-store__promotion-grid">
-        {promotions.map((promotion) => {
+        {cards.map((promotion) => {
           const priced = hasStorefrontPrice(promotion.offerPrice);
           return (
             <a
               className="cx-store__promotion-card"
               href={promotion.actionUrl}
-              key={promotion.promotionCode}
+              key={promotion.cardCode}
             >
               <span className="cx-store__promotion-media">
-                <img alt={promotion.imageAlt || promotion.title} loading="lazy" src={promotion.imageUrl} />
-                {promotion.badge ? <span className={`cx-store__promotion-saving is-${promotion.badgePosition} is-${promotion.badgeTint}`}>{promotion.badge}</span> : null}
+                <img
+                  alt={promotion.imageAlt || promotion.title}
+                  loading="lazy"
+                  src={promotion.imageUrl}
+                />
+                {promotion.badge ? (
+                  <span
+                    className={`cx-store__promotion-saving is-${promotion.badgePosition}`}
+                    style={{
+                      backgroundColor: badgeColor(promotion.badgeTint),
+                      color: promotion.badgeTextColor || "#ffffff"
+                    }}
+                  >
+                    {promotion.badge}
+                  </span>
+                ) : null}
               </span>
               <span className="cx-store__promotion-copy">
                 {promotion.eyebrow ? <small>{promotion.eyebrow}</small> : null}
@@ -112,6 +298,22 @@ export function PromotionsSection({ promotions }: { promotions: StorefrontPromot
         })}
       </div>
     </section>
+  );
+}
+
+function badgeColor(value: string) {
+  return (
+    (
+      {
+        brand: "#0f766e",
+        success: "#15803d",
+        warning: "#b45309",
+        danger: "#b91c1c",
+        neutral: "#334155"
+      } as Record<string, string>
+    )[value] ||
+    value ||
+    "#0f766e"
   );
 }
 
@@ -224,6 +426,17 @@ export function CatalogFilters({ discovery, filters, onFilters }: FilterProps) {
   return (
     <aside className="cx-store__filters" aria-label="Product filters">
       <strong>Filter the range</strong>
+      <label className="cx-store__filter-search">
+        Search products
+        <input
+          aria-label="Search products"
+          autoComplete="off"
+          placeholder="Name, brand, or category"
+          type="search"
+          value={filters.search}
+          onChange={(event) => onFilters({ ...filters, scope: "all", search: event.target.value })}
+        />
+      </label>
       <label>
         Category
         <select
@@ -460,7 +673,7 @@ export function StoreFooter({
         <a href="/login">
           <UserRoundIcon size={17} /> Customer portal
         </a>
-        <a href="/contact">
+        <a href="/support">
           <HeadphonesIcon size={17} /> Support
         </a>
         <a
@@ -518,12 +731,21 @@ const defaultFooterGroups = [
       { label: "Blog", href: "/blog" }
     ]
   },
-  { title: "Help", links: [{ label: "Contact", href: "/contact" }] },
+  {
+    title: "Help",
+    links: [
+      { label: "Support", href: "/support" },
+      { label: "Order help", href: "/order-help" },
+      { label: "Shipping", href: "/shipping" },
+      { label: "Returns", href: "/returns" }
+    ]
+  },
   {
     title: "Legal",
     links: [
       { label: "Privacy", href: "/privacy" },
-      { label: "Terms", href: "/terms" }
+      { label: "Terms", href: "/terms" },
+      { label: "Cookies", href: "/cookies" }
     ]
   }
 ];

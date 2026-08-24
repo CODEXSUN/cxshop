@@ -70,6 +70,7 @@ export class StorefrontRepository {
   async sliders() {
     const result = await sql<Row>`SELECT * FROM ecommerce_storefront_sliders
       WHERE status='active' AND published=1
+      AND ${this.sourceCondition("ecommerce_storefront_sliders")}
       AND (starts_at IS NULL OR starts_at<=CURRENT_TIMESTAMP)
       AND (ends_at IS NULL OR ends_at>=CURRENT_TIMESTAMP)
       ORDER BY display_order,slider_code`.execute(getEcommerceDatabase());
@@ -87,16 +88,54 @@ export class StorefrontRepository {
     }));
   }
   async promotions() {
-    const result = await sql<Row>`SELECT * FROM ecommerce_storefront_promotions WHERE status='active' AND published=1
+    const result =
+      await sql<Row>`SELECT * FROM ecommerce_storefront_promotions WHERE status='active' AND published=1
+      AND ${this.sourceCondition("ecommerce_storefront_promotions")}
       AND (starts_at IS NULL OR starts_at<=CURRENT_TIMESTAMP) AND (ends_at IS NULL OR ends_at>=CURRENT_TIMESTAMP)
       ORDER BY display_order,promotion_code`.execute(getEcommerceDatabase());
     return result.rows.map((row) => ({
-      actionLabel: String(row.action_label || "View offer"), actionUrl: String(row.action_url || "#catalog"),
-      badge: String(row.badge || ""), badgePosition: String(row.badge_position || "top-right") as "top-left" | "top-right" | "bottom-left" | "bottom-right",
-      badgeTint: String(row.badge_tint || "brand"), description: String(row.description || ""), displayOrder: Number(row.display_order || 0),
-      eyebrow: String(row.eyebrow || ""), imageAlt: String(row.title), imageUrl: String(row.image_url || ""),
-      linkedItem: row.ishop_item ? String(row.ishop_item) : null, offerPrice: Number(row.offer_price || 0),
-      originalPrice: row.original_price == null ? null : Number(row.original_price), promotionCode: String(row.promotion_code), title: String(row.title)
+      actionLabel: String(row.action_label || "View offer"),
+      actionUrl: String(row.action_url || "#catalog"),
+      badge: String(row.badge || ""),
+      badgePosition: String(row.badge_position || "top-right") as
+        "top-left" | "top-right" | "bottom-left" | "bottom-right",
+      badgeTint: String(row.badge_tint || "brand"),
+      badgeTextColor: String(row.badge_text_color || "#ffffff"),
+      description: String(row.description || ""),
+      displayOrder: Number(row.display_order || 0),
+      eyebrow: String(row.eyebrow || ""),
+      imageAlt: String(row.title),
+      imageUrl: String(row.image_url || ""),
+      linkedItem: row.ishop_item ? String(row.ishop_item) : null,
+      offerPrice: Number(row.offer_price || 0),
+      originalPrice: row.original_price == null ? null : Number(row.original_price),
+      promotionCode: String(row.promotion_code),
+      title: String(row.title)
+    }));
+  }
+  async featuredCards() {
+    const result = await sql<Row>`SELECT * FROM ecommerce_storefront_featured_cards
+      WHERE status='active' AND published=1 AND ${this.sourceCondition("ecommerce_storefront_featured_cards")}
+      AND (starts_at IS NULL OR starts_at<=CURRENT_TIMESTAMP) AND (ends_at IS NULL OR ends_at>=CURRENT_TIMESTAMP)
+      ORDER BY display_order,featured_code`.execute(getEcommerceDatabase());
+    return result.rows.map((row) => ({
+      actionLabel: String(row.action_label || "Explore now"),
+      actionUrl: String(row.action_url || "#catalog"),
+      badge: String(row.badge || ""),
+      badgePosition: String(row.badge_position || "top-right") as
+        "top-left" | "top-right" | "bottom-left" | "bottom-right",
+      badgeTextColor: String(row.badge_text_color || "#ffffff"),
+      badgeTint: String(row.badge_tint || "#0f766e"),
+      description: String(row.description || ""),
+      displayOrder: Number(row.display_order || 0),
+      eyebrow: String(row.eyebrow || ""),
+      featuredCode: String(row.featured_code),
+      imageAlt: String(row.title),
+      imageUrl: String(row.image_url || ""),
+      linkedItem: row.ishop_item ? String(row.ishop_item) : null,
+      offerPrice: Number(row.offer_price || 0),
+      originalPrice: row.original_price == null ? null : Number(row.original_price),
+      title: String(row.title)
     }));
   }
 
@@ -139,8 +178,9 @@ export class StorefrontRepository {
   }
 
   private sourceCondition(alias = "info") {
-    if (!this.frappeCacheOnly) return sql`1=1`;
-    return sql.raw(`${alias}.frappe_item_code IS NOT NULL`);
+    return this.frappeCacheOnly
+      ? sql.raw(`${alias}.frappe_modified_at IS NOT NULL`)
+      : sql.raw(`${alias}.frappe_modified_at IS NULL`);
   }
 }
 

@@ -42,6 +42,7 @@ const syncResult = z.object({
   items: z.number().int().nonnegative(),
   sliders: z.number().int().nonnegative(),
   promotions: z.number().int().nonnegative(),
+  featuredCards: z.number().int().nonnegative(),
   message: z.string()
 });
 const frappeItem = z.object({

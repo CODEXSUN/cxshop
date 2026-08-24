@@ -481,6 +481,16 @@ export function appMenuItemsFor(
             title: "Home Slider",
             isActive: activePage === "ecommerce.catalog.home-slider",
             onSelect: () => onSelect("ecommerce.catalog.home-slider")
+          },
+          {
+            title: "Promotion Cards",
+            isActive: activePage === "ecommerce.catalog.promotions",
+            onSelect: () => onSelect("ecommerce.catalog.promotions")
+          },
+          {
+            title: "Featured Cards",
+            isActive: activePage === "ecommerce.catalog.featured-cards",
+            onSelect: () => onSelect("ecommerce.catalog.featured-cards")
           }
         ]
       },

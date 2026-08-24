@@ -13,9 +13,6 @@ const BillingPrintRoute = lazy(() =>
     default: module.BillingPrintRoute
   }))
 );
-const HealthPage = lazy(() =>
-  import("../public/health/HealthPage").then((module) => ({ default: module.HealthPage }))
-);
 const StorefrontPage = lazy(() =>
   import("@cxshop/ecommerce-web/modules/storefront").then((module) => ({
     default: module.StorefrontPage
@@ -90,6 +87,12 @@ const TenantTermsPage = lazy(() =>
   import("../public/tenant-site/pages/terms.page").then((module) => ({
     default: module.TenantTermsPage
   }))
+);
+const TenantSupportPage = lazy(() =>
+  import("../public/tenant-site/pages/support.page").then((module) => ({ default: module.TenantSupportPage }))
+);
+const TenantOrderHelpPage = lazy(() =>
+  import("../public/tenant-site/pages/order-help.page").then((module) => ({ default: module.TenantOrderHelpPage }))
 );
 const LoginPage = lazy(() =>
   import("../public/login/LoginPage").then((module) => ({ default: module.LoginPage }))
@@ -242,10 +245,15 @@ const termsRoute = createRoute({
   path: "/terms"
 });
 
-const healthRoute = createRoute({
-  component: HealthPage,
+const supportRoute = createRoute({
+  component: TenantSupportPage,
   getParentRoute: () => rootRoute,
-  path: "/status"
+  path: "/support"
+});
+const orderHelpRoute = createRoute({
+  component: TenantOrderHelpPage,
+  getParentRoute: () => rootRoute,
+  path: "/order-help"
 });
 
 const saLoginRoute = createRoute({
@@ -335,7 +343,8 @@ const routeTree = rootRoute.addChildren([
   cookiesRoute,
   privacyRoute,
   termsRoute,
-  healthRoute,
+  supportRoute,
+  orderHelpRoute,
   saLoginRoute,
   saRefreshRoute,
   adminLoginRoute,

@@ -1,6 +1,14 @@
 export type CatalogDataSourceProvider = "frappe" | "own";
 export type CatalogDataSourceModule =
-  "categories" | "brands" | "products" | "product-details" | "variants" | "product-images" | "sliders" | "promotions";
+  | "categories"
+  | "brands"
+  | "products"
+  | "product-details"
+  | "variants"
+  | "product-images"
+  | "sliders"
+  | "promotions"
+  | "featured-cards";
 export type CatalogModuleDataSource = {
   description: string;
   label: string;
@@ -53,5 +61,6 @@ export type CatalogSyncResult = {
   items: number;
   sliders: number;
   promotions: number;
+  featuredCards: number;
   message: string;
 };

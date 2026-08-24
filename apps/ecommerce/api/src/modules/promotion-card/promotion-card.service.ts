@@ -1,9 +1,6 @@
 import { AppError } from "@cxshop/framework/errors";
 import { PromotionCardRepository } from "./promotion-card.repository.js";
-import type {
-  PromotionCardFilters,
-  PromotionCardSaveInput
-} from "./promotion-card.types.js";
+import type { PromotionCardFilters, PromotionCardSaveInput } from "./promotion-card.types.js";
 
 export class PromotionCardService {
   constructor(private readonly repository = new PromotionCardRepository()) {}
@@ -46,6 +43,7 @@ export class PromotionCardService {
       actionUrl: input.actionUrl.trim(),
       badge: input.badge.trim(),
       badgeTint: input.badgeTint.trim(),
+      badgeTextColor: input.badgeTextColor.trim(),
       description: input.description.trim(),
       eyebrow: input.eyebrow.trim(),
       imageUrl: input.imageUrl.trim(),

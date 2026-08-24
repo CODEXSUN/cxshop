@@ -28,7 +28,12 @@ export class StorefrontService {
       imageUrl: sliderContentUrl(slider.imageUrl)
     }));
   }
-  promotions() { return this.source.promotions(); }
+  promotions() {
+    return this.source.promotions();
+  }
+  featuredCards() {
+    return this.source.featuredCards();
+  }
   async siteNavigation() {
     const profile = await new StorefrontProfileService().get();
     return {

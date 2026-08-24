@@ -7,6 +7,7 @@ export const promotionCardSchema = z
     badge: z.string().trim().max(120),
     badgePosition: z.enum(["top-left", "top-right", "bottom-left", "bottom-right"]),
     badgeTint: z.string().trim().min(1).max(32),
+    badgeTextColor: z.string().trim().min(1).max(32),
     description: z.string().trim().max(500),
     displayOrder: z.number().int().nonnegative(),
     endsAt: z.string().nullable(),

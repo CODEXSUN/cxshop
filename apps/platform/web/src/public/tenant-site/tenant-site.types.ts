@@ -8,6 +8,8 @@ export type TenantPublicPageKey =
   | "about"
   | "team"
   | "contact"
+  | "support"
+  | "order-help"
   | "shipping"
   | "returns"
   | "cookies"
