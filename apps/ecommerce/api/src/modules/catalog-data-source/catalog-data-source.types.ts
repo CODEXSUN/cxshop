@@ -125,6 +125,7 @@ export type FrappeIShopSlider = {
   display_order?: number;
   ends_at?: string | null;
   eyebrow?: string | null;
+  erpnext_item?: string | null;
   image_url?: string | null;
   ishop_item?: string | null;
   modified?: string | null;
@@ -158,6 +159,7 @@ export type FrappeIShopPromotion = {
   display_order?: number;
   ends_at?: string | null;
   eyebrow?: string | null;
+  erpnext_item?: string | null;
   image_url?: string | null;
   ishop_item?: string | null;
   modified?: string | null;

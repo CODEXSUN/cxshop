@@ -103,7 +103,7 @@ export class FrappeCatalogSource implements StorefrontCatalogSource {
         eyebrow: slider.eyebrow?.trim() || "",
         imageAlt: slider.title,
         imageUrl: absoluteUrl(slider.image_url, this.currentBaseUrl),
-        linkedItem: slider.ishop_item?.trim() || null,
+        linkedItem: slider.erpnext_item?.trim() || slider.ishop_item?.trim() || null,
         sliderCode: slider.slider_code,
         title: slider.title
       }));
@@ -132,7 +132,7 @@ export class FrappeCatalogSource implements StorefrontCatalogSource {
         eyebrow: item.eyebrow?.trim() || "",
         imageAlt: item.title,
         imageUrl: absoluteUrl(item.image_url, this.currentBaseUrl),
-        linkedItem: item.ishop_item?.trim() || null,
+        linkedItem: item.erpnext_item?.trim() || item.ishop_item?.trim() || null,
         offerPrice: Number(item.offer_price ?? 0),
         originalPrice: item.original_price == null ? null : Number(item.original_price),
         promotionCode: item.promotion_code,
@@ -165,7 +165,7 @@ export class FrappeCatalogSource implements StorefrontCatalogSource {
         featuredCode: item.featured_code,
         imageAlt: item.title,
         imageUrl: absoluteUrl(item.image_url, this.currentBaseUrl),
-        linkedItem: item.ishop_item?.trim() || null,
+        linkedItem: item.erpnext_item?.trim() || item.ishop_item?.trim() || null,
         offerPrice: Number(item.offer_price ?? 0),
         originalPrice: item.original_price == null ? null : Number(item.original_price),
         title: item.title

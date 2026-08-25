@@ -58,11 +58,34 @@ test("maps the LogicX iShop 1.0.9 snapshot into published storefront products", 
             description: "Featured laptop",
             display_order: 10,
             eyebrow: "New arrival",
+            erpnext_item: "ERP-1",
             image_url: "/files/hero.png",
             ishop_item: "WEB-1",
             published: 1,
             slider_code: "HOME-01",
             title: "Laptop season"
+          }
+        ],
+        promotions: [
+          {
+            erpnext_item: "ERP-1",
+            image_url: "/files/promotion.png",
+            offer_price: 44990,
+            promotion_code: "PROMO-01",
+            published: 1,
+            status: "active",
+            title: "ERPNext-linked promotion"
+          }
+        ],
+        featured_cards: [
+          {
+            erpnext_item: "ERP-1",
+            featured_code: "FEATURED-01",
+            image_url: "/files/featured.png",
+            offer_price: 42990,
+            published: 1,
+            status: "active",
+            title: "ERPNext-linked featured card"
           }
         ],
         brand_strips: [
@@ -129,11 +152,13 @@ test("maps the LogicX iShop 1.0.9 snapshot into published storefront products", 
       eyebrow: "New arrival",
       imageAlt: "Laptop season",
       imageUrl: "https://ishop.example.test/files/hero.png",
-      linkedItem: "WEB-1",
+      linkedItem: "ERP-1",
       sliderCode: "HOME-01",
       title: "Laptop season"
     }
   ]);
+  assert.equal((await source.promotions())[0]?.linkedItem, "ERP-1");
+  assert.equal((await source.featuredCards())[0]?.linkedItem, "ERP-1");
   assert.deepEqual(await source.brandStrips(), [
     {
       logoAlt: "LogicX logo",

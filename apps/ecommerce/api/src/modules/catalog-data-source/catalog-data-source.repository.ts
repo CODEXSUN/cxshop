@@ -58,15 +58,15 @@ export class CatalogDataSourceRepository {
       }
       for (const slider of snapshot.sliders) {
         await sql`INSERT INTO ecommerce_storefront_sliders
-          (slider_code,eyebrow,title,description,image_url,action_label,action_url,ishop_item,
+          (slider_code,eyebrow,title,description,image_url,action_label,action_url,ishop_item,erpnext_item,
            display_order,published,starts_at,ends_at,frappe_document_name,frappe_modified_at,status)
           VALUES (${slider.slider_code},${slider.eyebrow ?? ""},${slider.title},${slider.description ?? ""},
-            ${slider.image_url ?? ""},${slider.action_label ?? ""},${slider.action_url ?? ""},${slider.ishop_item ?? null},
+            ${slider.image_url ?? ""},${slider.action_label ?? ""},${slider.action_url ?? ""},${slider.ishop_item ?? null},${slider.erpnext_item ?? null},
             ${slider.display_order ?? 0},${slider.published ? 1 : 0},${frappeDate(slider.starts_at)},
             ${frappeDate(slider.ends_at)},${slider.name ?? slider.slider_code},${frappeDate(slider.modified)},${slider.status ?? "active"})
           ON DUPLICATE KEY UPDATE eyebrow=VALUES(eyebrow),title=VALUES(title),description=VALUES(description),
             image_url=VALUES(image_url),action_label=VALUES(action_label),action_url=VALUES(action_url),
-            ishop_item=VALUES(ishop_item),display_order=VALUES(display_order),published=VALUES(published),
+            ishop_item=VALUES(ishop_item),erpnext_item=VALUES(erpnext_item),display_order=VALUES(display_order),published=VALUES(published),
             starts_at=VALUES(starts_at),ends_at=VALUES(ends_at),frappe_document_name=VALUES(frappe_document_name),
             frappe_modified_at=VALUES(frappe_modified_at),status=VALUES(status)`.execute(
           transaction
@@ -74,17 +74,17 @@ export class CatalogDataSourceRepository {
       }
       for (const item of snapshot.promotions ?? []) {
         await sql`INSERT INTO ecommerce_storefront_promotions
-          (promotion_code,eyebrow,title,description,image_url,action_label,action_url,offer_price,original_price,badge,badge_position,badge_tint,badge_text_color,ishop_item,display_order,published,starts_at,ends_at,frappe_document_name,frappe_modified_at,status)
-          VALUES (${item.promotion_code},${item.eyebrow ?? ""},${item.title},${item.description ?? ""},${item.image_url ?? ""},${item.action_label ?? ""},${item.action_url ?? ""},${Number(item.offer_price ?? 0)},${item.original_price == null ? null : Number(item.original_price)},${item.badge ?? ""},${item.badge_position ?? "top-right"},${item.badge_tint ?? "#0f766e"},${item.badge_text_color ?? "#ffffff"},${item.ishop_item ?? null},${item.display_order ?? 0},${item.published ? 1 : 0},${frappeDate(item.starts_at)},${frappeDate(item.ends_at)},${item.name ?? item.promotion_code},${frappeDate(item.modified)},${item.status ?? "active"})
-          ON DUPLICATE KEY UPDATE title=VALUES(title),description=VALUES(description),image_url=VALUES(image_url),action_label=VALUES(action_label),action_url=VALUES(action_url),offer_price=VALUES(offer_price),original_price=VALUES(original_price),badge=VALUES(badge),badge_position=VALUES(badge_position),badge_tint=VALUES(badge_tint),badge_text_color=VALUES(badge_text_color),ishop_item=VALUES(ishop_item),display_order=VALUES(display_order),published=VALUES(published),starts_at=VALUES(starts_at),ends_at=VALUES(ends_at),frappe_document_name=VALUES(frappe_document_name),frappe_modified_at=VALUES(frappe_modified_at),status=VALUES(status)`.execute(
+          (promotion_code,eyebrow,title,description,image_url,action_label,action_url,offer_price,original_price,badge,badge_position,badge_tint,badge_text_color,ishop_item,erpnext_item,display_order,published,starts_at,ends_at,frappe_document_name,frappe_modified_at,status)
+          VALUES (${item.promotion_code},${item.eyebrow ?? ""},${item.title},${item.description ?? ""},${item.image_url ?? ""},${item.action_label ?? ""},${item.action_url ?? ""},${Number(item.offer_price ?? 0)},${item.original_price == null ? null : Number(item.original_price)},${item.badge ?? ""},${item.badge_position ?? "top-right"},${item.badge_tint ?? "#0f766e"},${item.badge_text_color ?? "#ffffff"},${item.ishop_item ?? null},${item.erpnext_item ?? null},${item.display_order ?? 0},${item.published ? 1 : 0},${frappeDate(item.starts_at)},${frappeDate(item.ends_at)},${item.name ?? item.promotion_code},${frappeDate(item.modified)},${item.status ?? "active"})
+          ON DUPLICATE KEY UPDATE title=VALUES(title),description=VALUES(description),image_url=VALUES(image_url),action_label=VALUES(action_label),action_url=VALUES(action_url),offer_price=VALUES(offer_price),original_price=VALUES(original_price),badge=VALUES(badge),badge_position=VALUES(badge_position),badge_tint=VALUES(badge_tint),badge_text_color=VALUES(badge_text_color),ishop_item=VALUES(ishop_item),erpnext_item=VALUES(erpnext_item),display_order=VALUES(display_order),published=VALUES(published),starts_at=VALUES(starts_at),ends_at=VALUES(ends_at),frappe_document_name=VALUES(frappe_document_name),frappe_modified_at=VALUES(frappe_modified_at),status=VALUES(status)`.execute(
           transaction
         );
       }
       for (const item of snapshot.featured_cards ?? []) {
         await sql`INSERT INTO ecommerce_storefront_featured_cards
-          (featured_code,eyebrow,title,description,image_url,action_label,action_url,offer_price,original_price,badge,badge_position,badge_tint,badge_text_color,ishop_item,display_order,published,starts_at,ends_at,frappe_document_name,frappe_modified_at,status)
-          VALUES (${item.featured_code},${item.eyebrow ?? ""},${item.title},${item.description ?? ""},${item.image_url ?? ""},${item.action_label ?? ""},${item.action_url ?? ""},${Number(item.offer_price ?? 0)},${item.original_price == null ? null : Number(item.original_price)},${item.badge ?? ""},${item.badge_position ?? "top-right"},${item.badge_tint ?? "#0f766e"},${item.badge_text_color ?? "#ffffff"},${item.ishop_item ?? null},${item.display_order ?? 0},${item.published ? 1 : 0},${frappeDate(item.starts_at)},${frappeDate(item.ends_at)},${item.name ?? item.featured_code},${frappeDate(item.modified)},${item.status ?? "active"})
-          ON DUPLICATE KEY UPDATE title=VALUES(title),description=VALUES(description),image_url=VALUES(image_url),action_label=VALUES(action_label),action_url=VALUES(action_url),offer_price=VALUES(offer_price),original_price=VALUES(original_price),badge=VALUES(badge),badge_position=VALUES(badge_position),badge_tint=VALUES(badge_tint),badge_text_color=VALUES(badge_text_color),ishop_item=VALUES(ishop_item),display_order=VALUES(display_order),published=VALUES(published),starts_at=VALUES(starts_at),ends_at=VALUES(ends_at),frappe_document_name=VALUES(frappe_document_name),frappe_modified_at=VALUES(frappe_modified_at),status=VALUES(status)`.execute(
+          (featured_code,eyebrow,title,description,image_url,action_label,action_url,offer_price,original_price,badge,badge_position,badge_tint,badge_text_color,ishop_item,erpnext_item,display_order,published,starts_at,ends_at,frappe_document_name,frappe_modified_at,status)
+          VALUES (${item.featured_code},${item.eyebrow ?? ""},${item.title},${item.description ?? ""},${item.image_url ?? ""},${item.action_label ?? ""},${item.action_url ?? ""},${Number(item.offer_price ?? 0)},${item.original_price == null ? null : Number(item.original_price)},${item.badge ?? ""},${item.badge_position ?? "top-right"},${item.badge_tint ?? "#0f766e"},${item.badge_text_color ?? "#ffffff"},${item.ishop_item ?? null},${item.erpnext_item ?? null},${item.display_order ?? 0},${item.published ? 1 : 0},${frappeDate(item.starts_at)},${frappeDate(item.ends_at)},${item.name ?? item.featured_code},${frappeDate(item.modified)},${item.status ?? "active"})
+          ON DUPLICATE KEY UPDATE title=VALUES(title),description=VALUES(description),image_url=VALUES(image_url),action_label=VALUES(action_label),action_url=VALUES(action_url),offer_price=VALUES(offer_price),original_price=VALUES(original_price),badge=VALUES(badge),badge_position=VALUES(badge_position),badge_tint=VALUES(badge_tint),badge_text_color=VALUES(badge_text_color),ishop_item=VALUES(ishop_item),erpnext_item=VALUES(erpnext_item),display_order=VALUES(display_order),published=VALUES(published),starts_at=VALUES(starts_at),ends_at=VALUES(ends_at),frappe_document_name=VALUES(frappe_document_name),frappe_modified_at=VALUES(frappe_modified_at),status=VALUES(status)`.execute(
           transaction
         );
       }
@@ -151,6 +151,7 @@ export class CatalogDataSourceRepository {
         ends_at: dateString(slider.ends_at),
         eyebrow: String(slider.eyebrow ?? ""),
         image_url: String(slider.image_url ?? ""),
+        erpnext_item: slider.erpnext_item ? String(slider.erpnext_item) : null,
         ishop_item: slider.ishop_item ? String(slider.ishop_item) : null,
         modified: dateString(slider.frappe_modified_at),
         name: String(slider.frappe_document_name || slider.slider_code),
@@ -173,6 +174,7 @@ export class CatalogDataSourceRepository {
         ends_at: dateString(item.ends_at),
         eyebrow: String(item.eyebrow ?? ""),
         image_url: String(item.image_url ?? ""),
+        erpnext_item: item.erpnext_item ? String(item.erpnext_item) : null,
         ishop_item: item.ishop_item ? String(item.ishop_item) : null,
         modified: dateString(item.frappe_modified_at),
         name: String(item.frappe_document_name || item.promotion_code),
@@ -198,6 +200,7 @@ export class CatalogDataSourceRepository {
         eyebrow: String(item.eyebrow ?? ""),
         featured_code: String(item.featured_code),
         image_url: String(item.image_url ?? ""),
+        erpnext_item: item.erpnext_item ? String(item.erpnext_item) : null,
         ishop_item: item.ishop_item ? String(item.ishop_item) : null,
         modified: dateString(item.frappe_modified_at),
         name: String(item.frappe_document_name || item.featured_code),

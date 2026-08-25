@@ -2,11 +2,11 @@
 
 ## Version State
 
-Current version: 1.0.69
+Current version: 1.0.70
 
-Release tag: v-1.0.69
+Release tag: v-1.0.70
 
-Changelog label: v 1.0.69
+Changelog label: v 1.0.70
 
 This changelog starts fresh from the cleaned CODEXSUN foundation. Earlier copied application history was intentionally removed because it did not represent the current workspace.
 
@@ -21,6 +21,25 @@ Records schema, migration, seed, tenant provisioning, and data compatibility cha
 ### App Codebase Changes
 
 Records UI, API, service logic, tooling, packaging, and documentation changes.
+
+## v-1.0.70
+
+### [v 1.0.70] 2026-08-25 4:50 pm - LogicX iShop storefront card synchronization
+
+#### Database Changes
+
+- Database update: Yes (manual).
+- Added separate ERPNext Item cache fields for Home Slider, Promotion Cards, and Featured Cards.
+- Registered Ecommerce migration batch 20 for the additive storefront link fields.
+
+#### App Codebase Changes
+
+- Bumped workspace version to 1.0.70.
+- Aligned Home Slider, Promotion Card, and Featured Card records with the LogicX iShop snapshot format.
+- Preserved `erpnext_item` and `ishop_item` as separate links during Frappe pull and local caching.
+- Preferred the ERPNext Item link when CXShop renders Frappe storefront content.
+- Preserved both link fields during local-to-Frappe publication.
+- Added mapping tests for ERPNext-linked sliders, promotions, and featured cards.
 
 ## v-1.0.69
 

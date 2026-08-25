@@ -1078,6 +1078,136 @@
   max-width: 740px;
 }
 
+.tenant-about-article {
+  border-top: 1px solid var(--portal-line);
+  display: flex;
+  flex-direction: column;
+  margin: 0 auto 110px;
+  max-width: 860px;
+}
+.tenant-about-article > header,
+.tenant-about-article > section,
+.tenant-about-article > footer {
+  border-bottom: 1px solid var(--portal-line);
+  padding: clamp(36px, 6vw, 64px) 0;
+}
+.tenant-about-article > header > span {
+  color: var(--portal-accent);
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  padding-bottom: 20px;
+  text-transform: uppercase;
+}
+.tenant-about-article h2 {
+  color: var(--portal-ink);
+  font-size: clamp(28px, 3vw, 38px);
+  font-weight: 560;
+  letter-spacing: -0.035em;
+  line-height: 1.15;
+  margin: 0;
+  max-width: 680px;
+  padding-bottom: 24px;
+}
+.tenant-about-article p {
+  color: var(--portal-muted);
+  font-size: 17px;
+  line-height: 1.85;
+  margin: 0;
+  max-width: 76ch;
+}
+.tenant-about-article p + p {
+  padding-top: 20px;
+}
+.tenant-about-article > header p {
+  color: var(--portal-ink);
+  font-size: clamp(20px, 2.2vw, 25px);
+  line-height: 1.65;
+}
+.tenant-about-article > footer {
+  align-items: flex-start;
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
+}
+.tenant-about-solutions {
+  columns: 2;
+  gap: 48px;
+  list-style: none;
+  margin: 30px 0;
+  padding: 0;
+}
+.tenant-about-solutions li {
+  border-top: 1px solid var(--portal-line);
+  break-inside: avoid;
+  color: var(--portal-ink);
+  font-size: 16px;
+  line-height: 1.5;
+  padding: 13px 0;
+}
+.tenant-about-principles {
+  align-items: center;
+  color: var(--portal-ink) !important;
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 15px !important;
+  gap: 10px;
+  padding: 26px 0 !important;
+}
+.tenant-about-principles span {
+  color: var(--portal-accent);
+}
+.tenant-about-reasons {
+  border-top: 1px solid var(--portal-line);
+}
+.tenant-about-reasons > div {
+  border-bottom: 1px solid var(--portal-line);
+  display: grid;
+  gap: 40px;
+  grid-template-columns: 250px minmax(0, 1fr);
+  padding: 24px 0;
+}
+.tenant-about-reasons h3 {
+  color: var(--portal-ink);
+  font-size: 18px;
+  line-height: 1.35;
+  margin: 0;
+}
+.tenant-about-reasons p {
+  font-size: 16px;
+}
+.tenant-about-purpose {
+  display: flex;
+  flex-direction: column;
+  gap: 42px;
+}
+.tenant-about-purpose > div + div {
+  border-top: 1px solid var(--portal-line);
+  padding-top: 42px;
+}
+.tenant-about-article > footer > strong {
+  color: var(--portal-ink);
+  font-size: 15px;
+  line-height: 1.6;
+}
+.tenant-about-article > footer > small {
+  color: var(--portal-muted);
+  font-size: 14px;
+}
+.tenant-about-article > footer a {
+  align-items: center;
+  color: var(--portal-accent);
+  display: inline-flex;
+  font-size: 15px;
+  font-weight: 700;
+  gap: 9px;
+}
+.tenant-about-article > footer a svg {
+  height: 17px;
+  width: 17px;
+}
+
 .tenant-contact-grid article > span {
   margin-top: 42px;
 }
@@ -1213,6 +1343,21 @@
 }
 
 @media (max-width: 620px) {
+  .tenant-about-article {
+    margin-bottom: 72px;
+    max-width: calc(100% - 36px);
+  }
+  .tenant-about-article p {
+    font-size: 16px;
+    line-height: 1.75;
+  }
+  .tenant-about-solutions {
+    columns: 1;
+  }
+  .tenant-about-reasons > div {
+    gap: 10px;
+    grid-template-columns: 1fr;
+  }
   .tenant-portal-nav {
     min-height: 68px;
     padding: 0 18px;

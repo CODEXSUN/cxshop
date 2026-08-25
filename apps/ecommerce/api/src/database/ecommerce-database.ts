@@ -51,6 +51,7 @@ import {
   catalogDataSourceCompatibilityMigration,
   catalogDataSourceSeedCompatibilityMigration,
   catalogStorefrontSourceCompatibilityMigration,
+  catalogStorefrontErpnextLinksMigration,
   catalogStorefrontSliderMigration,
   catalogStorefrontUxSourceMigration,
   catalogModuleDataSourceMigration,
@@ -62,6 +63,7 @@ import {
   upgradeCatalogDataSourceCompatibility,
   upgradeCatalogDataSourceSeedCompatibility,
   upgradeCatalogStorefrontSourceCompatibility,
+  upgradeCatalogStorefrontErpnextLinks,
   upgradeCatalogStorefrontSlider,
   upgradeCatalogStorefrontUxSources
 } from "../modules/catalog-data-source/catalog-data-source.migration.js";
@@ -446,6 +448,21 @@ const ecommerceStorefrontUxSourceMigrationBatch: MigrationBatch<EcommerceDatabas
     }
   ]
 };
+const ecommerceStorefrontErpnextLinksMigrationBatch: MigrationBatch<EcommerceDatabase> = {
+  batch: 20,
+  description: "Storefront ERPNext Item link compatibility.",
+  scope: "ecommerce",
+  version: "1.0.70",
+  steps: [
+    {
+      checksum: `${catalogStorefrontErpnextLinksMigration.key}:v1`,
+      description: catalogStorefrontErpnextLinksMigration.description,
+      name: catalogStorefrontErpnextLinksMigration.key,
+      up: upgradeCatalogStorefrontErpnextLinks,
+      version: 1
+    }
+  ]
+};
 
 export function resolveEcommerceDatabaseName(value: unknown) {
   void value;
@@ -529,6 +546,10 @@ export async function bootstrapEcommerceDatabase(databaseName: string) {
   await runMigrationBatch(getEcommerceDatabase(name), ecommerceStorefrontPerformanceMigrationBatch);
   await runMigrationBatch(getEcommerceDatabase(name), ecommerceStorefrontSchemaMigrationBatch);
   await runMigrationBatch(getEcommerceDatabase(name), ecommerceStorefrontUxSourceMigrationBatch);
+  await runMigrationBatch(
+    getEcommerceDatabase(name),
+    ecommerceStorefrontErpnextLinksMigrationBatch
+  );
   await runWithEcommerceDatabase(name, seedProductInformationModule);
   await runWithEcommerceDatabase(name, seedProductVariantModule);
   await runWithEcommerceDatabase(name, seedProductImageModule);
@@ -578,6 +599,10 @@ export async function migrateEcommerceTenantDatabase(databaseName: string) {
   await runMigrationBatch(getEcommerceDatabase(name), ecommerceStorefrontPerformanceMigrationBatch);
   await runMigrationBatch(getEcommerceDatabase(name), ecommerceStorefrontSchemaMigrationBatch);
   await runMigrationBatch(getEcommerceDatabase(name), ecommerceStorefrontUxSourceMigrationBatch);
+  await runMigrationBatch(
+    getEcommerceDatabase(name),
+    ecommerceStorefrontErpnextLinksMigrationBatch
+  );
 }
 
 export async function seedEcommerceTenantDatabase(databaseName: string) {
@@ -592,6 +617,10 @@ export async function seedEcommerceTenantDatabase(databaseName: string) {
 }
 
 export async function rollbackEcommerceTenantDatabase(databaseName: string) {
+  await rollbackMigrationBatch(
+    getEcommerceDatabase(databaseName),
+    ecommerceStorefrontErpnextLinksMigrationBatch
+  );
   await rollbackMigrationBatch(
     getEcommerceDatabase(databaseName),
     ecommerceStorefrontUxSourceMigrationBatch

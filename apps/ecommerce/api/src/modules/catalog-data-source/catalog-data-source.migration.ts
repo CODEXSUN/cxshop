@@ -177,6 +177,23 @@ export async function upgradeCatalogStorefrontUxSources(database: Kysely<Ecommer
   }
 }
 
+export const catalogStorefrontErpnextLinksMigration = {
+  description: "Preserve ERPNext Item links for synchronized storefront cards.",
+  key: "ecommerce.catalog.storefront-erpnext-links"
+} as const;
+
+export async function upgradeCatalogStorefrontErpnextLinks(database: Kysely<EcommerceDatabase>) {
+  for (const table of [
+    "ecommerce_storefront_sliders",
+    "ecommerce_storefront_promotions",
+    "ecommerce_storefront_featured_cards"
+  ]) {
+    await sql
+      .raw(`ALTER TABLE ${table} ADD COLUMN IF NOT EXISTS erpnext_item VARCHAR(191) NULL`)
+      .execute(database);
+  }
+}
+
 export const catalogDataSourceCompatibilityMigration = {
   description:
     "Retain Frappe document identity, revision, and ERPNext item fields in the local cache.",
