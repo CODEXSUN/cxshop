@@ -14,16 +14,25 @@ const empty: StorefrontProfile = {
   facebookUrl: "",
   instagramUrl: "",
   linkedinUrl: "",
+  paymentMethods: [
+    { logoUrl: "", name: "VISA" },
+    { logoUrl: "", name: "Mastercard" },
+    { logoUrl: "", name: "UPI" },
+    { logoUrl: "", name: "G Pay" }
+  ],
   poweredByText: "",
   serviceActionLabel: "Get support",
   serviceActionUrl: "/support",
-  serviceDescription: "Local help for products, installation, maintenance, and ongoing technology needs.",
+  serviceDescription:
+    "Local help for products, installation, maintenance, and ongoing technology needs.",
   serviceEyebrow: "Tech Media care",
   serviceTitle: "Technology works better with support close by.",
   tagline: "",
-  trustedDescription: "We help you choose technology that fits the work, set it up properly, and keep it useful as your needs grow.",
+  trustedDescription:
+    "We help you choose technology that fits the work, set it up properly, and keep it useful as your needs grow.",
   trustedEyebrow: "Trusted in Tiruppur since 2002",
-  trustedProofPoints: "Multi-brand guidance\nLocal technical support\nRetail and business expertise",
+  trustedProofPoints:
+    "Multi-brand guidance\nLocal technical support\nRetail and business expertise",
   trustedTitle: "25+ years of practical technology experience",
   threadsUrl: "",
   whatsappUrl: "",
@@ -52,40 +61,43 @@ export function StorefrontProfileWorkspace({
     });
   }
   return (
-    <WorkspacePage
-      title={workspaceCopy[mode].title}
-      description={workspaceCopy[mode].description}
-    >
+    <WorkspacePage title={workspaceCopy[mode].title} description={workspaceCopy[mode].description}>
       <div className="grid gap-5">
         <Card title={workspaceCopy[mode].cardTitle}>
           <StorefrontProfileForm mode={mode} onChange={setValue} value={value} />
         </Card>
-        {mode === "profile" ? <Card title="Footer preview"><FooterPreview dark={darkPreview} profile={value} /></Card> : null}
+        {mode === "profile" ? (
+          <Card title="Footer preview">
+            <FooterPreview dark={darkPreview} profile={value} />
+          </Card>
+        ) : null}
         <div className="flex justify-end">
           <Button disabled={profile.isLoading || save.isPending} onClick={submit}>
             {save.isPending ? "Saving…" : "Save profile"}
           </Button>
         </div>
       </div>
-      {mode === "profile" ? <div
-        className="fixed bottom-5 right-5 z-30 flex items-center gap-1 rounded-md border bg-background p-1 shadow-sm"
-        aria-label="Preview tone"
-      >
-        <Button
-          onClick={() => setDarkPreview(false)}
-          size="sm"
-          variant={darkPreview ? "ghost" : "default"}
+      {mode === "profile" ? (
+        <div
+          className="fixed bottom-5 right-5 z-30 flex items-center gap-1 rounded-md border bg-background p-1 shadow-sm"
+          aria-label="Preview tone"
         >
-          Light
-        </Button>
-        <Button
-          onClick={() => setDarkPreview(true)}
-          size="sm"
-          variant={darkPreview ? "default" : "ghost"}
-        >
-          Dark
-        </Button>
-      </div> : null}
+          <Button
+            onClick={() => setDarkPreview(false)}
+            size="sm"
+            variant={darkPreview ? "ghost" : "default"}
+          >
+            Light
+          </Button>
+          <Button
+            onClick={() => setDarkPreview(true)}
+            size="sm"
+            variant={darkPreview ? "default" : "ghost"}
+          >
+            Dark
+          </Button>
+        </div>
+      ) : null}
     </WorkspacePage>
   );
 }
@@ -93,7 +105,8 @@ export function StorefrontProfileWorkspace({
 const workspaceCopy = {
   profile: {
     cardTitle: "Profile and footer",
-    description: "Set the white-label message and footer details shown with the Application Company brand.",
+    description:
+      "Set the white-label message and footer details shown with the Application Company brand.",
     title: "Storefront Profile"
   },
   "trusted-strip": {
@@ -118,6 +131,25 @@ function FooterPreview({ dark, profile }: { dark: boolean; profile: StorefrontPr
       <p className="max-w-2xl text-sm opacity-80">
         {profile.aboutUs || "Your About Us text will appear here."}
       </p>
+      <div className="flex flex-wrap items-center gap-2 text-sm">
+        <strong>Supported payment types</strong>
+        {profile.paymentMethods.map((method) => (
+          <span
+            className="flex h-9 items-center gap-2 rounded bg-white px-2 text-slate-950"
+            key={`${method.name}:${method.logoUrl}`}
+          >
+            {method.logoUrl ? (
+              <img
+                alt=""
+                aria-hidden="true"
+                className="h-5 w-auto max-w-14 object-contain"
+                src={method.logoUrl}
+              />
+            ) : null}
+            {method.name || "Payment type"}
+          </span>
+        ))}
+      </div>
       <div className="flex justify-between gap-4 border-t border-current/20 pt-3 text-sm">
         <span>{profile.copyrightText || "Copyright instructions"}</span>
         <span>{profile.poweredByText}</span>

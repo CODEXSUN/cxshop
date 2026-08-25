@@ -10,6 +10,14 @@ export const storefrontProfileSchema = z.object({
   facebookUrl: optionalUrl,
   instagramUrl: optionalUrl,
   linkedinUrl: optionalUrl,
+  paymentMethods: z
+    .array(
+      z.object({
+        logoUrl: optionalUrl,
+        name: z.string().trim().min(1, "Enter a payment method name.").max(80)
+      })
+    )
+    .max(12, "Add no more than 12 payment methods."),
   poweredByText: z.string().max(240),
   serviceActionLabel: z.string().max(120),
   serviceActionUrl: z.string().max(500),

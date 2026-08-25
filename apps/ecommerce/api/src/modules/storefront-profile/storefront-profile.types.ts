@@ -4,6 +4,7 @@ export type StorefrontProfile = {
   facebookUrl: string;
   instagramUrl: string;
   linkedinUrl: string;
+  paymentMethods: StorefrontPaymentMethod[];
   poweredByText: string;
   serviceActionLabel: string;
   serviceActionUrl: string;
@@ -22,3 +23,8 @@ export type StorefrontProfile = {
 };
 
 export type StorefrontProfileInput = StorefrontProfile;
+
+export type StorefrontPaymentMethod = {
+  logoUrl: string;
+  name: string;
+};

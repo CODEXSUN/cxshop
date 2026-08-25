@@ -35,16 +35,19 @@ const empty: PromotionCardPayload = {
 };
 
 export function PromotionCardForm({
+  kind = "promotion",
   loading,
   onCancel,
   onSubmit,
   record
 }: {
+  kind?: "promotion" | "season";
   loading: boolean;
   onCancel: () => void;
   onSubmit: (value: PromotionCardPayload) => void;
   record: PromotionCardRecord | null;
 }) {
+  const noun = kind === "season" ? "season strip" : "promotion card";
   const [value, setValue] = useState(record ? payload(record) : empty);
   const [error, setError] = useState("");
   const [frappeSearch, setFrappeSearch] = useState("");
@@ -65,7 +68,7 @@ export function PromotionCardForm({
     setValue((current) => ({ ...current, [key]: next }));
   const submit = () => {
     const parsed = promotionCardSchema.safeParse(value);
-    if (!parsed.success) return setError(parsed.error.issues[0]?.message ?? "Check the promotion.");
+    if (!parsed.success) return setError(parsed.error.issues[0]?.message ?? `Check the ${noun}.`);
     setError("");
     onSubmit(parsed.data);
   };
@@ -90,7 +93,7 @@ export function PromotionCardForm({
         title: item.itemName
       }));
       setFrappeMessage(
-        `Filled from Frappe item ${item.itemCode}. Review the promotion fields before saving.`
+        `Filled from Frappe item ${item.itemCode}. Review the ${noun} fields before saving.`
       );
     } catch (caught) {
       setFrappeMessage(
@@ -100,8 +103,8 @@ export function PromotionCardForm({
   };
   return (
     <Card
-      title={record ? "Edit promotion card" : "New promotion card"}
-      description="Manage the local storefront copy of a promotion card. Pull from Frappe first when linking an iShop item."
+      title={record ? `Edit ${noun}` : `New ${noun}`}
+      description={`Manage the local storefront copy of a ${noun}. Pull from Frappe first when linking an iShop item.`}
     >
       {frappeMessage ? (
         <WorkspaceFormBanner title="Frappe item loaded" tone="info">
@@ -123,7 +126,7 @@ export function PromotionCardForm({
         </Field>
       </div>
       <div className="grid gap-4 md:grid-cols-2">
-        <Field label="Promotion code *">
+        <Field label={`${kind === "season" ? "Season" : "Promotion"} code *`}>
           <Input
             value={value.promotionCode}
             onChange={(event) => update("promotionCode", event.target.value)}
@@ -141,7 +144,7 @@ export function PromotionCardForm({
         <Field label="Frappe iShop item code (auto-filled)">
           <Input readOnly value={value.ishopItem ?? ""} />
         </Field>
-        <Field label="Promotion image">
+        <Field label={`${kind === "season" ? "Season" : "Promotion"} image`}>
           <PromotionCardImageUpload
             code={value.promotionCode}
             value={value.imageUrl}

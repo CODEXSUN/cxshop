@@ -32,6 +32,11 @@ export const saveCatalogDataSource = (input: {
   module: CatalogDataSourceModule;
   provider: CatalogDataSourceProvider;
 }) => request<CatalogDataSourceSettings>({ body: JSON.stringify(input), method: "PUT" });
+export const saveStorefrontSectionVisibility = (input: {
+  enabled: boolean;
+  module: CatalogDataSourceModule;
+}) =>
+  request<CatalogDataSourceSettings>({ body: JSON.stringify(input), method: "PUT" }, "/visibility");
 export const testCatalogDataSource = (provider: CatalogDataSourceProvider) =>
   request<CatalogDataSourceConnectionResult>(
     { body: JSON.stringify({ provider }), method: "POST" },

@@ -31,6 +31,12 @@ export function emptyStorefrontProfile(): StorefrontProfileInput {
     facebookUrl: "",
     instagramUrl: "",
     linkedinUrl: "",
+    paymentMethods: [
+      { logoUrl: "", name: "VISA" },
+      { logoUrl: "", name: "Mastercard" },
+      { logoUrl: "", name: "UPI" },
+      { logoUrl: "", name: "G Pay" }
+    ],
     poweredByText: "",
     serviceActionLabel: "Get support",
     serviceActionUrl: "/support",
@@ -53,7 +59,15 @@ export function emptyStorefrontProfile(): StorefrontProfileInput {
 }
 
 function normalize(input: StorefrontProfileInput): StorefrontProfileInput {
-  return Object.fromEntries(
-    Object.entries(input).map(([key, value]) => [key, value.trim()])
-  ) as StorefrontProfileInput;
+  return {
+    ...Object.fromEntries(
+      Object.entries(input)
+        .filter(([key]) => key !== "paymentMethods")
+        .map(([key, value]) => [key, String(value).trim()])
+    ),
+    paymentMethods: input.paymentMethods.map((method) => ({
+      logoUrl: method.logoUrl.trim(),
+      name: method.name.trim()
+    }))
+  } as StorefrontProfileInput;
 }

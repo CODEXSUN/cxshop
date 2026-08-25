@@ -15,6 +15,7 @@ import {
   updateFeaturedCard
 } from "./featured-card.services";
 import { invalidateStorefrontClientCache } from "../storefront";
+import { StorefrontSectionSwitch } from "../catalog-data-source";
 import type {
   FeaturedCardPayload,
   FeaturedCardRecord,
@@ -72,6 +73,7 @@ export function FeaturedCardWorkspace() {
       description="Manage locally stored storefront slides and refresh their linked items and source documents from Frappe."
       actions={
         <div className="flex flex-wrap gap-2">
+          <StorefrontSectionSwitch module="featured-cards" />
           <Button variant="outline" disabled={pull.isPending} onClick={() => pull.mutate()}>
             <Download className="size-4" />
             {pull.isPending ? "Pulling..." : "Pull from Frappe"}

@@ -15,6 +15,7 @@ import {
   updateStorefrontSlider
 } from "./storefront-slider.services";
 import { invalidateStorefrontClientCache } from "../storefront";
+import { StorefrontSectionSwitch } from "../catalog-data-source";
 import type {
   StorefrontSliderPayload,
   StorefrontSliderRecord,
@@ -70,6 +71,7 @@ export function StorefrontSliderWorkspace() {
       description="Manage locally stored storefront slides and refresh their linked items and source documents from Frappe."
       actions={
         <div className="flex flex-wrap gap-2">
+          <StorefrontSectionSwitch module="sliders" />
           <Button variant="outline" disabled={pull.isPending} onClick={() => pull.mutate()}>
             <Download className="size-4" />
             {pull.isPending ? "Pulling..." : "Pull from Frappe"}

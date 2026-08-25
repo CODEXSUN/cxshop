@@ -10,12 +10,12 @@ export function useCompanyBranding(companyId: number | null) {
   });
   const company = companyQuery.data;
   const lightLogoQuery = useQuery({
-    enabled: Boolean(company?.logoPath),
+    enabled: hasStoredLogo(company?.logoPath),
     queryFn: () => readCompanyLogo("logo"),
     queryKey: ["core", "organisation", "companies", companyId, "logo", company?.updatedAt]
   });
   const darkLogoQuery = useQuery({
-    enabled: Boolean(company?.logoDarkPath),
+    enabled: hasStoredLogo(company?.logoDarkPath),
     queryFn: () => readCompanyLogo("logo-dark"),
     queryKey: ["core", "organisation", "companies", companyId, "logo-dark", company?.updatedAt]
   });
@@ -28,6 +28,10 @@ export function useCompanyBranding(companyId: number | null) {
     isLoading: companyQuery.isLoading || lightLogoQuery.isLoading || darkLogoQuery.isLoading,
     lightLogoUrl
   };
+}
+
+function hasStoredLogo(path: string | null | undefined) {
+  return path?.startsWith("storage/") ?? false;
 }
 
 function useBlobUrl(blob: Blob | null | undefined) {

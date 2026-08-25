@@ -144,6 +144,10 @@ export function StorefrontSliderForm({
           />
         </Field>
         <Field label="Slider image">
+          <div className="rounded-md bg-muted/50 px-3 py-2 text-sm leading-6 text-muted-foreground">
+            <p>1. Ratio: 4:3</p>
+            <p>2. Preferred size: 1600 × 1200 px WebP</p>
+          </div>
           <StorefrontSliderImageField
             imageUrl={value.imageUrl}
             itemCode={value.ishopItem}

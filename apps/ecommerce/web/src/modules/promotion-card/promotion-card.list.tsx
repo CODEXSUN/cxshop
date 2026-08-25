@@ -3,11 +3,13 @@ import { WorkspaceStatusBadge } from "@cxshop/ui/workspace/status";
 import type { PromotionCardRecord } from "./promotion-card.types";
 
 export function PromotionCardList({
+  kind = "promotion",
   loading,
   onEdit,
   onStatus,
   records
 }: {
+  kind?: "promotion" | "season";
   loading: boolean;
   onEdit: (record: PromotionCardRecord) => void;
   onStatus: (record: PromotionCardRecord) => void;
@@ -16,7 +18,9 @@ export function PromotionCardList({
   if (loading || records.length === 0) {
     return (
       <div className="rounded-md border p-8 text-center text-sm text-muted-foreground">
-        {loading ? "Loading promotion cards..." : "No promotion cards found."}
+        {loading
+          ? `Loading ${kind === "season" ? "season strips" : "promotion cards"}...`
+          : `No ${kind === "season" ? "season strips" : "promotion cards"} found.`}
       </div>
     );
   }
@@ -26,7 +30,7 @@ export function PromotionCardList({
         <thead>
           <tr className="border-b bg-muted/40">
             <th className="px-4 py-3 text-left">Preview</th>
-            <th className="px-4 py-3 text-left">Promotion</th>
+            <th className="px-4 py-3 text-left">{kind === "season" ? "Season" : "Promotion"}</th>
             <th className="px-4 py-3 text-left">Frappe item</th>
             <th className="px-4 py-3 text-left">Order</th>
             <th className="px-4 py-3 text-left">Publication</th>

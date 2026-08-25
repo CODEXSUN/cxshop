@@ -9,6 +9,14 @@ const profileSchema = z.object({
   facebookUrl: z.union([z.literal(""), z.string().url().max(500)]),
   instagramUrl: z.union([z.literal(""), z.string().url().max(500)]),
   linkedinUrl: z.union([z.literal(""), z.string().url().max(500)]),
+  paymentMethods: z
+    .array(
+      z.object({
+        logoUrl: z.union([z.literal(""), z.string().url().max(500)]),
+        name: z.string().trim().min(1).max(80)
+      })
+    )
+    .max(12),
   poweredByText: z.string().max(240),
   serviceActionLabel: z.string().max(120),
   serviceActionUrl: z.string().max(500),

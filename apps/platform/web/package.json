@@ -1,6 +1,6 @@
 {
   "name": "@cxshop/platform-web",
-  "version": "1.0.70",
+  "version": "1.0.71",
   "private": true,
   "type": "module",
   "scripts": {
@@ -10,12 +10,12 @@
   },
   "dependencies": {
     "@codexsun/blog": "github:CODEXSUN/blog#v-1.0.12",
-    "@cxshop/billing-web": "^1.0.70",
-    "@cxshop/core-web": "^1.0.70",
-    "@cxshop/devkit-web": "^1.0.70",
-    "@cxshop/ecommerce-web": "^1.0.70",
-    "@cxshop/mail-web": "^1.0.70",
-    "@cxshop/ui": "^1.0.70",
+    "@cxshop/billing-web": "^1.0.71",
+    "@cxshop/core-web": "^1.0.71",
+    "@cxshop/devkit-web": "^1.0.71",
+    "@cxshop/ecommerce-web": "^1.0.71",
+    "@cxshop/mail-web": "^1.0.71",
+    "@cxshop/ui": "^1.0.71",
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/modifiers": "^9.0.0",
     "@dnd-kit/sortable": "^10.0.0",

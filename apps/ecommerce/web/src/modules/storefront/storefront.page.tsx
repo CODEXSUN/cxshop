@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { ArrowLeftIcon, ArrowRightIcon } from "lucide-react";
 import {
   getStorefrontAnnouncement,
@@ -141,7 +141,7 @@ function CatalogPage({ category, searchPage = false }: { category: string; searc
     ...defaultFilters(category, searchPage ? initialSearch : ""),
     scope: searchPage ? initialScope : "all"
   });
-  const loadMoreMarker = useRef<HTMLDivElement>(null);
+  const [loadMoreMarker, setLoadMoreMarker] = useState<HTMLDivElement | null>(null);
   const [blogPosts, setBlogPosts] = useState<StorefrontBlogPost[]>([]);
   const [siteNavigation, setSiteNavigation] = useState<StorefrontSiteNavigation | null>(null);
   const [announcement, setAnnouncement] = useState<StorefrontAnnouncement | null>(null);
@@ -190,17 +190,17 @@ function CatalogPage({ category, searchPage = false }: { category: string; searc
   const { error, hasMore, loading, loadingMore, loadMore, products } =
     useStorefrontCatalog(filters);
   useEffect(() => {
-    const marker = loadMoreMarker.current;
-    if (!marker || !hasMore) return;
+    if (!loadMoreMarker || !hasMore || loading) return;
+    const rootMargin = `${catalogPreloadDistance(loadMoreMarker)}px 0px`;
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0]?.isIntersecting) void loadMore();
       },
-      { rootMargin: "600px 0px" }
+      { rootMargin }
     );
-    observer.observe(marker);
+    observer.observe(loadMoreMarker);
     return () => observer.disconnect();
-  }, [hasMore, loadMore]);
+  }, [hasMore, loadMore, loadMoreMarker, loading]);
 
   const catalogSection = (
     <section className="cx-store__catalog" id="catalog">
@@ -244,7 +244,7 @@ function CatalogPage({ category, searchPage = false }: { category: string; searc
             ))}
             {loadingMore ? <ProductSkeletons count={4} /> : null}
           </div>
-          <div ref={loadMoreMarker} className="cx-store__load-marker" aria-hidden="true" />
+          <div ref={setLoadMoreMarker} className="cx-store__load-marker" aria-hidden="true" />
           {!loading && products.length === 0 ? (
             <p className="cx-store__empty">{error || "No products match this selection."}</p>
           ) : null}
@@ -288,6 +288,14 @@ function CatalogPage({ category, searchPage = false }: { category: string; searc
       <StoreFooter branding={branding} navigation={siteNavigation} />
     </div>
   );
+}
+
+function catalogPreloadDistance(marker: HTMLDivElement) {
+  const grid = marker.previousElementSibling;
+  const card = grid?.firstElementChild;
+  if (!(grid instanceof HTMLElement) || !(card instanceof HTMLElement)) return 1000;
+  const rowGap = Number.parseFloat(window.getComputedStyle(grid).rowGap) || 0;
+  return Math.max(800, Math.ceil((card.getBoundingClientRect().height + rowGap) * 2));
 }
 
 function ProductSkeletons({ count }: { count: number }) {

@@ -31,6 +31,7 @@ export type CatalogModuleDataSource = {
   label: string;
   module: CatalogDataSourceModule;
   provider: CatalogDataSourceProvider;
+  enabled: boolean;
   updatedAt: string | null;
   updatedBy: string | null;
 };
@@ -187,10 +188,9 @@ export type FrappeIShopBrandStrip = {
   published?: number;
   status?: "active" | "inactive";
 };
-export type FrappeIShopSeasonStrip = Omit<
-  FrappeIShopPromotion,
-  "badge_position" | "offer_price" | "original_price" | "promotion_code"
-> & { season_code: string };
+export type FrappeIShopSeasonStrip = Omit<FrappeIShopPromotion, "promotion_code"> & {
+  season_code: string;
+};
 export type FrappeIShopCampaignEvent = Omit<
   FrappeIShopPromotion,
   "badge_position" | "offer_price" | "original_price" | "promotion_code"

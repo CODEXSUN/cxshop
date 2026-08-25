@@ -2,11 +2,11 @@
 
 ## Version State
 
-Current version: 1.0.70
+Current version: 1.0.71
 
-Release tag: v-1.0.70
+Release tag: v-1.0.71
 
-Changelog label: v 1.0.70
+Changelog label: v 1.0.71
 
 This changelog starts fresh from the cleaned CODEXSUN foundation. Earlier copied application history was intentionally removed because it did not represent the current workspace.
 
@@ -16,11 +16,28 @@ New entries should keep database-facing work and application code work separate.
 
 ### Database Changes
 
-Records schema, migration, seed, tenant provisioning, and data compatibility changes.
+- Added migration batch 21 for a dedicated Season Strip table.
+- Added a persisted whole-section visibility flag to each storefront data-source module.
+- Added migration batch 22 for ordered Storefront Profile payment methods with logo and name data.
 
 ### App Codebase Changes
 
-Records UI, API, service logic, tooling, packaging, and documentation changes.
+- Separated Season Strip reads, administration, Frappe synchronization, and storefront rendering from Promotion Cards.
+- Added section enable and disable switches beside the Frappe pull action for Home Slider, Promotion Cards, Featured Cards, and Season Strips.
+- Removed the Promotion Cards fallback from `storefront.home.season`.
+- Connected footer payment types to Storefront Profile, including ordered back-office editing, logo previews, public API data, and responsive storefront rendering.
+
+## v-1.0.71
+
+### [v 1.0.71] 2026-08-25 6:09 pm - update store front
+
+#### Database Changes
+
+- Database update: Yes (auto-check).
+
+#### App Codebase Changes
+
+- Bumped workspace version to 1.0.71.
 
 ## v-1.0.70
 

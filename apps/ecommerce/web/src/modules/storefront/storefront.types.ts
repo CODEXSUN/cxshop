@@ -83,6 +83,7 @@ export type StorefrontSiteNavigation = {
   about: string;
   copyrightText: string;
   groups: Array<{ title: string; links: Array<{ label: string; href: string }> }>;
+  paymentMethods: Array<{ logoUrl: string; name: string }>;
   socialLinks: Array<{ label: string; href: string }>;
   poweredByText: string;
   serviceBanner: {

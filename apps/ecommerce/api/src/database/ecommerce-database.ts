@@ -40,9 +40,11 @@ import {
 import { seedStorefrontAnnouncementModule } from "../modules/storefront-announcement/storefront-announcement.seed.js";
 import {
   migrateStorefrontProfileModule,
+  storefrontProfilePaymentMethodsMigration,
   storefrontProfileMigration,
   storefrontProfileSocialLinksMigration,
   storefrontProfileUxContentMigration,
+  upgradeStorefrontProfilePaymentMethods,
   upgradeStorefrontProfileSocialLinks,
   upgradeStorefrontProfileUxContent
 } from "../modules/storefront-profile/storefront-profile.migration.js";
@@ -81,6 +83,12 @@ import {
   featuredCardMigration,
   migrateFeaturedCardModule
 } from "../modules/featured-card/featured-card.migration.js";
+import {
+  migrateSeasonStripModule,
+  seasonStripMigration,
+  storefrontSectionVisibilityMigration,
+  upgradeStorefrontSectionVisibility
+} from "../modules/season-strip/season-strip.migration.js";
 import {
   storefrontPerformanceMigration,
   upgradeStorefrontReadPerformance
@@ -125,8 +133,11 @@ export const ecommerceTenantMigrations = [
   storefrontProfileMigration,
   storefrontProfileSocialLinksMigration,
   storefrontProfileUxContentMigration,
+  storefrontProfilePaymentMethodsMigration,
   storefrontPerformanceMigration,
-  catalogStorefrontUxSourceMigration
+  catalogStorefrontUxSourceMigration,
+  seasonStripMigration,
+  storefrontSectionVisibilityMigration
 ] as const;
 export const ecommerceMigrationBatch: MigrationBatch<EcommerceDatabase> = {
   batch: 1,
@@ -463,6 +474,43 @@ const ecommerceStorefrontErpnextLinksMigrationBatch: MigrationBatch<EcommerceDat
     }
   ]
 };
+const ecommerceSeasonStripMigrationBatch: MigrationBatch<EcommerceDatabase> = {
+  batch: 21,
+  description: "Dedicated Season Strip documents and storefront section visibility.",
+  scope: "ecommerce",
+  version: "1.0.70",
+  steps: [
+    {
+      checksum: `${seasonStripMigration.key}:v1`,
+      description: seasonStripMigration.description,
+      name: seasonStripMigration.key,
+      up: migrateSeasonStripModule,
+      version: 1
+    },
+    {
+      checksum: `${storefrontSectionVisibilityMigration.key}:v1`,
+      description: storefrontSectionVisibilityMigration.description,
+      name: storefrontSectionVisibilityMigration.key,
+      up: upgradeStorefrontSectionVisibility,
+      version: 1
+    }
+  ]
+};
+const ecommerceStorefrontProfilePaymentMethodsMigrationBatch: MigrationBatch<EcommerceDatabase> = {
+  batch: 22,
+  description: "Storefront Profile payment methods.",
+  scope: "ecommerce",
+  version: "1.0.70",
+  steps: [
+    {
+      checksum: `${storefrontProfilePaymentMethodsMigration.key}:v1`,
+      description: storefrontProfilePaymentMethodsMigration.description,
+      name: storefrontProfilePaymentMethodsMigration.key,
+      up: upgradeStorefrontProfilePaymentMethods,
+      version: 1
+    }
+  ]
+};
 
 export function resolveEcommerceDatabaseName(value: unknown) {
   void value;
@@ -550,6 +598,11 @@ export async function bootstrapEcommerceDatabase(databaseName: string) {
     getEcommerceDatabase(name),
     ecommerceStorefrontErpnextLinksMigrationBatch
   );
+  await runMigrationBatch(getEcommerceDatabase(name), ecommerceSeasonStripMigrationBatch);
+  await runMigrationBatch(
+    getEcommerceDatabase(name),
+    ecommerceStorefrontProfilePaymentMethodsMigrationBatch
+  );
   await runWithEcommerceDatabase(name, seedProductInformationModule);
   await runWithEcommerceDatabase(name, seedProductVariantModule);
   await runWithEcommerceDatabase(name, seedProductImageModule);
@@ -603,6 +656,11 @@ export async function migrateEcommerceTenantDatabase(databaseName: string) {
     getEcommerceDatabase(name),
     ecommerceStorefrontErpnextLinksMigrationBatch
   );
+  await runMigrationBatch(getEcommerceDatabase(name), ecommerceSeasonStripMigrationBatch);
+  await runMigrationBatch(
+    getEcommerceDatabase(name),
+    ecommerceStorefrontProfilePaymentMethodsMigrationBatch
+  );
 }
 
 export async function seedEcommerceTenantDatabase(databaseName: string) {
@@ -617,6 +675,14 @@ export async function seedEcommerceTenantDatabase(databaseName: string) {
 }
 
 export async function rollbackEcommerceTenantDatabase(databaseName: string) {
+  await rollbackMigrationBatch(
+    getEcommerceDatabase(databaseName),
+    ecommerceStorefrontProfilePaymentMethodsMigrationBatch
+  );
+  await rollbackMigrationBatch(
+    getEcommerceDatabase(databaseName),
+    ecommerceSeasonStripMigrationBatch
+  );
   await rollbackMigrationBatch(
     getEcommerceDatabase(databaseName),
     ecommerceStorefrontErpnextLinksMigrationBatch

@@ -18,4 +18,5 @@ export * from "./modules/storefront-profile/index.js";
 export * from "./modules/storefront-slider/index.js";
 export * from "./modules/promotion-card/index.js";
 export * from "./modules/featured-card/index.js";
+export * from "./modules/season-strip/index.js";
 export * from "./modules/catalog-data-source/index.js";

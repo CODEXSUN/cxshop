@@ -112,16 +112,9 @@ export class StorefrontService {
             { label: "Returns & refunds", href: "/returns" },
             { label: "Order help", href: "/login" }
           ]
-        },
-        {
-          title: "Legal",
-          links: [
-            { label: "Privacy policy", href: "/privacy" },
-            { label: "Terms of use", href: "/terms" },
-            { label: "Cookie policy", href: "/cookies" }
-          ]
         }
       ],
+      paymentMethods: profile.paymentMethods,
       poweredByText: profile.poweredByText,
       serviceBanner: {
         actionLabel: profile.serviceActionLabel,

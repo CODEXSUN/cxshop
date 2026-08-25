@@ -65,11 +65,7 @@ export function StorefrontHomeSections(props: HomeSectionsProps) {
     trust: <TechMediaTrustSection content={props.siteNavigation?.trustedStrip} />,
     "service-banner": <ServiceBanner content={props.siteNavigation?.serviceBanner} />,
     promotions: <PromotionsSection promotions={props.promotions} />,
-    season: (
-      <SeasonBanner
-        promotions={props.seasonStrips.length ? props.seasonStrips : props.promotions}
-      />
-    ),
+    season: <SeasonBanner promotions={props.seasonStrips} />,
     "campaigns-events": (
       <CampaignsAndEventsSection
         campaigns={

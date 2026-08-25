@@ -17,13 +17,15 @@ export class CatalogDataSourceRepository {
     const result = await sql<{
       module_key: CatalogDataSourceModule;
       provider: CatalogDataSourceProvider;
+      enabled: number;
       updated_at: Date | string;
       updated_by: string;
-    }>`SELECT module_key,provider,updated_by,updated_at
+    }>`SELECT module_key,provider,enabled,updated_by,updated_at
       FROM ecommerce_catalog_module_data_sources ORDER BY id`.execute(getEcommerceDatabase());
     return result.rows.map((row) => ({
       module: row.module_key,
       provider: row.provider,
+      enabled: Boolean(row.enabled),
       updatedAt: new Date(row.updated_at).toISOString(),
       updatedBy: row.updated_by
     }));
@@ -37,6 +39,14 @@ export class CatalogDataSourceRepository {
     await sql`INSERT INTO ecommerce_catalog_module_data_sources (module_key,provider,updated_by)
       VALUES (${module},${provider},${actorEmail})
       ON DUPLICATE KEY UPDATE provider=VALUES(provider),updated_by=VALUES(updated_by),updated_at=CURRENT_TIMESTAMP`.execute(
+      getEcommerceDatabase()
+    );
+  }
+
+  async saveModuleEnabled(module: CatalogDataSourceModule, enabled: boolean, actorEmail: string) {
+    await sql`INSERT INTO ecommerce_catalog_module_data_sources (module_key,provider,enabled,updated_by)
+      VALUES (${module},'own',${enabled ? 1 : 0},${actorEmail})
+      ON DUPLICATE KEY UPDATE enabled=VALUES(enabled),updated_by=VALUES(updated_by),updated_at=CURRENT_TIMESTAMP`.execute(
       getEcommerceDatabase()
     );
   }
@@ -88,6 +98,14 @@ export class CatalogDataSourceRepository {
           transaction
         );
       }
+      for (const item of snapshot.season_strips ?? []) {
+        await sql`INSERT INTO ecommerce_storefront_season_strips
+          (season_code,eyebrow,title,description,image_url,action_label,action_url,offer_price,original_price,badge,badge_position,badge_tint,badge_text_color,ishop_item,erpnext_item,display_order,published,starts_at,ends_at,frappe_document_name,frappe_modified_at,status)
+          VALUES (${item.season_code},${item.eyebrow ?? ""},${item.title},${item.description ?? ""},${item.image_url ?? ""},${item.action_label ?? ""},${item.action_url ?? ""},${Number(item.offer_price ?? 0)},${item.original_price == null ? null : Number(item.original_price)},${item.badge ?? ""},${item.badge_position ?? "top-right"},${item.badge_tint ?? "#0f766e"},${item.badge_text_color ?? "#ffffff"},${item.ishop_item ?? null},${item.erpnext_item ?? null},${item.display_order ?? 0},${item.published ? 1 : 0},${frappeDate(item.starts_at)},${frappeDate(item.ends_at)},${item.name ?? item.season_code},${frappeDate(item.modified)},${item.status ?? "active"})
+          ON DUPLICATE KEY UPDATE eyebrow=VALUES(eyebrow),title=VALUES(title),description=VALUES(description),image_url=VALUES(image_url),action_label=VALUES(action_label),action_url=VALUES(action_url),offer_price=VALUES(offer_price),original_price=VALUES(original_price),badge=VALUES(badge),badge_position=VALUES(badge_position),badge_tint=VALUES(badge_tint),badge_text_color=VALUES(badge_text_color),ishop_item=VALUES(ishop_item),erpnext_item=VALUES(erpnext_item),display_order=VALUES(display_order),published=VALUES(published),starts_at=VALUES(starts_at),ends_at=VALUES(ends_at),frappe_document_name=VALUES(frappe_document_name),frappe_modified_at=VALUES(frappe_modified_at),status=VALUES(status)`.execute(
+          transaction
+        );
+      }
       await this.deactivateMissingFrappeRecords(transaction, snapshot);
       await sql`INSERT INTO ecommerce_catalog_sync_runs
         (direction,status,item_count,catalog_count,details_json)
@@ -99,33 +117,37 @@ export class CatalogDataSourceRepository {
 
   async snapshot(): Promise<FrappeCatalogSnapshot> {
     const database = getEcommerceDatabase();
-    const [items, catalogs, memberships, sliders, promotions, featuredCards] = await Promise.all([
-      sql<Row>`SELECT info.*,product.name AS item_name,product.opening_price,category.name AS category_name,
+    const [items, catalogs, memberships, sliders, promotions, featuredCards, seasonStrips] =
+      await Promise.all([
+        sql<Row>`SELECT info.*,product.name AS item_name,product.opening_price,category.name AS category_name,
         brand.name AS brand_name,image.url AS primary_image FROM ecommerce_product_information info
         INNER JOIN core_products product ON product.id=info.core_product_id AND product.deleted_at IS NULL
         LEFT JOIN core_product_categories category ON category.id=product.product_category_id
         LEFT JOIN core_brands brand ON brand.id=info.brand_id
         LEFT JOIN ecommerce_product_images image ON image.product_information_id=info.id AND image.is_primary=1 AND image.status='active'
         WHERE info.status='active' AND info.frappe_item_code IS NOT NULL ORDER BY info.frappe_item_code`.execute(
-        database
-      ),
-      sql<Row>`SELECT * FROM ecommerce_ishop_catalogs WHERE status='active' ORDER BY catalog_code`.execute(
-        database
-      ),
-      sql<Row>`SELECT membership.*,catalog.catalog_code FROM ecommerce_catalog_items membership
+          database
+        ),
+        sql<Row>`SELECT * FROM ecommerce_ishop_catalogs WHERE status='active' ORDER BY catalog_code`.execute(
+          database
+        ),
+        sql<Row>`SELECT membership.*,catalog.catalog_code FROM ecommerce_catalog_items membership
         INNER JOIN ecommerce_ishop_catalogs catalog ON catalog.id=membership.catalog_id ORDER BY membership.display_order`.execute(
-        database
-      ),
-      sql<Row>`SELECT * FROM ecommerce_storefront_sliders WHERE status='active' ORDER BY display_order,slider_code`.execute(
-        database
-      ),
-      sql<Row>`SELECT * FROM ecommerce_storefront_promotions WHERE status='active' ORDER BY display_order,promotion_code`.execute(
-        database
-      ),
-      sql<Row>`SELECT * FROM ecommerce_storefront_featured_cards WHERE status='active' ORDER BY display_order,featured_code`.execute(
-        database
-      )
-    ]);
+          database
+        ),
+        sql<Row>`SELECT * FROM ecommerce_storefront_sliders WHERE status='active' ORDER BY display_order,slider_code`.execute(
+          database
+        ),
+        sql<Row>`SELECT * FROM ecommerce_storefront_promotions WHERE status='active' ORDER BY display_order,promotion_code`.execute(
+          database
+        ),
+        sql<Row>`SELECT * FROM ecommerce_storefront_featured_cards WHERE status='active' ORDER BY display_order,featured_code`.execute(
+          database
+        ),
+        sql<Row>`SELECT * FROM ecommerce_storefront_season_strips WHERE status='active' ORDER BY display_order,season_code`.execute(
+          database
+        )
+      ]);
     const ishopItems = items.rows.map(toIShopItem);
     return {
       erpnext_items: items.rows.map(toErpItem),
@@ -207,6 +229,31 @@ export class CatalogDataSourceRepository {
         offer_price: Number(item.offer_price ?? 0),
         original_price: item.original_price == null ? null : Number(item.original_price),
         published: Number(item.published ?? 0),
+        starts_at: dateString(item.starts_at),
+        status: item.status === "inactive" ? "inactive" : "active",
+        title: String(item.title)
+      })),
+      season_strips: seasonStrips.rows.map((item) => ({
+        action_label: String(item.action_label ?? ""),
+        action_url: String(item.action_url ?? ""),
+        badge: String(item.badge ?? ""),
+        badge_position: String(item.badge_position ?? "top-right") as
+          "top-left" | "top-right" | "bottom-left" | "bottom-right",
+        badge_tint: String(item.badge_tint ?? "brand"),
+        badge_text_color: String(item.badge_text_color ?? "#ffffff"),
+        description: String(item.description ?? ""),
+        display_order: Number(item.display_order ?? 0),
+        ends_at: dateString(item.ends_at),
+        eyebrow: String(item.eyebrow ?? ""),
+        image_url: String(item.image_url ?? ""),
+        erpnext_item: item.erpnext_item ? String(item.erpnext_item) : null,
+        ishop_item: item.ishop_item ? String(item.ishop_item) : null,
+        modified: dateString(item.frappe_modified_at),
+        name: String(item.frappe_document_name || item.season_code),
+        offer_price: Number(item.offer_price ?? 0),
+        original_price: item.original_price == null ? null : Number(item.original_price),
+        published: Number(item.published ?? 0),
+        season_code: String(item.season_code),
         starts_at: dateString(item.starts_at),
         status: item.status === "inactive" ? "inactive" : "active",
         title: String(item.title)
@@ -426,6 +473,15 @@ export class CatalogDataSourceRepository {
       );
     else
       await sql`UPDATE ecommerce_storefront_featured_cards SET status='inactive',published=0`.execute(
+        transaction
+      );
+    const seasonCodes = (snapshot.season_strips ?? []).map((item) => item.season_code);
+    if (seasonCodes.length)
+      await sql`UPDATE ecommerce_storefront_season_strips SET status='inactive',published=0 WHERE season_code NOT IN (${sql.join(seasonCodes)})`.execute(
+        transaction
+      );
+    else
+      await sql`UPDATE ecommerce_storefront_season_strips SET status='inactive',published=0`.execute(
         transaction
       );
   }

@@ -139,6 +139,32 @@ export class StorefrontRepository {
     }));
   }
 
+  async seasonStrips() {
+    const result = await sql<Row>`SELECT * FROM ecommerce_storefront_season_strips
+      WHERE status='active' AND published=1 AND ${this.sourceCondition("ecommerce_storefront_season_strips")}
+      AND (starts_at IS NULL OR starts_at<=CURRENT_TIMESTAMP) AND (ends_at IS NULL OR ends_at>=CURRENT_TIMESTAMP)
+      ORDER BY display_order,season_code`.execute(getEcommerceDatabase());
+    return result.rows.map((row) => ({
+      actionLabel: String(row.action_label || "Explore now"),
+      actionUrl: String(row.action_url || "#catalog"),
+      badge: String(row.badge || ""),
+      badgePosition: String(row.badge_position || "top-right") as
+        "top-left" | "top-right" | "bottom-left" | "bottom-right",
+      badgeTint: String(row.badge_tint || "brand"),
+      badgeTextColor: String(row.badge_text_color || "#ffffff"),
+      description: String(row.description || ""),
+      displayOrder: Number(row.display_order || 0),
+      eyebrow: String(row.eyebrow || ""),
+      imageAlt: String(row.title),
+      imageUrl: String(row.image_url || ""),
+      linkedItem: row.ishop_item ? String(row.ishop_item) : null,
+      offerPrice: Number(row.offer_price || 0),
+      originalPrice: row.original_price == null ? null : Number(row.original_price),
+      promotionCode: String(row.season_code),
+      title: String(row.title)
+    }));
+  }
+
   async discovery(): Promise<StorefrontDiscovery> {
     const [categories, brands, prices] = await Promise.all([
       this.categories(),

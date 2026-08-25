@@ -885,10 +885,12 @@ export function StoreFooter({
             <strong>Supported payment types</strong>
             <div>
               <CreditCardIcon aria-hidden="true" />
-              <b>VISA</b>
-              <b>Mastercard</b>
-              <b>UPI</b>
-              <b>G Pay</b>
+              {navigation?.paymentMethods.map((method) => (
+                <span className="cx-store__payment-method" key={`${method.name}:${method.logoUrl}`}>
+                  {method.logoUrl ? <img alt="" aria-hidden="true" src={method.logoUrl} /> : null}
+                  <b>{method.name}</b>
+                </span>
+              ))}
             </div>
           </section>
           <section className="cx-store__footer-updates">
@@ -1040,14 +1042,6 @@ const defaultFooterGroups = [
       { label: "Order help", href: "/order-help" },
       { label: "Shipping", href: "/shipping" },
       { label: "Returns", href: "/returns" }
-    ]
-  },
-  {
-    title: "Legal",
-    links: [
-      { label: "Privacy", href: "/privacy" },
-      { label: "Terms", href: "/terms" },
-      { label: "Cookies", href: "/cookies" }
     ]
   }
 ];

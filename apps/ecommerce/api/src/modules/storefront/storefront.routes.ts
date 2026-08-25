@@ -84,6 +84,9 @@ const siteNavigation = z
         links: z.array(z.object({ label: z.string(), href: z.string() }))
       })
     ),
+    paymentMethods: z.array(
+      z.object({ logoUrl: z.union([z.literal(""), z.string().url()]), name: z.string() })
+    ),
     poweredByText: z.string(),
     serviceBanner: z.object({
       actionLabel: z.string(),

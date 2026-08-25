@@ -3,6 +3,7 @@ import {
   getCatalogDataSource,
   saveFrappeConnection,
   saveCatalogDataSource,
+  saveStorefrontSectionVisibility,
   syncCatalogDataSource,
   testCatalogDataSource,
   verifyFrappeConnection
@@ -34,5 +35,9 @@ export function useCatalogDataSource() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: catalogDataSourceQueryKey })
   });
   const sync = useMutation({ mutationFn: syncCatalogDataSource });
-  return { save, saveConnection, settings, sync, test, verifyConnection };
+  const visibility = useMutation({
+    mutationFn: saveStorefrontSectionVisibility,
+    onSuccess: (value) => queryClient.setQueryData(catalogDataSourceQueryKey, value)
+  });
+  return { save, saveConnection, settings, sync, test, verifyConnection, visibility };
 }

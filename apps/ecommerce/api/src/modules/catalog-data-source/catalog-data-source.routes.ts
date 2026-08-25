@@ -20,6 +20,7 @@ const settings = z.object({
       label: z.string(),
       module: moduleKey,
       provider,
+      enabled: z.boolean(),
       updatedAt: z.string().nullable(),
       updatedBy: z.string().nullable()
     })
@@ -89,6 +90,16 @@ export async function registerCatalogDataSourceRoutes(
       response: z.array(frappeItem)
     },
     handler: ({ query }) => service.frappeItems(query.search)
+  });
+  registerContractRoute(app, {
+    method: "PUT",
+    url: "/ecommerce/settings/data-source/visibility",
+    schemas: {
+      body: z.object({ module: moduleKey, enabled: z.boolean() }).strict(),
+      response: settings
+    },
+    handler: ({ body, request }) =>
+      service.switchEnabled(body.module, body.enabled, resolveActorEmail(request))
   });
   registerContractRoute(app, {
     method: "GET",

@@ -1,6 +1,10 @@
 import { sql } from "kysely";
 import { getEcommerceDatabase } from "../../database/ecommerce-database.js";
-import type { StorefrontProfile, StorefrontProfileInput } from "./storefront-profile.types.js";
+import type {
+  StorefrontPaymentMethod,
+  StorefrontProfile,
+  StorefrontProfileInput
+} from "./storefront-profile.types.js";
 
 type Row = {
   about_us: string;
@@ -8,6 +12,7 @@ type Row = {
   facebook_url: string;
   instagram_url: string;
   linkedin_url: string;
+  payment_methods_json: string | null;
   powered_by_text: string;
   service_action_label: string;
   service_action_url: string;
@@ -27,7 +32,8 @@ type Row = {
 
 export class StorefrontProfileRepository {
   async get(): Promise<StorefrontProfile | null> {
-    const result = await sql<Row>`SELECT tagline,about_us,copyright_text,powered_by_text,
+    const result =
+      await sql<Row>`SELECT tagline,about_us,copyright_text,powered_by_text,payment_methods_json,
       facebook_url,linkedin_url,instagram_url,x_url,youtube_url,whatsapp_url,threads_url
       ,trusted_eyebrow,trusted_title,trusted_description,trusted_proof_points,
       service_eyebrow,service_title,service_description,service_action_label,service_action_url
@@ -38,12 +44,12 @@ export class StorefrontProfileRepository {
 
   async save(input: StorefrontProfileInput, actorEmail: string) {
     await sql`INSERT INTO ecommerce_storefront_profiles
-      (uuid,profile_key,tagline,about_us,copyright_text,powered_by_text,facebook_url,linkedin_url,
+      (uuid,profile_key,tagline,about_us,copyright_text,powered_by_text,payment_methods_json,facebook_url,linkedin_url,
        instagram_url,x_url,youtube_url,whatsapp_url,threads_url,trusted_eyebrow,trusted_title,
        trusted_description,trusted_proof_points,service_eyebrow,service_title,service_description,
        service_action_label,service_action_url,status,created_by,updated_by)
       VALUES (LOWER(SUBSTRING(MD5('ecommerce:storefront-profile:default'),1,8)),'default',
-       ${input.tagline},${input.aboutUs},${input.copyrightText},${input.poweredByText},
+       ${input.tagline},${input.aboutUs},${input.copyrightText},${input.poweredByText},${JSON.stringify(input.paymentMethods)},
        ${input.facebookUrl},${input.linkedinUrl},${input.instagramUrl},${input.xUrl},
        ${input.youtubeUrl},${input.whatsappUrl},${input.threadsUrl},${input.trustedEyebrow},
        ${input.trustedTitle},${input.trustedDescription},${input.trustedProofPoints},
@@ -51,6 +57,7 @@ export class StorefrontProfileRepository {
        ${input.serviceActionLabel},${input.serviceActionUrl},'active',${actorEmail},${actorEmail})
       ON DUPLICATE KEY UPDATE tagline=VALUES(tagline),about_us=VALUES(about_us),
        copyright_text=VALUES(copyright_text),powered_by_text=VALUES(powered_by_text),
+       payment_methods_json=VALUES(payment_methods_json),
        facebook_url=VALUES(facebook_url),linkedin_url=VALUES(linkedin_url),
        instagram_url=VALUES(instagram_url),x_url=VALUES(x_url),youtube_url=VALUES(youtube_url),
        whatsapp_url=VALUES(whatsapp_url),threads_url=VALUES(threads_url),
@@ -73,6 +80,7 @@ function toProfile(row: Row): StorefrontProfile {
     facebookUrl: row.facebook_url,
     instagramUrl: row.instagram_url,
     linkedinUrl: row.linkedin_url,
+    paymentMethods: parsePaymentMethods(row.payment_methods_json),
     poweredByText: row.powered_by_text,
     serviceActionLabel: row.service_action_label,
     serviceActionUrl: row.service_action_url,
@@ -89,4 +97,21 @@ function toProfile(row: Row): StorefrontProfile {
     xUrl: row.x_url,
     youtubeUrl: row.youtube_url
   };
+}
+
+function parsePaymentMethods(value: string | null): StorefrontPaymentMethod[] {
+  if (!value) return [];
+  try {
+    const parsed: unknown = JSON.parse(value);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter(isPaymentMethod);
+  } catch {
+    return [];
+  }
+}
+
+function isPaymentMethod(value: unknown): value is StorefrontPaymentMethod {
+  if (!value || typeof value !== "object") return false;
+  const method = value as Record<string, unknown>;
+  return typeof method.name === "string" && typeof method.logoUrl === "string";
 }

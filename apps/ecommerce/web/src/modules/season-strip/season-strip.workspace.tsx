@@ -1,64 +1,67 @@
 import { useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Download, Plus, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@cxshop/ui/components/button";
 import { WorkspaceFilters } from "@cxshop/ui/workspace/filters";
 import { WorkspacePage } from "@cxshop/ui/workspace/page";
-import { PromotionCardForm } from "./promotion-card.form";
-import { promotionCardQueryKey, usePromotionCards } from "./promotion-card.hooks";
-import { PromotionCardList } from "./promotion-card.list";
-import {
-  changePromotionCardStatus,
-  createPromotionCard,
-  pullPromotionCardsFromFrappe,
-  updatePromotionCard
-} from "./promotion-card.services";
-import { invalidateStorefrontClientCache } from "../storefront";
 import { StorefrontSectionSwitch } from "../catalog-data-source";
+import { PromotionCardForm } from "../promotion-card/promotion-card.form";
+import { PromotionCardList } from "../promotion-card/promotion-card.list";
+import { invalidateStorefrontClientCache } from "../storefront";
 import type {
   PromotionCardPayload,
-  PromotionCardRecord,
-  PromotionCardStatus
-} from "./promotion-card.types";
+  PromotionCardRecord
+} from "../promotion-card/promotion-card.types";
+import {
+  changeSeasonStripStatus,
+  createSeasonStrip,
+  getSeasonStrips,
+  pullSeasonStripsFromFrappe,
+  updateSeasonStrip
+} from "./season-strip.services";
 
-export function PromotionCardWorkspace() {
+const queryKey = ["ecommerce", "season-strips"] as const;
+export function SeasonStripWorkspace() {
   const client = useQueryClient();
   const [search, setSearch] = useState("");
-  const [status] = useState<PromotionCardStatus | undefined>();
   const [editing, setEditing] = useState<PromotionCardRecord | null | undefined>();
-  const query = usePromotionCards(search, status);
+  const query = useQuery({
+    queryKey: [...queryKey, search],
+    queryFn: () => getSeasonStrips(search)
+  });
   const refresh = () => {
     invalidateStorefrontClientCache();
-    return client.invalidateQueries({ queryKey: promotionCardQueryKey });
+    return client.invalidateQueries({ queryKey });
   };
   const save = useMutation({
     mutationFn: (value: PromotionCardPayload) =>
-      editing ? updatePromotionCard(editing.id, value) : createPromotionCard(value),
+      editing ? updateSeasonStrip(editing.id, value) : createSeasonStrip(value),
     onSuccess: async () => {
       await refresh();
       setEditing(undefined);
-      toast.success("Promotion card saved");
+      toast.success("Season strip saved");
     },
     onError: (error) => toast.error(error.message)
   });
   const changeStatus = useMutation({
     mutationFn: (record: PromotionCardRecord) =>
-      changePromotionCardStatus(record.id, record.status === "active" ? "inactive" : "active"),
+      changeSeasonStripStatus(record.id, record.status === "active" ? "inactive" : "active"),
     onSuccess: refresh,
     onError: (error) => toast.error(error.message)
   });
   const pull = useMutation({
-    mutationFn: pullPromotionCardsFromFrappe,
+    mutationFn: pullSeasonStripsFromFrappe,
     onSuccess: async (result) => {
       await refresh();
-      toast.success(`Stored ${result.items} items and ${result.promotions} promotions locally`);
+      toast.success(`Stored ${result.seasonStrips} season strips locally`);
     },
     onError: (error) => toast.error(error.message)
   });
   if (editing !== undefined)
     return (
       <PromotionCardForm
+        kind="season"
         loading={save.isPending}
         record={editing}
         onCancel={() => setEditing(undefined)}
@@ -67,11 +70,11 @@ export function PromotionCardWorkspace() {
     );
   return (
     <WorkspacePage
-      title="Promotion Cards"
-      description="Manage locally stored storefront slides and refresh their linked items and source documents from Frappe."
+      title="Season Strips"
+      description="Manage the two seasonal storefront banners separately from promotion cards."
       actions={
         <div className="flex flex-wrap gap-2">
-          <StorefrontSectionSwitch module="promotions" />
+          <StorefrontSectionSwitch module="season-strips" />
           <Button variant="outline" disabled={pull.isPending} onClick={() => pull.mutate()}>
             <Download className="size-4" />
             {pull.isPending ? "Pulling..." : "Pull from Frappe"}
@@ -88,11 +91,12 @@ export function PromotionCardWorkspace() {
       }
     >
       <WorkspaceFilters
-        searchPlaceholder="Search promotion code, title, or Frappe item"
+        searchPlaceholder="Search season code, title, or Frappe item"
         searchValue={search}
         onSearchValueChange={setSearch}
       />
       <PromotionCardList
+        kind="season"
         loading={query.isLoading}
         records={query.data ?? []}
         onEdit={setEditing}

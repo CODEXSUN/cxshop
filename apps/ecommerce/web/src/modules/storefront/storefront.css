@@ -599,7 +599,7 @@
   text-decoration: none;
 }
 .cx-store__hero-media {
-  background: #f7f8fa;
+  background: #fff;
   border-radius: 8px;
   box-sizing: border-box;
   height: 464px;
@@ -2617,12 +2617,25 @@
   height: 27px;
   width: 27px;
 }
-.cx-store__payment-types b {
+.cx-store__payment-method {
+  align-items: center;
   background: #fff;
   border-radius: 4px;
   color: #111827;
+  display: inline-flex;
+  gap: 6px;
+  min-height: 29px;
+  padding: 4px 8px;
+}
+.cx-store__payment-method img {
+  height: 20px;
+  max-width: 54px;
+  object-fit: contain;
+  width: auto;
+}
+.cx-store__payment-method b {
   font-size: 11px;
-  padding: 5px 8px;
+  white-space: nowrap;
 }
 .cx-store__footer-updates form {
   display: flex;

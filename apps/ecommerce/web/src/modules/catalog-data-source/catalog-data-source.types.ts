@@ -13,6 +13,7 @@ export type CatalogDataSourceModule =
   | "season-strips"
   | "campaign-events";
 export type CatalogModuleDataSource = {
+  enabled: boolean;
   description: string;
   label: string;
   module: CatalogDataSourceModule;

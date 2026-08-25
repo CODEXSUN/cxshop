@@ -87,6 +87,7 @@ const loadStorefrontProfileModule = () =>
 const loadStorefrontSliderModule = () => import("@cxshop/ecommerce-web/modules/storefront-slider");
 const loadPromotionCardModule = () => import("@cxshop/ecommerce-web/modules/promotion-card");
 const loadFeaturedCardModule = () => import("@cxshop/ecommerce-web/modules/featured-card");
+const loadSeasonStripModule = () => import("@cxshop/ecommerce-web/modules/season-strip");
 const loadBlogsEditorModule = () => import("@codexsun/blog/web");
 const loadCloudPublishingModule = () => import("../../modules/blog-cloud-publishing");
 
@@ -130,6 +131,9 @@ const PromotionCardWorkspace = lazyWorkspace(() =>
 );
 const FeaturedCardWorkspace = lazyWorkspace(() =>
   loadFeaturedCardModule().then((module) => module.FeaturedCardWorkspace)
+);
+const SeasonStripWorkspace = lazyWorkspace(() =>
+  loadSeasonStripModule().then((module) => module.SeasonStripWorkspace)
 );
 const BlogsEditorWorkspace = lazyWorkspace(() =>
   loadBlogsEditorModule().then((module) => module.BlogsEditorWorkspace)
@@ -886,14 +890,26 @@ export function AppDesk() {
             {safePage === "ecommerce.catalog.home-slider" ? <StorefrontSliderWorkspace /> : null}
             {safePage === "ecommerce.catalog.promotions" ? <PromotionCardWorkspace /> : null}
             {safePage === "ecommerce.catalog.featured-cards" ? <FeaturedCardWorkspace /> : null}
-            {safePage === "ecommerce.storefront-ux.home-slider" ? <StorefrontSliderWorkspace /> : null}
-            {safePage === "ecommerce.storefront-ux.trusted-strip" ? <StorefrontProfileWorkspace mode="trusted-strip" /> : null}
-            {safePage === "ecommerce.storefront-ux.promotion-cards" ? <PromotionCardWorkspace /> : null}
+            {safePage === "ecommerce.storefront-ux.home-slider" ? (
+              <StorefrontSliderWorkspace />
+            ) : null}
+            {safePage === "ecommerce.storefront-ux.trusted-strip" ? (
+              <StorefrontProfileWorkspace mode="trusted-strip" />
+            ) : null}
+            {safePage === "ecommerce.storefront-ux.promotion-cards" ? (
+              <PromotionCardWorkspace />
+            ) : null}
             {safePage === "ecommerce.storefront-ux.brands-strip" ? <BrandsWorkspace /> : null}
-            {safePage === "ecommerce.storefront-ux.featured-cards" ? <FeaturedCardWorkspace /> : null}
-            {safePage === "ecommerce.storefront-ux.season-strip" ? <PromotionCardWorkspace /> : null}
-            {safePage === "ecommerce.storefront-ux.campaign-events" ? <PromotionCardWorkspace /> : null}
-            {safePage === "ecommerce.storefront-ux.service-banner" ? <StorefrontProfileWorkspace mode="service-banner" /> : null}
+            {safePage === "ecommerce.storefront-ux.featured-cards" ? (
+              <FeaturedCardWorkspace />
+            ) : null}
+            {safePage === "ecommerce.storefront-ux.season-strip" ? <SeasonStripWorkspace /> : null}
+            {safePage === "ecommerce.storefront-ux.campaign-events" ? (
+              <PromotionCardWorkspace />
+            ) : null}
+            {safePage === "ecommerce.storefront-ux.service-banner" ? (
+              <StorefrontProfileWorkspace mode="service-banner" />
+            ) : null}
             {safePage === "ecommerce.settings.data-source" ? <CatalogDataSourceWorkspace /> : null}
             {safePage === "ecommerce.settings.storefront-profile" ? (
               <StorefrontProfileWorkspace />

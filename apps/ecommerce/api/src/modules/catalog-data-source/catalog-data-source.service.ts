@@ -41,7 +41,7 @@ class OwnCatalogSource implements StorefrontCatalogSource {
     return this.repository.discovery().then((discovery) => discovery.brands);
   }
   seasonStrips() {
-    return this.repository.promotions();
+    return this.repository.seasonStrips();
   }
   campaignEvents() {
     return this.repository.promotions();
@@ -138,6 +138,13 @@ export class CatalogDataSourceService implements StorefrontCatalogSource {
     return this.settings();
   }
 
+  async switchEnabled(module: CatalogDataSourceModule, enabled: boolean, actorEmail: string) {
+    await this.repository.saveModuleEnabled(module, enabled, actorEmail);
+    this.moduleProvidersCache = undefined;
+    this.moduleProvidersRequest = undefined;
+    return this.settings();
+  }
+
   async test(provider: CatalogDataSourceProvider) {
     const result = await this.control.test(provider);
     if (provider !== "frappe" || !result.connected) return result;
@@ -160,7 +167,9 @@ export class CatalogDataSourceService implements StorefrontCatalogSource {
   }
 
   async catalog(filters: StorefrontCatalogFilters) {
-    return this.read("products", (source) => source.catalog(filters));
+    return this.withResolvedImages(
+      await this.read("products", (source) => source.catalog(filters))
+    );
   }
 
   async categories() {
@@ -169,19 +178,25 @@ export class CatalogDataSourceService implements StorefrontCatalogSource {
 
   async discovery() {
     if (await this.modulesUseSameProvider(["products", "categories", "brands"])) {
-      return this.read("products", (source) => source.discovery());
+      const discovery = await this.read("products", (source) => source.discovery());
+      return { ...discovery, brands: await this.withResolvedLogos(discovery.brands) };
     }
     const [productDiscovery, categories, brandDiscovery] = await Promise.all([
       this.read("products", (source) => source.discovery()),
       this.read("categories", (source) => source.categories()),
       this.read("brands", (source) => source.discovery())
     ]);
-    return { ...productDiscovery, brands: brandDiscovery.brands, categories };
+    return {
+      ...productDiscovery,
+      brands: await this.withResolvedLogos(brandDiscovery.brands),
+      categories
+    };
   }
 
   async product(slug: string) {
     if (await this.modulesUseSameProvider(["product-details", "variants", "product-images"])) {
-      return this.read("product-details", (source) => source.product(slug));
+      const product = await this.read("product-details", (source) => source.product(slug));
+      return product ? this.withResolvedImage(product) : null;
     }
     const [details, variants, images] = await Promise.all([
       this.read("product-details", (source) => source.product(slug)),
@@ -189,32 +204,64 @@ export class CatalogDataSourceService implements StorefrontCatalogSource {
       this.read("product-images", (source) => source.product(slug))
     ]);
     if (!details) return null;
-    return {
+    return this.withResolvedImage({
       ...details,
       imageAlt: images?.imageAlt ?? details.imageAlt,
       imageUrl: images?.imageUrl ?? details.imageUrl,
       variantCount: variants?.variantCount ?? details.variantCount,
       variants: variants?.variants ?? details.variants
-    };
+    });
   }
 
-  sliders() {
-    return this.read("sliders", (source) => source.sliders());
+  async sliders() {
+    return this.withResolvedImages(await this.read("sliders", (source) => source.sliders()));
   }
-  promotions() {
-    return this.read("promotions", (source) => source.promotions());
+  async promotions() {
+    return this.withResolvedImages(await this.read("promotions", (source) => source.promotions()));
   }
-  featuredCards() {
-    return this.read("featured-cards", (source) => source.featuredCards());
+  async featuredCards() {
+    return this.withResolvedImages(
+      await this.read("featured-cards", (source) => source.featuredCards())
+    );
   }
-  brandStrips() {
-    return this.read("brand-strips", (source) => source.brandStrips());
+  async brandStrips() {
+    return this.withResolvedLogos(
+      await this.read("brand-strips", (source) => source.brandStrips())
+    );
   }
-  seasonStrips() {
-    return this.read("season-strips", (source) => source.seasonStrips());
+  async seasonStrips() {
+    return this.withResolvedImages(
+      await this.read("season-strips", (source) => source.seasonStrips())
+    );
   }
-  campaignEvents() {
-    return this.read("campaign-events", (source) => source.campaignEvents());
+  async campaignEvents() {
+    return this.withResolvedImages(
+      await this.read("campaign-events", (source) => source.campaignEvents())
+    );
+  }
+
+  private async withResolvedImage<T extends { imageUrl: string }>(item: T): Promise<T> {
+    if (!isFrappeFile(item.imageUrl)) return item;
+    const { frappeUrl } = await this.control.settings();
+    return { ...item, imageUrl: absoluteFrappeFile(item.imageUrl, frappeUrl) };
+  }
+
+  private async withResolvedImages<T extends { imageUrl: string }>(items: T[]): Promise<T[]> {
+    if (!items.some((item) => isFrappeFile(item.imageUrl))) return items;
+    const { frappeUrl } = await this.control.settings();
+    return items.map((item) => ({
+      ...item,
+      imageUrl: absoluteFrappeFile(item.imageUrl, frappeUrl)
+    }));
+  }
+
+  private async withResolvedLogos<T extends { logoUrl: string }>(items: T[]): Promise<T[]> {
+    if (!items.some((item) => isFrappeFile(item.logoUrl))) return items;
+    const { frappeUrl } = await this.control.settings();
+    return items.map((item) => ({
+      ...item,
+      logoUrl: absoluteFrappeFile(item.logoUrl, frappeUrl)
+    }));
   }
 
   private async read<T>(
@@ -222,6 +269,8 @@ export class CatalogDataSourceService implements StorefrontCatalogSource {
     operation: (source: StorefrontCatalogSource) => Promise<T>
   ) {
     const providers = await this.moduleProviders();
+    if (providers.find((item) => item.module === module)?.enabled === false)
+      return emptyResult<T>();
     if (providers.find((item) => item.module === module)?.provider !== "frappe") {
       return operation(this.own);
     }
@@ -285,6 +334,26 @@ function isEmptyCatalogResult(value: unknown) {
   return value == null || (Array.isArray(value) && value.length === 0);
 }
 
+function emptyResult<T>() {
+  return [] as T;
+}
+
+function isFrappeFile(value: unknown): value is string {
+  return (
+    typeof value === "string" &&
+    (value.startsWith("/files/") || value.startsWith("/private/files/"))
+  );
+}
+
+function absoluteFrappeFile(value: string, frappeUrl: string | null) {
+  if (!isFrappeFile(value) || !frappeUrl) return value;
+  try {
+    return new URL(value, frappeUrl).toString();
+  } catch {
+    return value;
+  }
+}
+
 function moduleDefinition(module: CatalogDataSourceModule) {
   return {
     categories: { description: "Storefront category navigation and filters.", label: "Categories" },
@@ -322,7 +391,8 @@ function moduleDefinition(module: CatalogDataSourceModule) {
       label: "Brand strip"
     },
     "season-strips": {
-      description: "Scheduled seasonal banners. Local promotion cards remain the fallback.",
+      description:
+        "Dedicated scheduled seasonal banners with an independent local or Frappe source.",
       label: "Season strip"
     },
     "campaign-events": {
