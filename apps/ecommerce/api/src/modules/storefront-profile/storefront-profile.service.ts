@@ -1,5 +1,6 @@
 import { AppError } from "@cxshop/framework/errors";
 import { StorefrontProfileRepository } from "./storefront-profile.repository.js";
+import { invalidateStorefrontReadCache } from "../storefront/index.js";
 import type { StorefrontProfileInput } from "./storefront-profile.types.js";
 
 export class StorefrontProfileService {
@@ -18,6 +19,7 @@ export class StorefrontProfileService {
         message: "The storefront profile could not be saved.",
         statusCode: 500
       });
+    invalidateStorefrontReadCache();
     return saved;
   }
 }
@@ -26,11 +28,27 @@ export function emptyStorefrontProfile(): StorefrontProfileInput {
   return {
     aboutUs: "",
     copyrightText: "",
+    facebookUrl: "",
     instagramUrl: "",
     linkedinUrl: "",
     poweredByText: "",
+    serviceActionLabel: "Get support",
+    serviceActionUrl: "/support",
+    serviceDescription:
+      "Local help for products, installation, maintenance, and ongoing technology needs.",
+    serviceEyebrow: "Tech Media care",
+    serviceTitle: "Technology works better with support close by.",
     tagline: "",
-    xUrl: ""
+    trustedDescription:
+      "We help you choose technology that fits the work, set it up properly, and keep it useful as your needs grow.",
+    trustedEyebrow: "Trusted in Tiruppur since 2002",
+    trustedProofPoints:
+      "Multi-brand guidance\nLocal technical support\nRetail and business expertise",
+    trustedTitle: "25+ years of practical technology experience",
+    threadsUrl: "",
+    whatsappUrl: "",
+    xUrl: "",
+    youtubeUrl: ""
   };
 }
 

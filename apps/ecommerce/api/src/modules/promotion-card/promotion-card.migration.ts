@@ -12,6 +12,7 @@ export async function migratePromotionCardModule(database: Kysely<EcommerceDatab
       `CREATE TABLE IF NOT EXISTS ecommerce_storefront_promotions (
         id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
         uuid CHAR(8) NOT NULL DEFAULT (LOWER(SUBSTRING(MD5(UUID()),1,8))) UNIQUE,
+        created_by VARCHAR(191) NOT NULL DEFAULT 'system:migration',
         promotion_code VARCHAR(191) NOT NULL,
         eyebrow VARCHAR(191) NOT NULL DEFAULT '',
         title VARCHAR(191) NOT NULL,

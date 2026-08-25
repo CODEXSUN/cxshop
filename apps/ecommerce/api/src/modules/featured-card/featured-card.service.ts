@@ -1,5 +1,6 @@
 import { AppError } from "@cxshop/framework/errors";
 import { FeaturedCardRepository } from "./featured-card.repository.js";
+import { invalidateStorefrontReadCache } from "../storefront/index.js";
 import type { FeaturedCardFilters, FeaturedCardSaveInput } from "./featured-card.types.js";
 
 export class FeaturedCardService {
@@ -14,16 +15,22 @@ export class FeaturedCardService {
   }
 
   async create(input: FeaturedCardSaveInput) {
-    return this.repository.create(await this.validate(input));
+    const record = await this.repository.create(await this.validate(input));
+    invalidateStorefrontReadCache();
+    return record;
   }
 
   async update(id: number, input: FeaturedCardSaveInput) {
     if (!(await this.repository.find(id))) throw AppError.notFound("Featured card was not found.");
-    return this.repository.update(id, await this.validate(input, id));
+    const record = await this.repository.update(id, await this.validate(input, id));
+    invalidateStorefrontReadCache();
+    return record;
   }
 
-  setActive(id: number, active: boolean) {
-    return this.repository.setActive(id, active);
+  async setActive(id: number, active: boolean) {
+    const record = await this.repository.setActive(id, active);
+    invalidateStorefrontReadCache();
+    return record;
   }
 
   private async validate(input: FeaturedCardSaveInput, currentId = 0) {

@@ -17,7 +17,9 @@ const platformMasterTables = new Set([
   "access_users",
   "auth_sessions",
   "auth_login_attempts",
+  "application_settings",
   "database_maintenance_runs",
+  "data_source_settings",
   "entitlements",
   "industries",
   "password_reset_requests",
@@ -70,7 +72,7 @@ test("every fresh SQL table follows its database ownership naming contract", () 
         failures.push(`${file}: ${table} prefixes a master table`);
       } else if (platformMasterTables.has(table)) {
         // Platform master tables are intentionally unprefixed.
-      } else if (!/^(app|core|billing|devkit|ecommerce|mail)_/.test(table)) {
+      } else if (!/^(app|blogs|core|billing|devkit|ecommerce|mail)_/.test(table)) {
         failures.push(`${file}: ${table} has no tenant owner prefix`);
       }
       const columnNames = sqlColumnNames(body);
@@ -96,7 +98,7 @@ test("every fresh SQL table follows its database ownership naming contract", () 
         failures.push(`${file}: ${table} prefixes a master table`);
       } else if (platformMasterTables.has(table)) {
         // Platform master tables are intentionally unprefixed.
-      } else if (!/^(app|core|billing|devkit|ecommerce|mail)_/.test(table)) {
+      } else if (!/^(app|blogs|core|billing|devkit|ecommerce|mail)_/.test(table)) {
         failures.push(`${file}: ${table} has no tenant owner prefix`);
       }
       for (const column of ["id", "uuid", "status", "created_by", "created_at", "updated_at"]) {

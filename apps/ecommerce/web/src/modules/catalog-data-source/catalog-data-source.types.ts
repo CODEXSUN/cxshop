@@ -8,7 +8,10 @@ export type CatalogDataSourceModule =
   | "product-images"
   | "sliders"
   | "promotions"
-  | "featured-cards";
+  | "featured-cards"
+  | "brand-strips"
+  | "season-strips"
+  | "campaign-events";
 export type CatalogModuleDataSource = {
   description: string;
   label: string;
@@ -62,5 +65,8 @@ export type CatalogSyncResult = {
   sliders: number;
   promotions: number;
   featuredCards: number;
+  brandStrips: number;
+  seasonStrips: number;
+  campaignEvents: number;
   message: string;
 };

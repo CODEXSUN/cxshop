@@ -2,10 +2,12 @@ import type { Kysely } from "kysely";
 import { runMigrationBatch, type MigrationBatch } from "@cxshop/framework/db";
 import { getPlatformDatabase } from "../../database/platform-database.js";
 import {
+  cloudPublishingAuditMigration,
   cloudPublishingMigration,
   cloudPublishingSessionMigration,
   migrateCloudPublishingModule,
-  migrateCloudPublishingSession
+  migrateCloudPublishingSession,
+  standardizeCloudPublishingAudit
 } from "./cloud-publishing.migration.js";
 
 export type BlogCloudDatabase = Record<string, unknown>;
@@ -31,6 +33,13 @@ const migrationBatch: MigrationBatch<BlogCloudDatabase> = {
       name: cloudPublishingSessionMigration.key,
       up: migrateCloudPublishingSession,
       version: 4
+    },
+    {
+      checksum: `${cloudPublishingAuditMigration.key}:v1`,
+      description: cloudPublishingAuditMigration.description,
+      name: cloudPublishingAuditMigration.key,
+      up: standardizeCloudPublishingAudit,
+      version: 5
     }
   ]
 };

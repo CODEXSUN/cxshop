@@ -14,6 +14,7 @@ import {
   pullStorefrontSlidersFromFrappe,
   updateStorefrontSlider
 } from "./storefront-slider.services";
+import { invalidateStorefrontClientCache } from "../storefront";
 import type {
   StorefrontSliderPayload,
   StorefrontSliderRecord,
@@ -26,7 +27,10 @@ export function StorefrontSliderWorkspace() {
   const [status] = useState<StorefrontSliderStatus | undefined>();
   const [editing, setEditing] = useState<StorefrontSliderRecord | null | undefined>();
   const query = useStorefrontSliders(search, status);
-  const refresh = () => client.invalidateQueries({ queryKey: storefrontSliderQueryKey });
+  const refresh = () => {
+    invalidateStorefrontClientCache();
+    return client.invalidateQueries({ queryKey: storefrontSliderQueryKey });
+  };
   const save = useMutation({
     mutationFn: (value: StorefrontSliderPayload) =>
       editing ? updateStorefrontSlider(editing.id, value) : createStorefrontSlider(value),

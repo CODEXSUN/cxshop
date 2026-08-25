@@ -19,7 +19,10 @@ export const catalogDataSourceModules = [
   "product-images",
   "sliders",
   "promotions",
-  "featured-cards"
+  "featured-cards",
+  "brand-strips",
+  "season-strips",
+  "campaign-events"
 ] as const;
 export type CatalogDataSourceModule = (typeof catalogDataSourceModules)[number];
 
@@ -140,6 +143,9 @@ export type FrappeCatalogSnapshot = {
   sliders: FrappeIShopSlider[];
   promotions: FrappeIShopPromotion[];
   featured_cards: FrappeIShopFeaturedCard[];
+  brand_strips?: FrappeIShopBrandStrip[];
+  season_strips?: FrappeIShopSeasonStrip[];
+  campaign_events?: FrappeIShopCampaignEvent[];
 };
 export type FrappeIShopPromotion = {
   action_label?: string | null;
@@ -167,6 +173,26 @@ export type FrappeIShopPromotion = {
 export type FrappeIShopFeaturedCard = Omit<FrappeIShopPromotion, "promotion_code"> & {
   featured_code: string;
 };
+export type FrappeIShopBrandStrip = {
+  action_url?: string | null;
+  brand_code: string;
+  brand_name: string;
+  display_order?: number;
+  logo_alt?: string | null;
+  logo_url?: string | null;
+  modified?: string | null;
+  name?: string;
+  published?: number;
+  status?: "active" | "inactive";
+};
+export type FrappeIShopSeasonStrip = Omit<
+  FrappeIShopPromotion,
+  "badge_position" | "offer_price" | "original_price" | "promotion_code"
+> & { season_code: string };
+export type FrappeIShopCampaignEvent = Omit<
+  FrappeIShopPromotion,
+  "badge_position" | "offer_price" | "original_price" | "promotion_code"
+> & { campaign_code: string };
 
 export type CatalogSyncResult = {
   catalogs: number;
@@ -176,6 +202,9 @@ export type CatalogSyncResult = {
   sliders: number;
   promotions: number;
   featuredCards: number;
+  brandStrips: number;
+  seasonStrips: number;
+  campaignEvents: number;
   message: string;
 };
 
@@ -198,4 +227,7 @@ export interface StorefrontCatalogSource {
   sliders(): Promise<StorefrontSlider[]>;
   promotions(): Promise<StorefrontPromotion[]>;
   featuredCards(): Promise<StorefrontFeaturedCard[]>;
+  brandStrips(): Promise<StorefrontDiscovery["brands"]>;
+  seasonStrips(): Promise<StorefrontPromotion[]>;
+  campaignEvents(): Promise<StorefrontPromotion[]>;
 }

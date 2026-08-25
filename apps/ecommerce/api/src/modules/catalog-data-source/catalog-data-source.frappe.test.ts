@@ -64,6 +64,33 @@ test("maps the LogicX iShop 1.0.9 snapshot into published storefront products", 
             slider_code: "HOME-01",
             title: "Laptop season"
           }
+        ],
+        brand_strips: [
+          {
+            brand_code: "LOGICX",
+            brand_name: "LogicX",
+            logo_url: "/files/logicx.svg",
+            published: 1,
+            status: "active"
+          }
+        ],
+        season_strips: [
+          {
+            season_code: "BACK-TO-WORK",
+            title: "Back to work",
+            image_url: "/files/season.webp",
+            published: 1,
+            status: "active"
+          }
+        ],
+        campaign_events: [
+          {
+            campaign_code: "TECH-DAY",
+            title: "Tech day",
+            image_url: "/files/event.webp",
+            published: 1,
+            status: "active"
+          }
         ]
       }
     });
@@ -107,4 +134,14 @@ test("maps the LogicX iShop 1.0.9 snapshot into published storefront products", 
       title: "Laptop season"
     }
   ]);
+  assert.deepEqual(await source.brandStrips(), [
+    {
+      logoAlt: "LogicX logo",
+      logoUrl: "https://ishop.example.test/files/logicx.svg",
+      name: "LogicX",
+      productCount: 1
+    }
+  ]);
+  assert.equal((await source.seasonStrips())[0]?.promotionCode, "BACK-TO-WORK");
+  assert.equal((await source.campaignEvents())[0]?.promotionCode, "TECH-DAY");
 });

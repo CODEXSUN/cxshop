@@ -9,12 +9,16 @@ export const cloudPublishingSessionMigration = {
   description: "Add password-session authentication and bidirectional cloud pull settings.",
   key: "blogs.cloud-publishing.session"
 } as const;
+export const cloudPublishingAuditMigration = {
+  description: "Add production connection and publication ownership audit metadata.",
+  key: "blogs.cloud-publishing.audit-v1"
+} as const;
 
 export async function migrateCloudPublishingModule(database: Kysely<BlogCloudDatabase>) {
   await sql
     .raw(
       `CREATE TABLE IF NOT EXISTS blogs_cloud_connections (
-    id INT NOT NULL AUTO_INCREMENT PRIMARY KEY, uuid CHAR(8) NOT NULL UNIQUE,
+    id INT NOT NULL AUTO_INCREMENT PRIMARY KEY, uuid CHAR(8) NOT NULL UNIQUE, created_by VARCHAR(191) NOT NULL DEFAULT 'system:migration',
     singleton_key VARCHAR(24) NOT NULL DEFAULT 'production' UNIQUE,
     site_url VARCHAR(500) NOT NULL, auth_mode VARCHAR(24) NOT NULL DEFAULT 'token',
     user_name VARCHAR(191) NOT NULL DEFAULT '', api_key_secret TEXT NULL,
@@ -23,7 +27,7 @@ export async function migrateCloudPublishingModule(database: Kysely<BlogCloudDat
     publish_method VARCHAR(255) NOT NULL DEFAULT 'cxshop.api.publish_article',
     enabled TINYINT(1) NOT NULL DEFAULT 0, verification_status VARCHAR(24) NOT NULL DEFAULT 'unverified',
     verified_user VARCHAR(191) NULL, last_verified_at DATETIME NULL,
-    updated_by VARCHAR(191) NULL, created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    status VARCHAR(24) NOT NULL DEFAULT 'active', updated_by VARCHAR(191) NULL, created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
   ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`
     )
@@ -31,7 +35,7 @@ export async function migrateCloudPublishingModule(database: Kysely<BlogCloudDat
   await sql
     .raw(
       `CREATE TABLE IF NOT EXISTS blogs_cloud_publications (
-    id INT NOT NULL AUTO_INCREMENT PRIMARY KEY, uuid CHAR(8) NOT NULL UNIQUE,
+    id INT NOT NULL AUTO_INCREMENT PRIMARY KEY, uuid CHAR(8) NOT NULL UNIQUE, created_by VARCHAR(191) NOT NULL DEFAULT 'system:migration',
     article_id INT NOT NULL, article_slug VARCHAR(191) NOT NULL, article_title VARCHAR(255) NOT NULL,
     source_updated_at DATETIME NOT NULL, status VARCHAR(24) NOT NULL DEFAULT 'pending',
     attempts INT NOT NULL DEFAULT 0, requested_by VARCHAR(191) NOT NULL,
@@ -60,6 +64,22 @@ export async function migrateCloudPublishingSession(database: Kysely<BlogCloudDa
   await sql
     .raw(
       "UPDATE blogs_cloud_connections SET auth_mode='password', api_key_secret=NULL, api_secret_secret=NULL"
+    )
+    .execute(database);
+}
+
+export async function standardizeCloudPublishingAudit(database: Kysely<BlogCloudDatabase>) {
+  await sql
+    .raw(
+      `ALTER TABLE blogs_cloud_connections
+    ADD COLUMN IF NOT EXISTS created_by VARCHAR(191) NOT NULL DEFAULT 'system:migration' AFTER uuid,
+    ADD COLUMN IF NOT EXISTS status VARCHAR(24) NOT NULL DEFAULT 'active' AFTER verification_status`
+    )
+    .execute(database);
+  await sql
+    .raw(
+      `ALTER TABLE blogs_cloud_publications
+    ADD COLUMN IF NOT EXISTS created_by VARCHAR(191) NOT NULL DEFAULT 'system:migration' AFTER uuid`
     )
     .execute(database);
 }

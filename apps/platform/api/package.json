@@ -1,6 +1,6 @@
 {
   "name": "@cxshop/platform-api",
-  "version": "1.0.66",
+  "version": "1.0.68",
   "private": true,
   "type": "module",
   "scripts": {
@@ -10,13 +10,13 @@
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.864.0",
-    "@codexsun/blog": "github:CODEXSUN/blog#v-1.0.10",
-    "@cxshop/billing-api": "^1.0.66",
-    "@cxshop/core-api": "^1.0.66",
-    "@cxshop/devkit-api": "^1.0.66",
-    "@cxshop/ecommerce-api": "^1.0.66",
-    "@cxshop/framework": "^1.0.66",
-    "@cxshop/mail-api": "^1.0.66",
+    "@codexsun/blog": "github:CODEXSUN/blog#v-1.0.12",
+    "@cxshop/billing-api": "^1.0.68",
+    "@cxshop/core-api": "^1.0.68",
+    "@cxshop/devkit-api": "^1.0.68",
+    "@cxshop/ecommerce-api": "^1.0.68",
+    "@cxshop/framework": "^1.0.68",
+    "@cxshop/mail-api": "^1.0.68",
     "@fastify/multipart": "^9.2.1",
     "bullmq": "^5.79.3",
     "fastify": "^5.2.1",

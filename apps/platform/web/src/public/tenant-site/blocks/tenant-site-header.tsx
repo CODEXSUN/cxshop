@@ -6,7 +6,7 @@ import {
   NavigationMenuLink,
   NavigationMenuList,
   NavigationMenuTrigger
-} from "@cxshop/ui";
+} from "@cxshop/ui/components/navigation-menu";
 import { ArrowRight, LogOut } from "lucide-react";
 import type { ReactNode } from "react";
 import { useTenantSite } from "../tenant-site.context";

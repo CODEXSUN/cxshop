@@ -12,6 +12,7 @@ export async function migrateFeaturedCardModule(database: Kysely<EcommerceDataba
       `CREATE TABLE IF NOT EXISTS ecommerce_storefront_featured_cards (
         id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
         uuid CHAR(8) NOT NULL DEFAULT (LOWER(SUBSTRING(MD5(UUID()),1,8))) UNIQUE,
+        created_by VARCHAR(191) NOT NULL DEFAULT 'system:migration',
         featured_code VARCHAR(191) NOT NULL,
         eyebrow VARCHAR(191) NOT NULL DEFAULT '',
         title VARCHAR(191) NOT NULL,

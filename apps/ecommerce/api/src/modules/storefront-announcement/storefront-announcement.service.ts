@@ -1,5 +1,6 @@
 import { AppError } from "@cxshop/framework/errors";
 import { StorefrontAnnouncementRepository } from "./storefront-announcement.repository.js";
+import { invalidateStorefrontReadCache } from "../storefront/index.js";
 import type { StorefrontAnnouncementInput } from "./storefront-announcement.types.js";
 
 export class StorefrontAnnouncementService {
@@ -14,22 +15,30 @@ export class StorefrontAnnouncementService {
   }
 
   async trigger(input: StorefrontAnnouncementInput) {
-    return requiredResult(await this.repository.create(normalize(input)));
+    const record = requiredResult(await this.repository.create(normalize(input)));
+    invalidateStorefrontReadCache();
+    return record;
   }
 
   async update(id: number, input: StorefrontAnnouncementInput) {
     await this.required(id);
-    return requiredResult(await this.repository.update(id, normalize(input)));
+    const record = requiredResult(await this.repository.update(id, normalize(input)));
+    invalidateStorefrontReadCache();
+    return record;
   }
 
   async setActive(id: number, active: boolean) {
     await this.required(id);
-    return requiredResult(await this.repository.setActive(id, active));
+    const record = requiredResult(await this.repository.setActive(id, active));
+    invalidateStorefrontReadCache();
+    return record;
   }
 
   async forceDelete(id: number) {
     await this.required(id);
-    return requiredResult(await this.repository.forceDelete(id));
+    const record = requiredResult(await this.repository.forceDelete(id));
+    invalidateStorefrontReadCache();
+    return record;
   }
 
   private async required(id: number) {

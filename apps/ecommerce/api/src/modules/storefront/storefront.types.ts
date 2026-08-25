@@ -82,5 +82,18 @@ export type StorefrontSiteNavigation = {
   groups: Array<{ title: string; links: Array<{ label: string; href: string }> }>;
   socialLinks: Array<{ label: string; href: string }>;
   poweredByText: string;
+  serviceBanner: {
+    actionLabel: string;
+    actionUrl: string;
+    description: string;
+    eyebrow: string;
+    title: string;
+  };
   tagline: string;
+  trustedStrip: {
+    description: string;
+    eyebrow: string;
+    proofPoints: string[];
+    title: string;
+  };
 };

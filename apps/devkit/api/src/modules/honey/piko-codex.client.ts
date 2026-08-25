@@ -160,7 +160,9 @@ class PikoCodexClient {
     }
     if (typeof message.id !== "number") return;
     if (message.method) {
-      this.process?.stdin.write(`${JSON.stringify({ id: message.id, result: { decision: "decline" } })}\n`);
+      this.process?.stdin.write(
+        `${JSON.stringify({ id: message.id, result: { decision: "decline" } })}\n`
+      );
       return;
     }
     const request = this.pending.get(message.id);
@@ -190,7 +192,8 @@ export function pikoCodexForActor(actor: DevkitActor) {
 }
 
 function actorCodexHome(actor: DevkitActor) {
-  const root = process.env.CXSHOP_PIKO_CODEX_HOME?.trim() ||
+  const root =
+    process.env.CXSHOP_PIKO_CODEX_HOME?.trim() ||
     join(process.env.LOCALAPPDATA?.trim() || process.cwd(), "CXShop", "Piko", "codex");
   return join(root, safeSegment(actor.storageScope), safeSegment(actor.id));
 }

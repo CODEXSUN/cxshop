@@ -413,6 +413,14 @@ type AppPage =
   | "ecommerce.catalog.home-slider"
   | "ecommerce.catalog.promotions"
   | "ecommerce.catalog.featured-cards"
+  | "ecommerce.storefront-ux.home-slider"
+  | "ecommerce.storefront-ux.trusted-strip"
+  | "ecommerce.storefront-ux.promotion-cards"
+  | "ecommerce.storefront-ux.brands-strip"
+  | "ecommerce.storefront-ux.featured-cards"
+  | "ecommerce.storefront-ux.season-strip"
+  | "ecommerce.storefront-ux.campaign-events"
+  | "ecommerce.storefront-ux.service-banner"
   | "ecommerce.settings.data-source"
   | "ecommerce.settings.storefront-profile"
   | "blogs.editor"
@@ -878,6 +886,14 @@ export function AppDesk() {
             {safePage === "ecommerce.catalog.home-slider" ? <StorefrontSliderWorkspace /> : null}
             {safePage === "ecommerce.catalog.promotions" ? <PromotionCardWorkspace /> : null}
             {safePage === "ecommerce.catalog.featured-cards" ? <FeaturedCardWorkspace /> : null}
+            {safePage === "ecommerce.storefront-ux.home-slider" ? <StorefrontSliderWorkspace /> : null}
+            {safePage === "ecommerce.storefront-ux.trusted-strip" ? <StorefrontProfileWorkspace mode="trusted-strip" /> : null}
+            {safePage === "ecommerce.storefront-ux.promotion-cards" ? <PromotionCardWorkspace /> : null}
+            {safePage === "ecommerce.storefront-ux.brands-strip" ? <BrandsWorkspace /> : null}
+            {safePage === "ecommerce.storefront-ux.featured-cards" ? <FeaturedCardWorkspace /> : null}
+            {safePage === "ecommerce.storefront-ux.season-strip" ? <PromotionCardWorkspace /> : null}
+            {safePage === "ecommerce.storefront-ux.campaign-events" ? <PromotionCardWorkspace /> : null}
+            {safePage === "ecommerce.storefront-ux.service-banner" ? <StorefrontProfileWorkspace mode="service-banner" /> : null}
             {safePage === "ecommerce.settings.data-source" ? <CatalogDataSourceWorkspace /> : null}
             {safePage === "ecommerce.settings.storefront-profile" ? (
               <StorefrontProfileWorkspace />
@@ -989,6 +1005,7 @@ function pageFromUrl(landingApp: PlatformAppId | null): AppPage {
     key === "ecommerce.catalog.home-slider" ||
     key === "ecommerce.catalog.promotions" ||
     key === "ecommerce.catalog.featured-cards" ||
+    key.startsWith("ecommerce.storefront-ux.") ||
     key === "ecommerce.settings.data-source" ||
     key === "ecommerce.settings.storefront-profile" ||
     key === "blogs.editor" ||
@@ -1498,6 +1515,14 @@ function titleForPage(page: AppPage) {
     "ecommerce.catalog.home-slider": "Home Slider",
     "ecommerce.catalog.promotions": "Promotion Cards",
     "ecommerce.catalog.featured-cards": "Featured Cards",
+    "ecommerce.storefront-ux.home-slider": "Home Slider",
+    "ecommerce.storefront-ux.trusted-strip": "Trusted Strip",
+    "ecommerce.storefront-ux.promotion-cards": "Promotion Cards",
+    "ecommerce.storefront-ux.brands-strip": "Brands Strip",
+    "ecommerce.storefront-ux.featured-cards": "Featured Cards",
+    "ecommerce.storefront-ux.season-strip": "Season Strip",
+    "ecommerce.storefront-ux.campaign-events": "Campaign Events",
+    "ecommerce.storefront-ux.service-banner": "Service Banner",
     "ecommerce.settings.data-source": "Data Source",
     "ecommerce.settings.storefront-profile": "Storefront Profile",
     "blogs.editor": "Articles",

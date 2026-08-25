@@ -14,6 +14,7 @@ import {
   pullPromotionCardsFromFrappe,
   updatePromotionCard
 } from "./promotion-card.services";
+import { invalidateStorefrontClientCache } from "../storefront";
 import type {
   PromotionCardPayload,
   PromotionCardRecord,
@@ -26,7 +27,10 @@ export function PromotionCardWorkspace() {
   const [status] = useState<PromotionCardStatus | undefined>();
   const [editing, setEditing] = useState<PromotionCardRecord | null | undefined>();
   const query = usePromotionCards(search, status);
-  const refresh = () => client.invalidateQueries({ queryKey: promotionCardQueryKey });
+  const refresh = () => {
+    invalidateStorefrontClientCache();
+    return client.invalidateQueries({ queryKey: promotionCardQueryKey });
+  };
   const save = useMutation({
     mutationFn: (value: PromotionCardPayload) =>
       editing ? updatePromotionCard(editing.id, value) : createPromotionCard(value),

@@ -136,6 +136,12 @@ const cartRoute = createRoute({
   path: "/cart"
 });
 
+const campaignsRoute = createRoute({
+  component: StorefrontPage,
+  getParentRoute: () => rootRoute,
+  path: "/campaigns"
+});
+
 const shopCategoryRoute = createRoute({
   component: StorefrontPage,
   getParentRoute: () => rootRoute,
@@ -327,6 +333,7 @@ const routeTree = rootRoute.addChildren([
   shopRoute,
   searchRoute,
   cartRoute,
+  campaignsRoute,
   shopCategoryRoute,
   shopProductRoute,
   workspaceRoute,

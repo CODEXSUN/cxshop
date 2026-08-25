@@ -1,5 +1,6 @@
 import { AppError } from "@cxshop/framework/errors";
 import { PromotionCardRepository } from "./promotion-card.repository.js";
+import { invalidateStorefrontReadCache } from "../storefront/index.js";
 import type { PromotionCardFilters, PromotionCardSaveInput } from "./promotion-card.types.js";
 
 export class PromotionCardService {
@@ -14,16 +15,22 @@ export class PromotionCardService {
   }
 
   async create(input: PromotionCardSaveInput) {
-    return this.repository.create(await this.validate(input));
+    const record = await this.repository.create(await this.validate(input));
+    invalidateStorefrontReadCache();
+    return record;
   }
 
   async update(id: number, input: PromotionCardSaveInput) {
     if (!(await this.repository.find(id))) throw AppError.notFound("Promotion card was not found.");
-    return this.repository.update(id, await this.validate(input, id));
+    const record = await this.repository.update(id, await this.validate(input, id));
+    invalidateStorefrontReadCache();
+    return record;
   }
 
-  setActive(id: number, active: boolean) {
-    return this.repository.setActive(id, active);
+  async setActive(id: number, active: boolean) {
+    const record = await this.repository.setActive(id, active);
+    invalidateStorefrontReadCache();
+    return record;
   }
 
   private async validate(input: PromotionCardSaveInput, currentId = 0) {

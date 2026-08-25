@@ -159,7 +159,7 @@ class HoneyRepository {
 }
 
 function id() {
-  return randomBytes(8).toString("hex");
+  return randomBytes(4).toString("hex");
 }
 
 export const honeyRepository = new HoneyRepository();

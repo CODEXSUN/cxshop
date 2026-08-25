@@ -154,6 +154,7 @@ export async function createApp() {
     data: {
       VITE_DEV_AUTO_TENANT_LOGIN: env.DEV_AUTO_TENANT_LOGIN,
       VITE_PLATFORM_API_URL: "/api/platform",
+      VITE_STOREFRONT_DEV_SECTION_LABELS: env.STOREFRONT_DEV_SECTION_LABELS,
       VITE_TENANT_NAME: env.DEFAULT_TENANT_NAME
     },
     success: true

@@ -67,8 +67,10 @@ import {
   type DevkitDatabase
 } from "@cxshop/devkit-api";
 import {
+  applicationSetupAuditMigration,
   applicationSetupMigration,
-  migrateApplicationSetupModule
+  migrateApplicationSetupModule,
+  standardizeApplicationSetupAudit
 } from "../modules/application-setup/application-setup.migration.js";
 import { seedApplicationSetupModule } from "../modules/application-setup/application-setup.seed.js";
 
@@ -80,6 +82,11 @@ const platformMasterMigrationSteps = [
     description: applicationSetupMigration.description,
     migrate: migrateApplicationSetupModule,
     name: applicationSetupMigration.key
+  },
+  {
+    description: applicationSetupAuditMigration.description,
+    migrate: standardizeApplicationSetupAudit,
+    name: applicationSetupAuditMigration.key
   },
   {
     description: appRegistryMigration.description,

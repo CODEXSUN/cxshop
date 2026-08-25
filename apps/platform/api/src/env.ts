@@ -50,6 +50,7 @@ const envSchema = z
     CXSHOP_VERIFIED_BACKUP_ID: z.string(),
     ENABLE_DEFAULT_TENANT_SEED: z.enum(["0", "1"]),
     DEV_AUTO_TENANT_LOGIN: z.enum(["0", "1"]),
+    STOREFRONT_DEV_SECTION_LABELS: z.enum(["0", "1"]).default("0"),
     TENANT_DOMAIN_BASE: z.string().min(1),
     DEFAULT_TENANT_ADMIN_EMAIL: z.string(),
     DEFAULT_TENANT_ADMIN_NAME: z.string(),

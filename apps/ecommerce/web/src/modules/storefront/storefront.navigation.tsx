@@ -5,7 +5,7 @@ import {
   NavigationMenuLink,
   NavigationMenuList,
   NavigationMenuTrigger
-} from "@cxshop/ui";
+} from "@cxshop/ui/components/navigation-menu";
 import {
   ArrowRightIcon,
   MenuIcon,
@@ -72,7 +72,9 @@ export function StoreHeader({
               alt=""
               aria-hidden="true"
               className="cx-store__brand-mark"
+              height={40}
               src={branding.logoUrl}
+              width={40}
             />
           ) : null}
           {branding?.brandName ? <strong>{branding.brandName}</strong> : null}
@@ -177,6 +179,12 @@ function MobileStoreNavigation({
           <small>About and contact</small>
         </span>
       </a>
+      <a href="/campaigns" onClick={onNavigate}>
+        <span>
+          <strong>Campaigns and events</strong>
+          <small>Current offers, launches, and programmes</small>
+        </span>
+      </a>
       <a href="/blog" onClick={onNavigate}>
         <span>
           <strong>Blog</strong>
@@ -248,6 +256,7 @@ function StoreNavigation({
           />
           <MenuColumn title="Company">
             <MenuLink href="/about">About</MenuLink>
+            <MenuLink href="/campaigns">Campaigns and events</MenuLink>
             <MenuLink href="/team">Team</MenuLink>
             <MenuLink href="/contact">Contact</MenuLink>
           </MenuColumn>

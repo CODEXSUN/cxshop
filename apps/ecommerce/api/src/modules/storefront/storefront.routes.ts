@@ -53,13 +53,102 @@ const promotion = z.object({
   title: z.string()
 });
 const featuredCard = promotion.omit({ promotionCode: true }).extend({ featuredCode: z.string() });
+const discovery = z.object({
+  brands: z.array(
+    z.object({
+      logoAlt: z.string(),
+      logoUrl: z.string(),
+      name: z.string(),
+      productCount: z.number()
+    })
+  ),
+  categories: z.array(z.object({ name: z.string(), productCount: z.number() })),
+  priceRange: z.object({ maximum: z.number(), minimum: z.number() })
+});
+const announcement = z
+  .object({
+    displayDurationMs: z.number(),
+    endsAt: z.string().nullable(),
+    eventKey: z.string(),
+    message: z.string(),
+    startsAt: z.string()
+  })
+  .nullable();
+const siteNavigation = z
+  .object({
+    about: z.string(),
+    copyrightText: z.string(),
+    groups: z.array(
+      z.object({
+        title: z.string(),
+        links: z.array(z.object({ label: z.string(), href: z.string() }))
+      })
+    ),
+    poweredByText: z.string(),
+    serviceBanner: z.object({
+      actionLabel: z.string(),
+      actionUrl: z.string(),
+      description: z.string(),
+      eyebrow: z.string(),
+      title: z.string()
+    }),
+    socialLinks: z.array(z.object({ label: z.string(), href: z.string().url() })),
+    tagline: z.string(),
+    trustedStrip: z.object({
+      description: z.string(),
+      eyebrow: z.string(),
+      proofPoints: z.array(z.string()),
+      title: z.string()
+    })
+  })
+  .nullable();
 
 export async function registerStorefrontRoutes(app: FastifyInstance, service: StorefrontService) {
   app.addHook("onSend", async (request, reply, payload) => {
+    if (request.raw.url?.startsWith("/storefront/") && !reply.hasHeader("Cache-Control")) {
+      reply.header("Cache-Control", "public, max-age=0, s-maxage=60, stale-while-revalidate=300");
+    }
     if (request.raw.url?.startsWith("/storefront/")) {
-      reply.header("Cache-Control", "no-store, no-cache, must-revalidate");
+      reply.header("Server-Timing", `app;dur=${reply.elapsedTime.toFixed(1)}`);
     }
     return payload;
+  });
+  registerContractRoute(app, {
+    method: "POST",
+    url: "/storefront/telemetry",
+    schemas: {
+      body: z
+        .object({
+          cls: z.number().min(0).max(10),
+          inp: z.number().min(0).max(120_000),
+          lcp: z.number().min(0).max(120_000),
+          path: z.string().max(500)
+        })
+        .strict(),
+      response: z.object({ accepted: z.literal(true) })
+    },
+    handler: ({ body }) => {
+      console.info("[ecommerce.storefront.vitals]", JSON.stringify(body));
+      return { accepted: true as const };
+    }
+  });
+  registerContractRoute(app, {
+    method: "GET",
+    url: "/storefront/bootstrap",
+    schemas: {
+      response: z.object({
+        announcement,
+        brandStrips: discovery.shape.brands,
+        campaignEvents: z.array(promotion),
+        discovery,
+        featuredCards: z.array(featuredCard),
+        promotions: z.array(promotion),
+        seasonStrips: z.array(promotion),
+        siteNavigation,
+        sliders: z.array(slider)
+      })
+    },
+    handler: () => service.bootstrap()
   });
   registerContractRoute(app, {
     method: "GET",
@@ -83,19 +172,7 @@ export async function registerStorefrontRoutes(app: FastifyInstance, service: St
     method: "GET",
     url: "/storefront/site-navigation",
     schemas: {
-      response: z.object({
-        about: z.string(),
-        copyrightText: z.string(),
-        groups: z.array(
-          z.object({
-            title: z.string(),
-            links: z.array(z.object({ label: z.string(), href: z.string() }))
-          })
-        ),
-        poweredByText: z.string(),
-        socialLinks: z.array(z.object({ label: z.string(), href: z.string().url() })),
-        tagline: z.string()
-      })
+      response: siteNavigation.unwrap()
     },
     handler: () => service.siteNavigation()
   });
@@ -130,18 +207,7 @@ export async function registerStorefrontRoutes(app: FastifyInstance, service: St
     method: "GET",
     url: "/storefront/discovery",
     schemas: {
-      response: z.object({
-        brands: z.array(
-          z.object({
-            logoAlt: z.string(),
-            logoUrl: z.string(),
-            name: z.string(),
-            productCount: z.number()
-          })
-        ),
-        categories: z.array(z.object({ name: z.string(), productCount: z.number() })),
-        priceRange: z.object({ maximum: z.number(), minimum: z.number() })
-      })
+      response: discovery
     },
     handler: () => service.discovery()
   });

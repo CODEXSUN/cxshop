@@ -9,7 +9,7 @@ import { AppError } from "@cxshop/framework/errors";
 import { pikoCodexForActor } from "./piko-codex.client.js";
 
 const service = new HoneyService();
-const idSchema = z.object({ uuid: z.string().length(16) }).strict();
+const idSchema = z.object({ uuid: z.string().length(8) }).strict();
 const chatSchema = z
   .object({
     message: z.string().trim().min(1).max(20_000),

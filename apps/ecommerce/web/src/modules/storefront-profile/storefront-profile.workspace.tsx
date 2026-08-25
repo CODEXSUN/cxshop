@@ -11,14 +11,31 @@ import type { StorefrontProfile } from "./storefront-profile.types";
 const empty: StorefrontProfile = {
   aboutUs: "",
   copyrightText: "",
+  facebookUrl: "",
   instagramUrl: "",
   linkedinUrl: "",
   poweredByText: "",
+  serviceActionLabel: "Get support",
+  serviceActionUrl: "/support",
+  serviceDescription: "Local help for products, installation, maintenance, and ongoing technology needs.",
+  serviceEyebrow: "Tech Media care",
+  serviceTitle: "Technology works better with support close by.",
   tagline: "",
-  xUrl: ""
+  trustedDescription: "We help you choose technology that fits the work, set it up properly, and keep it useful as your needs grow.",
+  trustedEyebrow: "Trusted in Tiruppur since 2002",
+  trustedProofPoints: "Multi-brand guidance\nLocal technical support\nRetail and business expertise",
+  trustedTitle: "25+ years of practical technology experience",
+  threadsUrl: "",
+  whatsappUrl: "",
+  xUrl: "",
+  youtubeUrl: ""
 };
 
-export function StorefrontProfileWorkspace() {
+export function StorefrontProfileWorkspace({
+  mode = "profile"
+}: {
+  mode?: "profile" | "service-banner" | "trusted-strip";
+}) {
   const { profile, save } = useStorefrontProfile();
   const [value, setValue] = useState(empty);
   const [darkPreview, setDarkPreview] = useState(true);
@@ -36,23 +53,21 @@ export function StorefrontProfileWorkspace() {
   }
   return (
     <WorkspacePage
-      title="Storefront Profile"
-      description="Set the white-label message and footer details shown with the Application Company brand."
+      title={workspaceCopy[mode].title}
+      description={workspaceCopy[mode].description}
     >
       <div className="grid gap-5">
-        <Card title="Profile and footer">
-          <StorefrontProfileForm onChange={setValue} value={value} />
+        <Card title={workspaceCopy[mode].cardTitle}>
+          <StorefrontProfileForm mode={mode} onChange={setValue} value={value} />
         </Card>
-        <Card title="Footer preview">
-          <FooterPreview dark={darkPreview} profile={value} />
-        </Card>
+        {mode === "profile" ? <Card title="Footer preview"><FooterPreview dark={darkPreview} profile={value} /></Card> : null}
         <div className="flex justify-end">
           <Button disabled={profile.isLoading || save.isPending} onClick={submit}>
             {save.isPending ? "Saving…" : "Save profile"}
           </Button>
         </div>
       </div>
-      <div
+      {mode === "profile" ? <div
         className="fixed bottom-5 right-5 z-30 flex items-center gap-1 rounded-md border bg-background p-1 shadow-sm"
         aria-label="Preview tone"
       >
@@ -70,10 +85,28 @@ export function StorefrontProfileWorkspace() {
         >
           Dark
         </Button>
-      </div>
+      </div> : null}
     </WorkspacePage>
   );
 }
+
+const workspaceCopy = {
+  profile: {
+    cardTitle: "Profile and footer",
+    description: "Set the white-label message and footer details shown with the Application Company brand.",
+    title: "Storefront Profile"
+  },
+  "trusted-strip": {
+    cardTitle: "Trusted strip content",
+    description: "Edit the experience statement and proof points shown below the home slider.",
+    title: "Trusted Strip"
+  },
+  "service-banner": {
+    cardTitle: "Service banner content",
+    description: "Edit the support callout shown near the end of the storefront home page.",
+    title: "Service Banner"
+  }
+} as const;
 
 function FooterPreview({ dark, profile }: { dark: boolean; profile: StorefrontProfile }) {
   return (

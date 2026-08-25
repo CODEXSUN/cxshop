@@ -10,7 +10,7 @@ export async function migrateStorefrontAnnouncementModule(database: Kysely<Ecomm
   await sql
     .raw(
       `CREATE TABLE IF NOT EXISTS ecommerce_storefront_announcements (
- id INT NOT NULL AUTO_INCREMENT PRIMARY KEY, event_key VARCHAR(64) NOT NULL UNIQUE,
+ id INT NOT NULL AUTO_INCREMENT PRIMARY KEY, uuid CHAR(8) NOT NULL DEFAULT (LOWER(SUBSTRING(MD5(UUID()),1,8))) UNIQUE, event_key VARCHAR(64) NOT NULL UNIQUE,
  message VARCHAR(500) NOT NULL, display_duration_ms INT NOT NULL DEFAULT 12000,
  starts_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, ends_at DATETIME NULL,
  status VARCHAR(24) NOT NULL DEFAULT 'active', created_by VARCHAR(191) NOT NULL DEFAULT 'system',

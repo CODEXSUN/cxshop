@@ -1,15 +1,9 @@
 import {
   getStorefrontSiteNavigation,
   type StorefrontSiteNavigation
-} from "@cxshop/ecommerce-web";
+} from "@cxshop/ecommerce-web/modules/storefront";
 import { Link } from "@tanstack/react-router";
-import {
-  AtSignIcon,
-  CameraIcon,
-  ExternalLink,
-  Globe2Icon,
-  MessageCircleIcon
-} from "lucide-react";
+import { AtSignIcon, CameraIcon, ExternalLink, Globe2Icon, MessageCircleIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useTenantSite } from "../tenant-site.context";
 import { TenantSiteLogo } from "./tenant-site-logo";
@@ -48,7 +42,10 @@ export function TenantSiteFooter() {
           <strong>{portal.brandName}</strong>
         </div>
         <p>{about}</p>
-        <div className="tenant-portal-footer-socials" aria-label="Tech Media social and contact links">
+        <div
+          className="tenant-portal-footer-socials"
+          aria-label="Tech Media social and contact links"
+        >
           {navigation?.socialLinks.map((link) => (
             <a
               aria-label={`Follow ${portal.brandName} on ${link.label}`}

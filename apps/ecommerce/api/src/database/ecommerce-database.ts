@@ -40,7 +40,11 @@ import {
 import { seedStorefrontAnnouncementModule } from "../modules/storefront-announcement/storefront-announcement.seed.js";
 import {
   migrateStorefrontProfileModule,
-  storefrontProfileMigration
+  storefrontProfileMigration,
+  storefrontProfileSocialLinksMigration,
+  storefrontProfileUxContentMigration,
+  upgradeStorefrontProfileSocialLinks,
+  upgradeStorefrontProfileUxContent
 } from "../modules/storefront-profile/storefront-profile.migration.js";
 import { seedStorefrontProfileModule } from "../modules/storefront-profile/storefront-profile.seed.js";
 import {
@@ -48,6 +52,7 @@ import {
   catalogDataSourceSeedCompatibilityMigration,
   catalogStorefrontSourceCompatibilityMigration,
   catalogStorefrontSliderMigration,
+  catalogStorefrontUxSourceMigration,
   catalogModuleDataSourceMigration,
   catalogDataSourceAuditMigration,
   catalogDataSourceSyncMigration,
@@ -57,7 +62,8 @@ import {
   upgradeCatalogDataSourceCompatibility,
   upgradeCatalogDataSourceSeedCompatibility,
   upgradeCatalogStorefrontSourceCompatibility,
-  upgradeCatalogStorefrontSlider
+  upgradeCatalogStorefrontSlider,
+  upgradeCatalogStorefrontUxSources
 } from "../modules/catalog-data-source/catalog-data-source.migration.js";
 import {
   migrateStorefrontSliderModule,
@@ -73,6 +79,14 @@ import {
   featuredCardMigration,
   migrateFeaturedCardModule
 } from "../modules/featured-card/featured-card.migration.js";
+import {
+  storefrontPerformanceMigration,
+  upgradeStorefrontReadPerformance
+} from "../modules/storefront/storefront-performance.migration.js";
+import {
+  standardizeStorefrontSchema,
+  storefrontSchemaStandardizationMigration
+} from "../modules/storefront/storefront-schema.migration.js";
 
 export type EcommerceDatabase = Record<string, unknown>;
 type ConnectionOptions = {
@@ -106,7 +120,11 @@ export const ecommerceTenantMigrations = [
   promotionCardBadgeTextColorMigration,
   featuredCardMigration,
   catalogStorefrontSourceCompatibilityMigration,
-  storefrontProfileMigration
+  storefrontProfileMigration,
+  storefrontProfileSocialLinksMigration,
+  storefrontProfileUxContentMigration,
+  storefrontPerformanceMigration,
+  catalogStorefrontUxSourceMigration
 ] as const;
 export const ecommerceMigrationBatch: MigrationBatch<EcommerceDatabase> = {
   batch: 1,
@@ -353,6 +371,81 @@ const ecommerceFeaturedCardMigrationBatch: MigrationBatch<EcommerceDatabase> = {
     }
   ]
 };
+const ecommerceStorefrontProfileSocialLinksMigrationBatch: MigrationBatch<EcommerceDatabase> = {
+  batch: 15,
+  description: "Additional storefront social profile links.",
+  scope: "ecommerce",
+  version: "1.0.66",
+  steps: [
+    {
+      checksum: `${storefrontProfileSocialLinksMigration.key}:v1`,
+      description: storefrontProfileSocialLinksMigration.description,
+      name: storefrontProfileSocialLinksMigration.key,
+      up: upgradeStorefrontProfileSocialLinks,
+      version: 1
+    }
+  ]
+};
+const ecommerceStorefrontProfileUxContentMigrationBatch: MigrationBatch<EcommerceDatabase> = {
+  batch: 16,
+  description: "Editable StoreFront UX content.",
+  scope: "ecommerce",
+  version: "1.0.66",
+  steps: [
+    {
+      checksum: `${storefrontProfileUxContentMigration.key}:v1`,
+      description: storefrontProfileUxContentMigration.description,
+      name: storefrontProfileUxContentMigration.key,
+      up: upgradeStorefrontProfileUxContent,
+      version: 1
+    }
+  ]
+};
+const ecommerceStorefrontPerformanceMigrationBatch: MigrationBatch<EcommerceDatabase> = {
+  batch: 17,
+  description: "Published storefront read-path indexes.",
+  scope: "ecommerce",
+  version: "1.0.66",
+  steps: [
+    {
+      checksum: `${storefrontPerformanceMigration.key}:v1`,
+      description: storefrontPerformanceMigration.description,
+      name: storefrontPerformanceMigration.key,
+      up: upgradeStorefrontReadPerformance,
+      version: 1
+    }
+  ]
+};
+const ecommerceStorefrontSchemaMigrationBatch: MigrationBatch<EcommerceDatabase> = {
+  batch: 18,
+  description: "Storefront schema ownership and audit standardization.",
+  scope: "ecommerce",
+  version: "1.0.66",
+  steps: [
+    {
+      checksum: `${storefrontSchemaStandardizationMigration.key}:v1`,
+      description: storefrontSchemaStandardizationMigration.description,
+      name: storefrontSchemaStandardizationMigration.key,
+      up: standardizeStorefrontSchema,
+      version: 1
+    }
+  ]
+};
+const ecommerceStorefrontUxSourceMigrationBatch: MigrationBatch<EcommerceDatabase> = {
+  batch: 19,
+  description: "Storefront UX data-source preferences.",
+  scope: "ecommerce",
+  version: "1.0.67",
+  steps: [
+    {
+      checksum: `${catalogStorefrontUxSourceMigration.key}:v1`,
+      description: catalogStorefrontUxSourceMigration.description,
+      name: catalogStorefrontUxSourceMigration.key,
+      up: upgradeCatalogStorefrontUxSources,
+      version: 1
+    }
+  ]
+};
 
 export function resolveEcommerceDatabaseName(value: unknown) {
   void value;
@@ -425,6 +518,17 @@ export async function bootstrapEcommerceDatabase(databaseName: string) {
   );
   await runMigrationBatch(getEcommerceDatabase(name), ecommercePromotionBadgeColorMigrationBatch);
   await runMigrationBatch(getEcommerceDatabase(name), ecommerceFeaturedCardMigrationBatch);
+  await runMigrationBatch(
+    getEcommerceDatabase(name),
+    ecommerceStorefrontProfileSocialLinksMigrationBatch
+  );
+  await runMigrationBatch(
+    getEcommerceDatabase(name),
+    ecommerceStorefrontProfileUxContentMigrationBatch
+  );
+  await runMigrationBatch(getEcommerceDatabase(name), ecommerceStorefrontPerformanceMigrationBatch);
+  await runMigrationBatch(getEcommerceDatabase(name), ecommerceStorefrontSchemaMigrationBatch);
+  await runMigrationBatch(getEcommerceDatabase(name), ecommerceStorefrontUxSourceMigrationBatch);
   await runWithEcommerceDatabase(name, seedProductInformationModule);
   await runWithEcommerceDatabase(name, seedProductVariantModule);
   await runWithEcommerceDatabase(name, seedProductImageModule);
@@ -463,6 +567,17 @@ export async function migrateEcommerceTenantDatabase(databaseName: string) {
   );
   await runMigrationBatch(getEcommerceDatabase(name), ecommercePromotionBadgeColorMigrationBatch);
   await runMigrationBatch(getEcommerceDatabase(name), ecommerceFeaturedCardMigrationBatch);
+  await runMigrationBatch(
+    getEcommerceDatabase(name),
+    ecommerceStorefrontProfileSocialLinksMigrationBatch
+  );
+  await runMigrationBatch(
+    getEcommerceDatabase(name),
+    ecommerceStorefrontProfileUxContentMigrationBatch
+  );
+  await runMigrationBatch(getEcommerceDatabase(name), ecommerceStorefrontPerformanceMigrationBatch);
+  await runMigrationBatch(getEcommerceDatabase(name), ecommerceStorefrontSchemaMigrationBatch);
+  await runMigrationBatch(getEcommerceDatabase(name), ecommerceStorefrontUxSourceMigrationBatch);
 }
 
 export async function seedEcommerceTenantDatabase(databaseName: string) {
@@ -477,6 +592,26 @@ export async function seedEcommerceTenantDatabase(databaseName: string) {
 }
 
 export async function rollbackEcommerceTenantDatabase(databaseName: string) {
+  await rollbackMigrationBatch(
+    getEcommerceDatabase(databaseName),
+    ecommerceStorefrontUxSourceMigrationBatch
+  );
+  await rollbackMigrationBatch(
+    getEcommerceDatabase(databaseName),
+    ecommerceStorefrontSchemaMigrationBatch
+  );
+  await rollbackMigrationBatch(
+    getEcommerceDatabase(databaseName),
+    ecommerceStorefrontPerformanceMigrationBatch
+  );
+  await rollbackMigrationBatch(
+    getEcommerceDatabase(databaseName),
+    ecommerceStorefrontProfileUxContentMigrationBatch
+  );
+  await rollbackMigrationBatch(
+    getEcommerceDatabase(databaseName),
+    ecommerceStorefrontProfileSocialLinksMigrationBatch
+  );
   await rollbackMigrationBatch(
     getEcommerceDatabase(databaseName),
     ecommerceFeaturedCardMigrationBatch

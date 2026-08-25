@@ -14,6 +14,7 @@ import {
   pullFeaturedCardsFromFrappe,
   updateFeaturedCard
 } from "./featured-card.services";
+import { invalidateStorefrontClientCache } from "../storefront";
 import type {
   FeaturedCardPayload,
   FeaturedCardRecord,
@@ -26,7 +27,10 @@ export function FeaturedCardWorkspace() {
   const [status] = useState<FeaturedCardStatus | undefined>();
   const [editing, setEditing] = useState<FeaturedCardRecord | null | undefined>();
   const query = useFeaturedCards(search, status);
-  const refresh = () => client.invalidateQueries({ queryKey: featuredCardQueryKey });
+  const refresh = () => {
+    invalidateStorefrontClientCache();
+    return client.invalidateQueries({ queryKey: featuredCardQueryKey });
+  };
   const save = useMutation({
     mutationFn: (value: FeaturedCardPayload) =>
       editing ? updateFeaturedCard(editing.id, value) : createFeaturedCard(value),

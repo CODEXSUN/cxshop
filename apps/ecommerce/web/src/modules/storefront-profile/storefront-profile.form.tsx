@@ -5,16 +5,41 @@ import type { StorefrontProfile } from "./storefront-profile.types";
 
 export function StorefrontProfileForm({
   value,
-  onChange
+  onChange,
+  mode = "profile"
 }: {
   value: StorefrontProfile;
   onChange: (value: StorefrontProfile) => void;
+  mode?: "profile" | "service-banner" | "trusted-strip";
 }) {
   const field = (key: keyof StorefrontProfile) => ({
     onChange: (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
       onChange({ ...value, [key]: event.target.value }),
     value: value[key]
   });
+  if (mode === "trusted-strip") {
+    return (
+      <div className="grid gap-5">
+        <Field label="Eyebrow"><Input maxLength={120} {...field("trustedEyebrow")} /></Field>
+        <Field label="Heading"><Input maxLength={240} {...field("trustedTitle")} /></Field>
+        <Field label="Description"><Textarea className="min-h-24" maxLength={500} {...field("trustedDescription")} /></Field>
+        <Field label="Proof points (one per line)"><Textarea className="min-h-28" maxLength={1000} {...field("trustedProofPoints")} /></Field>
+      </div>
+    );
+  }
+  if (mode === "service-banner") {
+    return (
+      <div className="grid gap-5">
+        <Field label="Eyebrow"><Input maxLength={120} {...field("serviceEyebrow")} /></Field>
+        <Field label="Heading"><Input maxLength={240} {...field("serviceTitle")} /></Field>
+        <Field label="Description"><Textarea className="min-h-24" maxLength={500} {...field("serviceDescription")} /></Field>
+        <div className="grid gap-5 md:grid-cols-2">
+          <Field label="Action label"><Input maxLength={120} {...field("serviceActionLabel")} /></Field>
+          <Field label="Action URL"><Input maxLength={500} placeholder="/support" {...field("serviceActionUrl")} /></Field>
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="grid gap-5">
       <Field label="Tagline">
@@ -44,7 +69,10 @@ export function StorefrontProfileForm({
           />
         </Field>
       </div>
-      <div className="grid gap-5 md:grid-cols-3">
+      <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+        <Field label="Facebook">
+          <Input inputMode="url" placeholder="https://facebook.com/..." {...field("facebookUrl")} />
+        </Field>
         <Field label="LinkedIn">
           <Input
             inputMode="url"
@@ -61,6 +89,15 @@ export function StorefrontProfileForm({
         </Field>
         <Field label="X">
           <Input inputMode="url" placeholder="https://x.com/..." {...field("xUrl")} />
+        </Field>
+        <Field label="YouTube">
+          <Input inputMode="url" placeholder="https://youtube.com/@..." {...field("youtubeUrl")} />
+        </Field>
+        <Field label="WhatsApp">
+          <Input inputMode="url" placeholder="https://wa.me/919..." {...field("whatsappUrl")} />
+        </Field>
+        <Field label="Threads">
+          <Input inputMode="url" placeholder="https://threads.net/@..." {...field("threadsUrl")} />
         </Field>
       </div>
     </div>

@@ -116,8 +116,10 @@ export async function migrateCatalogModuleDataSources(database: Kysely<Ecommerce
       `CREATE TABLE IF NOT EXISTS ecommerce_catalog_module_data_sources (
     id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
     uuid CHAR(8) NOT NULL DEFAULT (LOWER(SUBSTRING(MD5(UUID()),1,8))) UNIQUE,
+    created_by VARCHAR(191) NOT NULL DEFAULT 'system:migration',
     module_key VARCHAR(64) NOT NULL,
     provider VARCHAR(24) NOT NULL DEFAULT 'own',
+    status VARCHAR(24) NOT NULL DEFAULT 'active',
     updated_by VARCHAR(191) NOT NULL DEFAULT 'system:migration',
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -135,7 +137,10 @@ export async function migrateCatalogModuleDataSources(database: Kysely<Ecommerce
     "product-images",
     "sliders",
     "promotions",
-    "featured-cards"
+    "featured-cards",
+    "brand-strips",
+    "season-strips",
+    "campaign-events"
   ]) {
     await sql`INSERT IGNORE INTO ecommerce_catalog_module_data_sources
       (module_key,provider,updated_by) VALUES (${moduleKey},'own','system:seed')`.execute(database);
@@ -151,6 +156,20 @@ export async function upgradeCatalogStorefrontSourceCompatibility(
   database: Kysely<EcommerceDatabase>
 ) {
   for (const moduleKey of ["sliders", "promotions", "featured-cards"]) {
+    await sql`INSERT IGNORE INTO ecommerce_catalog_module_data_sources
+      (module_key,provider,updated_by) VALUES (${moduleKey},'own','system:compatibility')`.execute(
+      database
+    );
+  }
+}
+
+export const catalogStorefrontUxSourceMigration = {
+  description: "Add source preferences for all storefront UX content groups.",
+  key: "ecommerce.catalog.storefront-ux-sources"
+} as const;
+
+export async function upgradeCatalogStorefrontUxSources(database: Kysely<EcommerceDatabase>) {
+  for (const moduleKey of ["brand-strips", "season-strips", "campaign-events"]) {
     await sql`INSERT IGNORE INTO ecommerce_catalog_module_data_sources
       (module_key,provider,updated_by) VALUES (${moduleKey},'own','system:compatibility')`.execute(
       database

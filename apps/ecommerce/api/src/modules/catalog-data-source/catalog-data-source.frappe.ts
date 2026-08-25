@@ -11,6 +11,8 @@ import type {
   FrappeErpItem,
   FrappeIShopCatalog,
   FrappeIShopItem,
+  FrappeIShopCampaignEvent,
+  FrappeIShopSeasonStrip,
   StorefrontCatalogSource
 } from "./catalog-data-source.types.js";
 
@@ -26,6 +28,9 @@ type CatalogSnapshot = {
   sliders: FrappeCatalogSnapshot["sliders"];
   promotions: FrappeCatalogSnapshot["promotions"];
   featuredCards: FrappeCatalogSnapshot["featured_cards"];
+  brandStrips: NonNullable<FrappeCatalogSnapshot["brand_strips"]>;
+  seasonStrips: NonNullable<FrappeCatalogSnapshot["season_strips"]>;
+  campaignEvents: NonNullable<FrappeCatalogSnapshot["campaign_events"]>;
 };
 
 export class FrappeCatalogSource implements StorefrontCatalogSource {
@@ -167,6 +172,33 @@ export class FrappeCatalogSource implements StorefrontCatalogSource {
       }));
   }
 
+  async brandStrips() {
+    const snapshot = await this.snapshot();
+    return snapshot.brandStrips
+      .filter((item) => item.status !== "inactive" && Boolean(item.published))
+      .sort((left, right) => (left.display_order ?? 0) - (right.display_order ?? 0))
+      .map((item) => ({
+        logoAlt: item.logo_alt?.trim() || `${item.brand_name} logo`,
+        logoUrl: absoluteUrl(item.logo_url, this.currentBaseUrl),
+        name: item.brand_name,
+        productCount: snapshot.items.filter(
+          (product) =>
+            this.toProduct(product, snapshot).brand?.trim().toLowerCase() ===
+            item.brand_name.trim().toLowerCase()
+        ).length
+      }));
+  }
+
+  async seasonStrips() {
+    const snapshot = await this.snapshot();
+    return activePromotionalContent(snapshot.seasonStrips, this.currentBaseUrl);
+  }
+
+  async campaignEvents() {
+    const snapshot = await this.snapshot();
+    return activePromotionalContent(snapshot.campaignEvents, this.currentBaseUrl);
+  }
+
   async integrationSnapshot(): Promise<FrappeCatalogSnapshot> {
     const credentials = await this.resolveCredentials();
     return this.method<FrappeCatalogSnapshot>(credentials, "get_catalog_snapshot", "GET");
@@ -179,6 +211,9 @@ export class FrappeCatalogSource implements StorefrontCatalogSource {
       erpnext_items: number;
       items: number;
       featured_cards: number;
+      brand_strips: number;
+      season_strips: number;
+      campaign_events: number;
       promotions: number;
       sliders: number;
     }>(credentials, "upsert_catalog_snapshot", "POST", { payload: JSON.stringify(snapshot) });
@@ -191,6 +226,9 @@ export class FrappeCatalogSource implements StorefrontCatalogSource {
       erpnext_items: number;
       items: number;
       featured_cards: number;
+      brand_strips: number;
+      season_strips: number;
+      campaign_events: number;
       promotions: number;
       sliders: number;
     }>(credentials, "seed_dummy_catalog", "POST");
@@ -234,6 +272,20 @@ export class FrappeCatalogSource implements StorefrontCatalogSource {
   }
 
   private async snapshot(): Promise<CatalogSnapshot> {
+    if (this.snapshotCache && this.snapshotCache.expiresAt > Date.now()) {
+      return this.snapshotCache.value;
+    }
+    this.snapshotRequest ??= this.loadSnapshot();
+    try {
+      const value = await this.snapshotRequest;
+      this.snapshotCache = { expiresAt: Date.now() + 5_000, value };
+      return value;
+    } finally {
+      this.snapshotRequest = undefined;
+    }
+  }
+
+  private async loadSnapshot(): Promise<CatalogSnapshot> {
     const credentials = await this.resolveCredentials();
     const payload = await this.method<FrappeCatalogSnapshot>(
       credentials,
@@ -254,7 +306,10 @@ export class FrappeCatalogSource implements StorefrontCatalogSource {
       memberships: membershipsFrom(catalogs),
       sliders: payload.sliders ?? [],
       promotions: payload.promotions ?? [],
-      featuredCards: payload.featured_cards ?? []
+      featuredCards: payload.featured_cards ?? [],
+      brandStrips: payload.brand_strips ?? [],
+      seasonStrips: payload.season_strips ?? [],
+      campaignEvents: payload.campaign_events ?? []
     };
   }
 
@@ -337,6 +392,42 @@ export class FrappeCatalogSource implements StorefrontCatalogSource {
   }
 
   private currentBaseUrl = "";
+  private snapshotCache: { expiresAt: number; value: CatalogSnapshot } | undefined;
+  private snapshotRequest: Promise<CatalogSnapshot> | undefined;
+}
+
+function activePromotionalContent(
+  items: Array<FrappeIShopCampaignEvent | FrappeIShopSeasonStrip>,
+  baseUrl: string
+) {
+  const now = Date.now();
+  return items
+    .filter(
+      (item) =>
+        item.status !== "inactive" &&
+        Boolean(item.published) &&
+        (!item.starts_at || new Date(String(item.starts_at)).getTime() <= now) &&
+        (!item.ends_at || new Date(String(item.ends_at)).getTime() >= now)
+    )
+    .sort((left, right) => Number(left.display_order ?? 0) - Number(right.display_order ?? 0))
+    .map((item) => ({
+      actionLabel: String(item.action_label ?? "").trim() || "Explore now",
+      actionUrl: String(item.action_url ?? "").trim() || "#catalog",
+      badge: String(item.badge ?? "").trim(),
+      badgePosition: "top-left" as const,
+      badgeTint: String(item.badge_tint ?? "#0f766e"),
+      badgeTextColor: String(item.badge_text_color ?? "#ffffff"),
+      description: plainText(String(item.description ?? "")),
+      displayOrder: Number(item.display_order ?? 0),
+      eyebrow: String(item.eyebrow ?? "").trim(),
+      imageAlt: String(item.title ?? ""),
+      imageUrl: absoluteUrl(String(item.image_url ?? ""), baseUrl),
+      linkedItem: item.ishop_item ? String(item.ishop_item).trim() : null,
+      offerPrice: 0,
+      originalPrice: null,
+      promotionCode: "campaign_code" in item ? item.campaign_code : item.season_code,
+      title: String(item.title ?? "")
+    }));
 }
 
 function membershipsFrom(catalogs: IShopCatalog[]) {

@@ -85,7 +85,20 @@ export type StorefrontSiteNavigation = {
   groups: Array<{ title: string; links: Array<{ label: string; href: string }> }>;
   socialLinks: Array<{ label: string; href: string }>;
   poweredByText: string;
+  serviceBanner: {
+    actionLabel: string;
+    actionUrl: string;
+    description: string;
+    eyebrow: string;
+    title: string;
+  };
   tagline: string;
+  trustedStrip: {
+    description: string;
+    eyebrow: string;
+    proofPoints: string[];
+    title: string;
+  };
 };
 export type StorefrontAnnouncement = {
   displayDurationMs: number;
@@ -99,4 +112,15 @@ export type StorefrontBranding = {
   logoDarkUrl: string | null;
   logoUrl: string | null;
   primaryPhone: string | null;
+};
+export type StorefrontBootstrap = {
+  announcement: StorefrontAnnouncement | null;
+  brandStrips: StorefrontDiscovery["brands"];
+  campaignEvents: StorefrontPromotion[];
+  discovery: StorefrontDiscovery;
+  featuredCards: StorefrontFeaturedCard[];
+  promotions: StorefrontPromotion[];
+  seasonStrips: StorefrontPromotion[];
+  siteNavigation: StorefrontSiteNavigation | null;
+  sliders: StorefrontSlider[];
 };

@@ -1,5 +1,6 @@
 import { AppError } from "@cxshop/framework/errors";
 import { StorefrontSliderRepository } from "./storefront-slider.repository.js";
+import { invalidateStorefrontReadCache } from "../storefront/index.js";
 import type {
   StorefrontSliderFilters,
   StorefrontSliderSaveInput
@@ -17,16 +18,22 @@ export class StorefrontSliderService {
   }
 
   async create(input: StorefrontSliderSaveInput) {
-    return this.repository.create(await this.validate(input));
+    const record = await this.repository.create(await this.validate(input));
+    invalidateStorefrontReadCache();
+    return record;
   }
 
   async update(id: number, input: StorefrontSliderSaveInput) {
     if (!(await this.repository.find(id))) throw AppError.notFound("Home slider was not found.");
-    return this.repository.update(id, await this.validate(input, id));
+    const record = await this.repository.update(id, await this.validate(input, id));
+    invalidateStorefrontReadCache();
+    return record;
   }
 
-  setActive(id: number, active: boolean) {
-    return this.repository.setActive(id, active);
+  async setActive(id: number, active: boolean) {
+    const record = await this.repository.setActive(id, active);
+    invalidateStorefrontReadCache();
+    return record;
   }
 
   private async validate(input: StorefrontSliderSaveInput, currentId = 0) {

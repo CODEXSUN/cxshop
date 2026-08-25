@@ -2,11 +2,11 @@
 
 ## Version State
 
-Current version: 1.0.66
+Current version: 1.0.68
 
-Release tag: v-1.0.66
+Release tag: v-1.0.68
 
-Changelog label: v 1.0.66
+Changelog label: v 1.0.68
 
 This changelog starts fresh from the cleaned CODEXSUN foundation. Earlier copied application history was intentionally removed because it did not represent the current workspace.
 
@@ -21,6 +21,51 @@ Records schema, migration, seed, tenant provisioning, and data compatibility cha
 ### App Codebase Changes
 
 Records UI, API, service logic, tooling, packaging, and documentation changes.
+
+## v-1.0.68
+
+### [v 1.0.68] 2026-08-25 10:36 am - LogicX iShop storefront source integration
+
+#### Database Changes
+
+- Database update: Yes (auto-check).
+- Added data-source records for Brand Strip, Season Strip, and Campaign Events.
+- Registered the storefront source migration as an additive Ecommerce database batch.
+
+#### App Codebase Changes
+
+- Bumped workspace version to 1.0.68.
+- Connected Home Slider, Promotion Cards, Brand Strip, Featured Cards, Season Strip, and Campaign Events to the LogicX iShop snapshot.
+- Added a Local or Frappe source selector for each storefront content group.
+- Added automatic local fallback when the Frappe connection or remote content is unavailable.
+- Added Frappe media URL normalization and shared snapshot request caching.
+- Organized all six source selectors under Storefront UX Content in Ecommerce Data Source settings.
+
+## v-1.0.67
+
+### [v 1.0.67] 2026-08-25 10:02 am - Storefront performance, reliability, and responsive polish
+
+#### Database Changes
+
+- Database update: Yes (auto-check).
+- Added compatible storefront schema upgrades for audit fields, UUIDs, status fields, and performance indexes.
+- Added indexed catalog query coverage to prevent storefront database performance regressions.
+- Standardized the Application, cloud publishing, and Honey migration contracts.
+- Added source preferences for Brand Strip, Season Strip, and Campaign Events.
+
+#### App Codebase Changes
+
+- Bumped workspace version to 1.0.67.
+- Added one storefront bootstrap request with cache invalidation, request deduplication, timeouts, and section-level failure isolation.
+- Added responsive WebP and AVIF image delivery with intrinsic dimensions and browser size hints.
+- Added storefront performance telemetry and server timing data without changing the storefront layout.
+- Improved storefront loading stability, Core Web Vitals, SEO metadata, crawler files, and agent-search content.
+- Added consistent section spacing for desktop, tablet, and mobile storefront views.
+- Added responsive visual regression tests for mobile, tablet, desktop, and wide screens.
+- Added SEO, browser catalog, migration contract, and database query-plan regression tests.
+- Aligned all six storefront content groups with the LogicX iShop snapshot API.
+- Added independent Local MariaDB and Frappe Live selectors for each storefront content group.
+- Kept local records as the automatic fallback when Frappe is unavailable.
 
 ## v-1.0.66
 

@@ -12,7 +12,7 @@ export async function migrateCatalogMatchingModule(database: Kysely<EcommerceDat
   await sql
     .raw(
       `CREATE TABLE IF NOT EXISTS ecommerce_catalog_match_requests (
-    id INT NOT NULL AUTO_INCREMENT PRIMARY KEY, uuid VARCHAR(16) NOT NULL UNIQUE, source_reference VARCHAR(191) NOT NULL,
+    id INT NOT NULL AUTO_INCREMENT PRIMARY KEY, uuid CHAR(8) NOT NULL UNIQUE, created_by VARCHAR(191) NOT NULL DEFAULT 'system:catalog-matching', source_reference VARCHAR(191) NOT NULL,
     query_json JSON NOT NULL, product_information_id INT NULL, variant_id INT NULL, strategy VARCHAR(32) NOT NULL,
     confidence DECIMAL(6,5) NOT NULL DEFAULT 0, status VARCHAR(24) NOT NULL DEFAULT 'unmatched', correlation_id VARCHAR(191) NOT NULL,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -25,7 +25,7 @@ export async function migrateCatalogMatchingModule(database: Kysely<EcommerceDat
   await sql
     .raw(
       `CREATE TABLE IF NOT EXISTS ecommerce_catalog_match_outbox (
-    id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY, uuid VARCHAR(16) NOT NULL UNIQUE, event_name VARCHAR(191) NOT NULL,
+    id INT NOT NULL AUTO_INCREMENT PRIMARY KEY, uuid CHAR(8) NOT NULL UNIQUE, created_by VARCHAR(191) NOT NULL DEFAULT 'system:catalog-matching', event_name VARCHAR(191) NOT NULL,
     aggregate_id VARCHAR(191) NOT NULL, idempotency_key VARCHAR(191) NOT NULL UNIQUE, correlation_id VARCHAR(191) NOT NULL,
     payload_json JSON NOT NULL, status VARCHAR(24) NOT NULL DEFAULT 'pending', attempts INT NOT NULL DEFAULT 0,
     available_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, published_at DATETIME NULL, last_error TEXT NULL,

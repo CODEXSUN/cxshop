@@ -31,13 +31,15 @@ export function setStorefrontSeo(input: {
   setMeta("twitter:description", input.description);
   setMeta("robots", input.robots ?? "index,follow,max-image-preview:large,max-snippet:-1");
   setLink("canonical", canonicalUrl);
-  setStructuredData(input.structuredData ?? {
-    "@context": "https://schema.org",
-    "@type": "ComputerStore",
-    ...business,
-    description: input.description,
-    url: window.location.origin
-  });
+  setStructuredData(
+    input.structuredData ?? {
+      "@context": "https://schema.org",
+      "@type": "ComputerStore",
+      ...business,
+      description: input.description,
+      url: window.location.origin
+    }
+  );
 }
 
 export function createProductStructuredData(input: {
@@ -48,7 +50,10 @@ export function createProductStructuredData(input: {
   price: number;
   slug: string;
 }) {
-  const productUrl = new URL(`/shop/product/${encodeURIComponent(input.slug)}`, window.location.origin).toString();
+  const productUrl = new URL(
+    `/shop/product/${encodeURIComponent(input.slug)}`,
+    window.location.origin
+  ).toString();
   return {
     "@context": "https://schema.org",
     "@graph": [
@@ -58,14 +63,22 @@ export function createProductStructuredData(input: {
         description: input.description,
         image: [new URL(input.imageUrl, window.location.origin).toString()],
         name: input.name,
-        offers: input.price > 0 ? { "@type": "Offer", price: input.price, priceCurrency: "INR", url: productUrl } : undefined,
+        offers:
+          input.price > 0
+            ? { "@type": "Offer", price: input.price, priceCurrency: "INR", url: productUrl }
+            : undefined,
         url: productUrl
       },
       {
         "@type": "BreadcrumbList",
         itemListElement: [
           { "@type": "ListItem", item: window.location.origin, name: "Home", position: 1 },
-          { "@type": "ListItem", item: new URL("/shop", window.location.origin).toString(), name: "Shop", position: 2 },
+          {
+            "@type": "ListItem",
+            item: new URL("/shop", window.location.origin).toString(),
+            name: "Shop",
+            position: 2
+          },
           { "@type": "ListItem", item: productUrl, name: input.name, position: 3 }
         ]
       }

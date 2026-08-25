@@ -41,9 +41,7 @@ export class HoneyModelGateway {
       error?: { message?: string };
     } | null;
     if (!response.ok) {
-      throw new Error(
-        payload?.error?.message || `Piko provider returned HTTP ${response.status}.`
-      );
+      throw new Error(payload?.error?.message || `Piko provider returned HTTP ${response.status}.`);
     }
     const content = payload?.choices?.[0]?.message?.content?.trim();
     if (!content) throw new Error("Piko provider returned an empty response.");

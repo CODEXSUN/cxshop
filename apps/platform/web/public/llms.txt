@@ -4,15 +4,16 @@ Tech Media is a computer store and business technology company in Tiruppur, Tami
 
 Address: 436, Avinashi Road, Tiruppur 641602, Tamil Nadu, India
 Phone: +91 98946 44450
-Website: https://techmedia.in/
+Website: [Tech Media](https://techmedia.in/)
 
 Primary pages:
-- Storefront: https://techmedia.in/shop
-- Business IT solutions: https://techmedia.in/features
-- About: https://techmedia.in/about
-- Support: https://techmedia.in/support
-- Contact and map: https://techmedia.in/contact
-- Shipping: https://techmedia.in/shipping
-- Returns and refunds: https://techmedia.in/returns
-- Privacy: https://techmedia.in/privacy
-- Terms: https://techmedia.in/terms
+- [Storefront](https://techmedia.in/shop)
+- [Campaigns and events](https://techmedia.in/campaigns)
+- [Business IT solutions](https://techmedia.in/features)
+- [About Tech Media](https://techmedia.in/about)
+- [Support](https://techmedia.in/support)
+- [Contact and map](https://techmedia.in/contact)
+- [Shipping](https://techmedia.in/shipping)
+- [Returns and refunds](https://techmedia.in/returns)
+- [Privacy policy](https://techmedia.in/privacy)
+- [Terms of use](https://techmedia.in/terms)

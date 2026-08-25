@@ -5,15 +5,16 @@ import {
   ArrowUpRightIcon,
   CheckIcon,
   ChevronRightIcon,
+  CreditCardIcon,
   HeadphonesIcon,
-  AtSignIcon,
   CameraIcon,
   MessageCircleIcon,
   MenuIcon,
   Globe2Icon,
-  UserRoundIcon,
   LaptopIcon,
   NetworkIcon,
+  RotateCcwIcon,
+  TruckIcon,
   WrenchIcon,
   XIcon
 } from "lucide-react";
@@ -28,7 +29,14 @@ import type {
   StorefrontPromotion
 } from "./storefront.types";
 import type { StorefrontFeaturedCard } from "./storefront.types";
-import { hasStorefrontPrice, money, whatsappLink } from "./storefront.formatters";
+import {
+  hasStorefrontPrice,
+  money,
+  responsiveImageSrcSet,
+  whatsappLink
+} from "./storefront.formatters";
+import { StorefrontCollectionIcon } from "./storefront.collection-icons";
+import { StorefrontSocialIcon } from "./storefront.social-icon";
 
 type FilterProps = {
   discovery: StorefrontDiscovery;
@@ -60,7 +68,16 @@ export function HeroSlider({ slides }: { slides: StorefrontSlider[] }) {
         </a>
       </div>
       <div className="cx-store__hero-media" key={`media-${slide.sliderCode}`}>
-        <img src={slide.imageUrl} alt={slide.imageAlt || slide.title} />
+        <img
+          alt={slide.imageAlt || slide.title}
+          decoding="async"
+          fetchPriority="high"
+          height={720}
+          sizes="(max-width: 900px) 100vw, 50vw"
+          src={slide.imageUrl}
+          srcSet={responsiveImageSrcSet(slide.imageUrl, [480, 768, 1200, 1600])}
+          width={1200}
+        />
         <div aria-label="Choose storefront highlight" className="cx-store__hero-bullets">
           {slides.map((item, index) => (
             <button
@@ -78,14 +95,23 @@ export function HeroSlider({ slides }: { slides: StorefrontSlider[] }) {
   );
 }
 
-export function TechMediaTrustSection() {
+export function TechMediaTrustSection({
+  content
+}: {
+  content?: StorefrontSiteNavigation["trustedStrip"] | undefined;
+}) {
   const [activePanel, setActivePanel] = useState(0);
   const reduceMotion = useReducedMotion();
   const panels = [
     {
       action: "Explore products",
-      description: "Practical systems selected around your workload, budget, service needs, and future upgrades.",
-      details: ["Business and student laptops", "Desktops and workstations", "Custom systems and accessories"],
+      description:
+        "Practical systems selected around your workload, budget, service needs, and future upgrades.",
+      details: [
+        "Business and student laptops",
+        "Desktops and workstations",
+        "Custom systems and accessories"
+      ],
       href: "/shop",
       icon: LaptopIcon,
       number: "01",
@@ -93,8 +119,13 @@ export function TechMediaTrustSection() {
     },
     {
       action: "Explore solutions",
-      description: "Connected technology for offices, factories, retailers, institutions, and growing teams.",
-      details: ["Networking, Wi-Fi and storage", "CCTV, biometric and access", "POS, VoIP and displays"],
+      description:
+        "Connected technology for offices, factories, retailers, institutions, and growing teams.",
+      details: [
+        "Networking, Wi-Fi and storage",
+        "CCTV, biometric and access",
+        "POS, VoIP and displays"
+      ],
       href: "/features",
       icon: NetworkIcon,
       number: "02",
@@ -102,8 +133,13 @@ export function TechMediaTrustSection() {
     },
     {
       action: "Get local support",
-      description: "Reach a Tiruppur team that can help before the purchase and after the installation.",
-      details: ["Computer and laptop service", "Installation and upgrades", "Maintenance and warranty help"],
+      description:
+        "Reach a Tiruppur team that can help before the purchase and after the installation.",
+      details: [
+        "Computer and laptop service",
+        "Installation and upgrades",
+        "Maintenance and warranty help"
+      ],
       href: "/support",
       icon: WrenchIcon,
       number: "03",
@@ -111,8 +147,13 @@ export function TechMediaTrustSection() {
     },
     {
       action: "Plan security",
-      description: "Practical protection and access systems designed for the site, people, and daily workflow.",
-      details: ["CCTV and remote monitoring", "Biometric attendance", "Face recognition and access control"],
+      description:
+        "Practical protection and access systems designed for the site, people, and daily workflow.",
+      details: [
+        "CCTV and remote monitoring",
+        "Biometric attendance",
+        "Face recognition and access control"
+      ],
       href: "/features",
       icon: CameraIcon,
       number: "04",
@@ -120,8 +161,13 @@ export function TechMediaTrustSection() {
     },
     {
       action: "Discuss infrastructure",
-      description: "A connected foundation for teams that depend on reliable systems, communication, and support.",
-      details: ["Servers, storage and backup", "VoIP and video conferencing", "AMC and planned maintenance"],
+      description:
+        "A connected foundation for teams that depend on reliable systems, communication, and support.",
+      details: [
+        "Servers, storage and backup",
+        "VoIP and video conferencing",
+        "AMC and planned maintenance"
+      ],
       href: "/contact",
       icon: Globe2Icon,
       number: "05",
@@ -132,16 +178,23 @@ export function TechMediaTrustSection() {
   return (
     <section className="cx-store__tech-media" aria-labelledby="tech-media-title">
       <div className="cx-store__tech-media-intro">
-        <span>Trusted in Tiruppur since 2002</span>
-        <h2 id="tech-media-title">25+ years of practical technology experience</h2>
+        <span>{content?.eyebrow || "Trusted in Tiruppur since 2002"}</span>
+        <h2 id="tech-media-title">
+          {content?.title || "25+ years of practical technology experience"}
+        </h2>
         <p>
-          We help you choose technology that fits the work, set it up properly, and keep it useful
-          as your needs grow.
+          {content?.description ||
+            "We help you choose technology that fits the work, set it up properly, and keep it useful as your needs grow."}
         </p>
         <div className="cx-store__tech-media-proof" aria-label="Tech Media service strengths">
-          <span><CheckIcon /> Multi-brand guidance</span>
-          <span><CheckIcon /> Local technical support</span>
-          <span><CheckIcon /> Retail and business expertise</span>
+          {(content?.proofPoints.length
+            ? content.proofPoints
+            : ["Multi-brand guidance", "Local technical support", "Retail and business expertise"]
+          ).map((point) => (
+            <span key={point}>
+              <CheckIcon /> {point}
+            </span>
+          ))}
         </div>
       </div>
       <div className="cx-store__tech-media-accordion" aria-label="Technology services">
@@ -195,9 +248,15 @@ export function TechMediaTrustSection() {
                   >
                     <p>{panel.description}</p>
                     <ul>
-                      {panel.details.map((detail) => <li key={detail}><CheckIcon /> {detail}</li>)}
+                      {panel.details.map((detail) => (
+                        <li key={detail}>
+                          <CheckIcon /> {detail}
+                        </li>
+                      ))}
                     </ul>
-                    <a href={panel.href}>{panel.action} <ArrowUpRightIcon /></a>
+                    <a href={panel.href}>
+                      {panel.action} <ArrowUpRightIcon />
+                    </a>
                   </motion.div>
                 ) : null}
               </AnimatePresence>
@@ -209,6 +268,35 @@ export function TechMediaTrustSection() {
   );
 }
 
+export function ServiceBanner({
+  content
+}: {
+  content?: StorefrontSiteNavigation["serviceBanner"] | undefined;
+}) {
+  return (
+    <motion.a
+      className="cx-store__service-banner"
+      href={content?.actionUrl || "/support"}
+      initial={{ opacity: 0, y: 16 }}
+      transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+      viewport={{ amount: 0.35, once: true }}
+      whileInView={{ opacity: 1, y: 0 }}
+    >
+      <span className="cx-store__service-banner-mark" aria-hidden="true">
+        <HeadphonesIcon />
+      </span>
+      <span className="cx-store__service-banner-copy">
+        <small>{content?.eyebrow || "Tech Media care"}</small>
+        <strong>{content?.title || "Technology works better with support close by."}</strong>
+        {content?.description ? <span>{content.description}</span> : null}
+      </span>
+      <span className="cx-store__service-banner-action">
+        {content?.actionLabel || "Get support"} <ArrowUpRightIcon />
+      </span>
+    </motion.a>
+  );
+}
+
 export function PromotionsSection({ promotions }: { promotions: StorefrontPromotion[] }) {
   return (
     <StorefrontCardsSection
@@ -217,6 +305,45 @@ export function PromotionsSection({ promotions }: { promotions: StorefrontPromot
       label="Current promotions"
       title="Better value on everyday technology"
     />
+  );
+}
+
+export function SeasonBanner({ promotions }: { promotions: StorefrontPromotion[] }) {
+  const campaigns = promotions.slice(0, 2);
+  if (!campaigns.length) return null;
+
+  return (
+    <section className="cx-store__campaign-banner" aria-label="Featured store offers">
+      <div className={`cx-store__campaign-panels is-${campaigns.length}`}>
+        {campaigns.map((campaign) => (
+          <a href={campaign.actionUrl} key={campaign.promotionCode}>
+            <img
+              alt={campaign.imageAlt || campaign.title}
+              decoding="async"
+              loading="lazy"
+              src={campaign.imageUrl}
+              sizes="(max-width: 800px) 100vw, 50vw"
+              srcSet={responsiveImageSrcSet(campaign.imageUrl, [480, 768, 960])}
+              height={520}
+              width={960}
+            />
+            <span className="cx-store__campaign-copy">
+              <small>{campaign.eyebrow || "Featured offer"}</small>
+              <strong>{campaign.title}</strong>
+              <span>
+                {campaign.actionLabel || "Explore offer"} <ArrowUpRightIcon />
+              </span>
+            </span>
+          </a>
+        ))}
+      </div>
+      <div className="cx-store__campaign-benefits" aria-label="Shopping benefits">
+        <strong>Tech Media assurance</strong>
+        <span>Local product guidance</span>
+        <span>Business-ready installation</span>
+        <span>Support after purchase</span>
+      </div>
+    </section>
   );
 }
 
@@ -260,6 +387,7 @@ function StorefrontCardsSection({
               <span className="cx-store__promotion-media">
                 <img
                   alt={promotion.imageAlt || promotion.title}
+                  decoding="async"
                   loading="lazy"
                   src={promotion.imageUrl}
                 />
@@ -335,6 +463,8 @@ export function BrandsSection({ brands }: { brands: StorefrontDiscovery["brands"
                 {brand.logoUrl ? (
                   <img
                     alt={index >= brands.length ? "" : brand.logoAlt || `${brand.name} logo`}
+                    decoding="async"
+                    loading="lazy"
                     src={brand.logoUrl}
                   />
                 ) : (
@@ -372,7 +502,7 @@ export function BlogSolutionsSection({
           <a href={`/blog/${post.slug}`} key={post.slug}>
             <span className="cx-store__blog-solution-media">
               {post.featuredImage ? (
-                <img src={post.featuredImage} alt={post.imageAlt} loading="lazy" />
+                <img alt={post.imageAlt} decoding="async" loading="lazy" src={post.featuredImage} />
               ) : (
                 <span>{brandName} Journal</span>
               )}
@@ -522,12 +652,82 @@ export function CatalogFilters({ discovery, filters, onFilters }: FilterProps) {
   );
 }
 
+export function CollectionFilter({
+  categories,
+  filters,
+  onFilters
+}: {
+  categories: StorefrontDiscovery["categories"];
+  filters: StorefrontFilters;
+  onFilters: (value: StorefrontFilters) => void;
+}) {
+  const collections = collectionDefinitions.map((collection) => ({
+    ...collection,
+    value: resolveCollectionValue(categories, collection)
+  }));
+  return (
+    <nav className="cx-store__collection-filter" aria-label="Filter product collections">
+      <div>
+        {collections.map((collection) => {
+          const deals = collection.name === "Deals";
+          const active = deals
+            ? filters.sort === "discount"
+            : filters.category === collection.value && filters.sort !== "discount";
+          return (
+            <button
+              aria-pressed={active}
+              className={active ? "is-active" : undefined}
+              key={collection.name}
+              onClick={() =>
+                onFilters({
+                  ...filters,
+                  category: collection.value,
+                  sort: deals ? "discount" : "featured"
+                })
+              }
+              type="button"
+            >
+              <StorefrontCollectionIcon name={collection.name} />
+              <span>{collection.name}</span>
+            </button>
+          );
+        })}
+      </div>
+    </nav>
+  );
+}
+
+const collectionDefinitions = [
+  { aliases: [], name: "All Collections" },
+  { aliases: ["laptop", "notebook"], name: "Laptops" },
+  { aliases: ["desktop", "computer", "aio", "workstation"], name: "Desktop Computers" },
+  { aliases: ["monitor", "display"], name: "Monitors" },
+  { aliases: ["accessor"], name: "Accessories" },
+  { aliases: ["printer", "scanner"], name: "Printers" },
+  { aliases: ["cable", "connector", "adapter"], name: "Cables & Connectors" },
+  { aliases: [], name: "Deals" }
+] as const;
+
+function resolveCollectionValue(
+  categories: StorefrontDiscovery["categories"],
+  collection: (typeof collectionDefinitions)[number]
+) {
+  if (collection.name === "All Collections" || collection.name === "Deals") return "";
+  return (
+    categories.find((category) =>
+      collection.aliases.some((alias) => category.name.toLowerCase().includes(alias))
+    )?.name ?? collection.name
+  );
+}
+
 export function ProductCard({
   brandName = "",
+  eagerImage = false,
   product,
   whatsappNumber
 }: {
   brandName?: string | undefined;
+  eagerImage?: boolean | undefined;
   product: StorefrontProduct;
   whatsappNumber?: string | null | undefined;
 }) {
@@ -538,7 +738,16 @@ export function ProductCard({
       <a href={`/shop/product/${product.slug}`}>
         <div className="cx-product-card__image">
           {product.featured ? <span>Featured</span> : null}
-          <img src={product.imageUrl} alt={product.imageAlt} loading="lazy" />
+          <img
+            alt={product.imageAlt}
+            decoding="async"
+            loading={eagerImage ? "eager" : "lazy"}
+            src={product.imageUrl}
+            sizes="(max-width: 720px) 100vw, (max-width: 1200px) 50vw, 25vw"
+            srcSet={responsiveImageSrcSet(product.imageUrl, [320, 480, 640, 960])}
+            height={640}
+            width={640}
+          />
         </div>
         <div className="cx-product-card__copy">
           {metadata ? <small>{metadata}</small> : null}
@@ -614,19 +823,94 @@ export function StoreFooter({
   branding: StorefrontBranding | null;
   navigation: StorefrontSiteNavigation | null;
 }) {
-  const groups = navigation?.groups ?? defaultFooterGroups;
+  const copyrightText =
+    navigation?.copyrightText.trim() ||
+    `© ${new Date().getFullYear()} ${branding?.brandName || "Tech Media"}. All rights reserved.`;
+  const poweredByText = navigation?.poweredByText.trim() || "Powered by Logicx Softwares";
+  const groups = (navigation?.groups ?? defaultFooterGroups).map((group) => ({
+    ...group,
+    links: group.links.filter((link) => !["Customer portal", "Support"].includes(link.label))
+  }));
   const [menuOpen, setMenuOpen] = useState(false);
+  const [newsletterEmail, setNewsletterEmail] = useState("");
+  const subscribe = () => {
+    if (!newsletterEmail) return;
+    window.open(
+      whatsappLink(
+        `Hello${branding?.brandName ? ` ${branding.brandName}` : ""}, please add ${newsletterEmail} to the latest-deals update list.`,
+        branding?.primaryPhone
+      ),
+      "_blank",
+      "noopener,noreferrer"
+    );
+  };
   return (
-    <footer className="cx-store__footer">
-      <div className="cx-store__footer-main">
-        <section className="cx-store__footer-brand">
-          <a className="cx-store__footer-logo" href="/">
-            <StoreBrandMark branding={branding} dark />
-            {branding?.brandName ? <strong>{branding.brandName}</strong> : null}
-          </a>
-          {navigation?.tagline ? <b>{navigation.tagline}</b> : null}
-          {navigation?.about ? <p>{navigation.about}</p> : null}
-          <div className="cx-store__socials" aria-label="Social links">
+    <>
+      <StoreBenefitsBar />
+      <footer className="cx-store__footer">
+        <div className="cx-store__footer-main">
+          <section className="cx-store__footer-brand">
+            <a className="cx-store__footer-logo" href="/">
+              <StoreBrandMark branding={branding} dark />
+              {branding?.brandName ? <strong>{branding.brandName}</strong> : null}
+            </a>
+            {navigation?.tagline ? <b>{navigation.tagline}</b> : null}
+            {navigation?.about ? <p>{navigation.about}</p> : null}
+          </section>
+          <button
+            aria-controls="cx-store-footer-menu"
+            aria-expanded={menuOpen}
+            className="cx-store__footer-menu-toggle"
+            onClick={() => setMenuOpen((value) => !value)}
+            type="button"
+          >
+            <span>Explore footer</span>
+            {menuOpen ? <XIcon /> : <MenuIcon />}
+          </button>
+          <div
+            className={`cx-store__footer-menu${menuOpen ? " is-open" : ""}`}
+            id="cx-store-footer-menu"
+          >
+            {groups.map((group) => (
+              <FooterColumn
+                title={group.title}
+                links={group.links.map((link) => [link.label, link.href])}
+                key={group.title}
+              />
+            ))}
+          </div>
+        </div>
+        <div className="cx-store__footer-utility">
+          <section className="cx-store__payment-types" aria-label="Supported payment types">
+            <strong>Supported payment types</strong>
+            <div>
+              <CreditCardIcon aria-hidden="true" />
+              <b>VISA</b>
+              <b>Mastercard</b>
+              <b>UPI</b>
+              <b>G Pay</b>
+            </div>
+          </section>
+          <section className="cx-store__footer-updates">
+            <strong>Get the latest deals and practical buying updates</strong>
+            <form
+              onSubmit={(event) => {
+                event.preventDefault();
+                subscribe();
+              }}
+            >
+              <input
+                aria-label="Email address for deal updates"
+                onChange={(event) => setNewsletterEmail(event.target.value)}
+                placeholder="Enter email address"
+                required
+                type="email"
+                value={newsletterEmail}
+              />
+              <button type="submit">Sign up</button>
+            </form>
+          </section>
+          <div className="cx-store__socials" aria-label="Social and contact links">
             {navigation?.socialLinks.map((link) => (
               <a
                 aria-label={link.label}
@@ -635,66 +919,85 @@ export function StoreFooter({
                 rel="noreferrer"
                 target="_blank"
               >
-                {link.label === "Instagram" ? (
-                  <CameraIcon />
-                ) : link.label === "X" ? (
-                  <AtSignIcon />
-                ) : (
-                  <Globe2Icon />
-                )}
+                <StorefrontSocialIcon label={link.label} />
               </a>
             ))}
+            {navigation?.socialLinks.some((link) => link.label === "WhatsApp") ? null : (
+              <a
+                aria-label="WhatsApp"
+                href={whatsappLink(
+                  `Hello${branding?.brandName ? ` ${branding.brandName}` : ""}, I need help choosing a product.`,
+                  branding?.primaryPhone
+                )}
+                rel="noreferrer"
+                target="_blank"
+              >
+                <StorefrontSocialIcon label="WhatsApp" />
+              </a>
+            )}
           </div>
-        </section>
-        <button
-          aria-controls="cx-store-footer-menu"
-          aria-expanded={menuOpen}
-          className="cx-store__footer-menu-toggle"
-          onClick={() => setMenuOpen((value) => !value)}
-          type="button"
-        >
-          <span>Explore footer</span>
-          {menuOpen ? <XIcon /> : <MenuIcon />}
-        </button>
-        <div
-          className={`cx-store__footer-menu${menuOpen ? " is-open" : ""}`}
-          id="cx-store-footer-menu"
-        >
-          {groups.map((group) => (
-            <FooterColumn
-              title={group.title}
-              links={group.links.map((link) => [link.label, link.href])}
-              key={group.title}
-            />
-          ))}
         </div>
-      </div>
-      <div className="cx-store__footer-support">
-        <a href="/login">
-          <UserRoundIcon size={17} /> Customer portal
-        </a>
-        <a href="/support">
-          <HeadphonesIcon size={17} /> Support
-        </a>
-        <a
-          href={whatsappLink(
-            `Hello${branding?.brandName ? ` ${branding.brandName}` : ""}, I need help choosing a product.`,
-            branding?.primaryPhone
-          )}
-          rel="noreferrer"
-          target="_blank"
-        >
-          <MessageCircleIcon size={17} /> WhatsApp enquiry
-        </a>
-      </div>
-      <div className="cx-store__footer-bottom">
-        <span>
-          © {new Date().getFullYear()} {branding?.brandName ?? ""}
-          {navigation?.copyrightText ? `. ${navigation.copyrightText}` : ""}
-        </span>
-        {navigation?.poweredByText ? <span>{navigation.poweredByText}</span> : null}
-      </div>
-    </footer>
+        <div className="cx-store__footer-bottom">
+          <div className="cx-store__footer-legal">
+            <span>{copyrightText}</span>
+            <nav aria-label="Footer legal links">
+              <a href="/terms">Terms of Use Notice</a>
+              <a href="/privacy">Privacy Policy</a>
+              <a href="/cookies">Cookie Settings</a>
+            </nav>
+          </div>
+          <a
+            className="cx-store__footer-powered"
+            href="https://logicx.in"
+            rel="noreferrer"
+            target="_blank"
+          >
+            {poweredByText}
+          </a>
+        </div>
+      </footer>
+    </>
+  );
+}
+
+function StoreBenefitsBar() {
+  const benefits = [
+    {
+      description: "Delivery options confirmed for your location",
+      icon: TruckIcon,
+      title: "Dependable delivery"
+    },
+    {
+      description: "Clear guidance for eligible returns",
+      icon: RotateCcwIcon,
+      title: "Easy returns"
+    },
+    {
+      description: "Protected checkout and payment handling",
+      icon: CreditCardIcon,
+      title: "Secure payments"
+    },
+    {
+      description: "Local help for products, orders, and service",
+      icon: HeadphonesIcon,
+      title: "Customer support"
+    }
+  ];
+  return (
+    <aside className="cx-store__benefits-bar" aria-label="Store service benefits">
+      {benefits.map((benefit) => {
+        const Icon = benefit.icon;
+        return (
+          <div key={benefit.title}>
+            <Icon aria-hidden="true" />
+            <span>
+              <strong>{benefit.title}</strong>
+              <small>{benefit.description}</small>
+            </span>
+          </div>
+        );
+      })}
+    </aside>
   );
 }
 
@@ -734,7 +1037,6 @@ const defaultFooterGroups = [
   {
     title: "Help",
     links: [
-      { label: "Support", href: "/support" },
       { label: "Order help", href: "/order-help" },
       { label: "Shipping", href: "/shipping" },
       { label: "Returns", href: "/returns" }

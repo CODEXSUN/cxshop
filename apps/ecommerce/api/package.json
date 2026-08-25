@@ -1,6 +1,6 @@
 {
   "name": "@cxshop/ecommerce-api",
-  "version": "1.0.66",
+  "version": "1.0.68",
   "private": true,
   "type": "module",
   "exports": {
@@ -12,10 +12,11 @@
     "lint": "eslint src --ext .ts"
   },
   "dependencies": {
-    "@cxshop/framework": "^1.0.66",
+    "@cxshop/framework": "^1.0.68",
     "fastify": "^5.2.1",
     "kysely": "^0.29.0",
     "mysql2": "^3.22.3",
+    "sharp": "^0.35.3",
     "zod": "^4.4.3"
   }
 }

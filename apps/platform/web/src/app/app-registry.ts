@@ -14,6 +14,7 @@ import {
   MailIcon,
   MapPinnedIcon,
   PackageIcon,
+  PanelsTopLeftIcon,
   Settings2Icon,
   UsersIcon,
   ClipboardListIcon,
@@ -458,11 +459,6 @@ export function appMenuItemsFor(
             onSelect: () => onSelect("ecommerce.catalog.categories")
           },
           {
-            title: "Brands",
-            isActive: activePage === "ecommerce.catalog.brands",
-            onSelect: () => onSelect("ecommerce.catalog.brands")
-          },
-          {
             title: "Products",
             isActive: activePage === "ecommerce.catalog.products",
             onSelect: () => onSelect("ecommerce.catalog.products")
@@ -476,23 +472,27 @@ export function appMenuItemsFor(
             title: "Product Images",
             isActive: activePage === "ecommerce.catalog.images",
             onSelect: () => onSelect("ecommerce.catalog.images")
-          },
-          {
-            title: "Home Slider",
-            isActive: activePage === "ecommerce.catalog.home-slider",
-            onSelect: () => onSelect("ecommerce.catalog.home-slider")
-          },
-          {
-            title: "Promotion Cards",
-            isActive: activePage === "ecommerce.catalog.promotions",
-            onSelect: () => onSelect("ecommerce.catalog.promotions")
-          },
-          {
-            title: "Featured Cards",
-            isActive: activePage === "ecommerce.catalog.featured-cards",
-            onSelect: () => onSelect("ecommerce.catalog.featured-cards")
           }
         ]
+      },
+      {
+        icon: PanelsTopLeftIcon,
+        isActive: activePage.startsWith("ecommerce.storefront-ux"),
+        title: "StoreFront UX",
+        items: ([
+          ["Home Slider", "home-slider"],
+          ["Trusted Strip", "trusted-strip"],
+          ["Promotion Cards", "promotion-cards"],
+          ["Brands Strip", "brands-strip"],
+          ["Featured Cards", "featured-cards"],
+          ["Season Strip", "season-strip"],
+          ["Campaign Events", "campaign-events"],
+          ["Service Banner", "service-banner"]
+        ] as const).map(([title, page]) => ({
+          title,
+          isActive: activePage === `ecommerce.storefront-ux.${page}`,
+          onSelect: () => onSelect(`ecommerce.storefront-ux.${page}`)
+        }))
       },
       {
         icon: Settings2Icon,

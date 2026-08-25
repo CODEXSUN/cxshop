@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { ArrowLeftIcon, ArrowRightIcon } from "lucide-react";
 import {
   getStorefrontAnnouncement,
+  getStorefrontBootstrap,
   getStorefrontBranding,
   getStorefrontDiscovery,
   getStorefrontProduct,
@@ -14,17 +15,13 @@ import {
 } from "./storefront.services";
 import {
   BackToTopButton,
-  BrandsSection,
-  BlogSolutionsSection,
   CatalogFilters,
-  HeroSlider,
-  HomeClosingCta,
-  TechMediaTrustSection,
+  CollectionFilter,
   ProductCard,
-  PromotionsSection,
-  FeaturedCardsSection,
   StoreFooter
 } from "./storefront.components";
+import { StorefrontHomeSections } from "./storefront.home-sections";
+import { CampaignsCollection, resolveStorefrontCampaigns } from "./storefront.campaigns";
 import { StoreHeader } from "./storefront.navigation";
 import type {
   StorefrontAnnouncement,
@@ -39,11 +36,17 @@ import type {
   StorefrontPromotion
 } from "./storefront.types";
 import type { StorefrontFeaturedCard } from "./storefront.types";
-import { hasStorefrontPrice, money, whatsappLink } from "./storefront.formatters";
+import {
+  hasStorefrontPrice,
+  money,
+  responsiveImageSrcSet,
+  whatsappLink
+} from "./storefront.formatters";
 import "./storefront.css";
 import { PikoStoreAssistant } from "./storefront.assistant";
 import { addStorefrontCartItem } from "./storefront.cart";
 import { createProductStructuredData, setStorefrontSeo } from "./storefront.seo";
+import { observeStorefrontVitals } from "./storefront.performance";
 import { StorefrontCartPage } from "./storefront.cart.page";
 import { useStorefrontCatalog } from "./storefront.catalog";
 
@@ -54,6 +57,7 @@ const emptyDiscovery: StorefrontDiscovery = {
 };
 
 export function StorefrontPage() {
+  useEffect(() => observeStorefrontVitals(), []);
   const path = window.location.pathname;
   const productSlug = path.startsWith("/shop/product/") ? decodeURIComponent(path.slice(14)) : "";
   const category = path.startsWith("/shop/category/") ? decodeURIComponent(path.slice(15)) : "";
@@ -61,6 +65,8 @@ export function StorefrontPage() {
     <ProductPage slug={productSlug} />
   ) : path === "/cart" ? (
     <StorefrontCartPage />
+  ) : path === "/campaigns" ? (
+    <CampaignsPage />
   ) : path === "/search" || category ? (
     <CatalogPage category={category} searchPage />
   ) : (
@@ -71,6 +77,59 @@ export function StorefrontPage() {
       {page}
       <PikoStoreAssistant />
     </>
+  );
+}
+
+function CampaignsPage() {
+  const [campaignEvents, setCampaignEvents] = useState<StorefrontPromotion[]>([]);
+  const [campaigns, setCampaigns] = useState<StorefrontPromotion[]>([]);
+  const [campaignCards, setCampaignCards] = useState<StorefrontFeaturedCard[]>([]);
+  const [campaignSlides, setCampaignSlides] = useState<StorefrontSlider[]>([]);
+  const [discovery, setDiscovery] = useState<StorefrontDiscovery>(emptyDiscovery);
+  const [siteNavigation, setSiteNavigation] = useState<StorefrontSiteNavigation | null>(null);
+  const [announcement, setAnnouncement] = useState<StorefrontAnnouncement | null>(null);
+  const [branding, setBranding] = useState<StorefrontBranding | null>(null);
+
+  useEffect(() => {
+    void loadOptional(
+      getStorefrontBootstrap().then((value) => value.campaignEvents),
+      setCampaignEvents
+    );
+    void loadOptional(getStorefrontPromotions(), setCampaigns);
+    void loadOptional(getStorefrontFeaturedCards(), setCampaignCards);
+    void loadOptional(getStorefrontSliders(), setCampaignSlides);
+    void loadOptional(getStorefrontDiscovery(), setDiscovery);
+    void loadOptional(getStorefrontSiteNavigation(), setSiteNavigation);
+    void loadOptional(getStorefrontAnnouncement(), setAnnouncement);
+    void loadOptional(getStorefrontBranding(), setBranding);
+  }, []);
+  useEffect(() => {
+    setStorefrontSeo({
+      description:
+        "Explore active Tech Media campaigns, events, launches, seasonal offers, and customer programmes in Tiruppur.",
+      path: "/campaigns",
+      title: `Campaigns and Events | ${branding?.brandName || "Tech Media"}`
+    });
+  }, [branding?.brandName]);
+
+  return (
+    <div className="cx-store">
+      <StoreHeader
+        announcement={announcement}
+        branding={branding}
+        discovery={discovery}
+        filters={defaultFilters("", "")}
+      />
+      <CampaignsCollection
+        campaigns={
+          campaignEvents.length
+            ? campaignEvents
+            : resolveStorefrontCampaigns(campaigns, campaignCards, campaignSlides)
+        }
+      />
+      <BackToTopButton />
+      <StoreFooter branding={branding} navigation={siteNavigation} />
+    </div>
   );
 }
 
@@ -90,16 +149,31 @@ function CatalogPage({ category, searchPage = false }: { category: string; searc
   const [slides, setSlides] = useState<StorefrontSlider[]>([]);
   const [promotions, setPromotions] = useState<StorefrontPromotion[]>([]);
   const [featuredCards, setFeaturedCards] = useState<StorefrontFeaturedCard[]>([]);
+  const [brandStrips, setBrandStrips] = useState<StorefrontDiscovery["brands"]>([]);
+  const [seasonStrips, setSeasonStrips] = useState<StorefrontPromotion[]>([]);
+  const [campaignEvents, setCampaignEvents] = useState<StorefrontPromotion[]>([]);
+  const [contentReady, setContentReady] = useState(false);
 
   useEffect(() => {
-    getStorefrontDiscovery().then(setDiscovery);
-    getStorefrontSiteNavigation().then(setSiteNavigation);
-    getStorefrontAnnouncement().then(setAnnouncement);
-    getStorefrontBranding().then(setBranding);
-    if (!searchPage) getStorefrontSliders().then(setSlides);
-    if (!searchPage) getStorefrontPromotions().then(setPromotions);
-    if (!searchPage) getStorefrontFeaturedCards().then(setFeaturedCards);
-    if (!searchPage) listLatestBlogPosts().then((items) => setBlogPosts(items.slice(0, 3)));
+    let active = true;
+    void loadCatalogPageContent(searchPage).then((content) => {
+      if (!active) return;
+      setDiscovery(content.discovery);
+      setSiteNavigation(content.siteNavigation);
+      setAnnouncement(content.announcement);
+      setBranding(content.branding);
+      setSlides(content.slides);
+      setPromotions(content.promotions);
+      setFeaturedCards(content.featuredCards);
+      setBrandStrips(content.brandStrips);
+      setSeasonStrips(content.seasonStrips);
+      setCampaignEvents(content.campaignEvents);
+      setBlogPosts(content.blogPosts);
+      setContentReady(true);
+    });
+    return () => {
+      active = false;
+    };
   }, [searchPage]);
   useEffect(() => {
     if (!branding?.brandName) return;
@@ -128,6 +202,61 @@ function CatalogPage({ category, searchPage = false }: { category: string; searc
     return () => observer.disconnect();
   }, [hasMore, loadMore]);
 
+  const catalogSection = (
+    <section className="cx-store__catalog" id="catalog">
+      <div className="cx-store__section-title">
+        <div>
+          <span>{searchPage ? "Search and filter" : "The complete collection"}</span>
+          <h2>
+            {loading
+              ? "Loading products…"
+              : searchPage
+                ? "Find products that match what you need"
+                : "Technology for work, life, and everything in between"}
+          </h2>
+        </div>
+        {searchPage ? (
+          <button onClick={() => setFilters(defaultFilters("", ""))}>Clear all</button>
+        ) : null}
+      </div>
+      {!searchPage ? (
+        <CollectionFilter
+          categories={discovery.categories}
+          filters={filters}
+          onFilters={setFilters}
+        />
+      ) : null}
+      <div className={searchPage ? "cx-store__catalog-layout" : "cx-store__catalog-full"}>
+        {searchPage ? (
+          <CatalogFilters discovery={discovery} filters={filters} onFilters={setFilters} />
+        ) : null}
+        <div>
+          <div className="cx-store__grid">
+            {loading ? <ProductSkeletons count={8} /> : null}
+            {products.map((item, index) => (
+              <ProductCard
+                brandName={branding?.brandName}
+                eagerImage={index < 4}
+                key={item.slug}
+                product={item}
+                whatsappNumber={branding?.primaryPhone}
+              />
+            ))}
+            {loadingMore ? <ProductSkeletons count={4} /> : null}
+          </div>
+          <div ref={loadMoreMarker} className="cx-store__load-marker" aria-hidden="true" />
+          {!loading && products.length === 0 ? (
+            <p className="cx-store__empty">{error || "No products match this selection."}</p>
+          ) : null}
+        </div>
+      </div>
+    </section>
+  );
+
+  if (!contentReady) {
+    return <div className="cx-store cx-store--initializing" aria-busy="true" />;
+  }
+
   return (
     <div className="cx-store">
       <StoreHeader
@@ -137,55 +266,23 @@ function CatalogPage({ category, searchPage = false }: { category: string; searc
         filters={filters}
       />
       <main className={searchPage ? "cx-store__search-main" : undefined}>
-        {!searchPage ? <HeroSlider slides={slides} /> : null}
-        {!searchPage ? <TechMediaTrustSection /> : null}
-        {!searchPage ? <PromotionsSection promotions={promotions} /> : null}
-        {!searchPage ? <BrandsSection brands={discovery.brands} /> : null}
-        {!searchPage ? <FeaturedCardsSection cards={featuredCards} /> : null}
-        <section className="cx-store__catalog" id="catalog">
-          <div className="cx-store__section-title">
-            <div>
-              <span>{searchPage ? "Search and filter" : "The complete collection"}</span>
-              <h2>
-                {loading
-                  ? "Loading products…"
-                  : searchPage
-                    ? "Find products that match what you need"
-                    : "Technology for work, life, and everything in between"}
-              </h2>
-            </div>
-            {searchPage ? (
-              <button onClick={() => setFilters(defaultFilters("", ""))}>Clear all</button>
-            ) : null}
-          </div>
-          <div className={searchPage ? "cx-store__catalog-layout" : "cx-store__catalog-full"}>
-            {searchPage ? (
-              <CatalogFilters discovery={discovery} filters={filters} onFilters={setFilters} />
-            ) : null}
-            <div>
-              <div className="cx-store__grid">
-                {loading ? <ProductSkeletons count={8} /> : null}
-                {products.map((item) => (
-                  <ProductCard
-                    brandName={branding?.brandName}
-                    key={item.slug}
-                    product={item}
-                    whatsappNumber={branding?.primaryPhone}
-                  />
-                ))}
-                {loadingMore ? <ProductSkeletons count={4} /> : null}
-              </div>
-              <div ref={loadMoreMarker} className="cx-store__load-marker" aria-hidden="true" />
-              {!loading && products.length === 0 ? (
-                <p className="cx-store__empty">{error || "No products match this selection."}</p>
-              ) : null}
-            </div>
-          </div>
-        </section>
-        {!searchPage ? (
-          <BlogSolutionsSection brandName={branding?.brandName} posts={blogPosts} />
-        ) : null}
-        {!searchPage ? <HomeClosingCta /> : null}
+        {searchPage ? (
+          catalogSection
+        ) : (
+          <StorefrontHomeSections
+            blogPosts={blogPosts}
+            brandName={branding?.brandName}
+            brands={discovery.brands}
+            brandStrips={brandStrips}
+            campaignEvents={campaignEvents}
+            catalog={catalogSection}
+            featuredCards={featuredCards}
+            promotions={promotions}
+            seasonStrips={seasonStrips}
+            siteNavigation={siteNavigation}
+            slides={slides}
+          />
+        )}
       </main>
       <BackToTopButton />
       <StoreFooter branding={branding} navigation={siteNavigation} />
@@ -237,7 +334,10 @@ function ProductPage({ slug }: { slug: string }) {
   }, []);
   useEffect(() => {
     if (!product) return;
-    const description = product.shortDescription || product.description || `${product.name} from Tech Media, Tiruppur.`;
+    const description =
+      product.shortDescription ||
+      product.description ||
+      `${product.name} from Tech Media, Tiruppur.`;
     setStorefrontSeo({
       description,
       path: `/shop/product/${encodeURIComponent(product.slug)}`,
@@ -296,7 +396,14 @@ function ProductPage({ slug }: { slug: string }) {
           <ArrowLeftIcon aria-hidden="true" /> Back
         </button>
         <div className="cx-detail__image">
-          <img src={product.imageUrl} alt={product.imageAlt} />
+          <img
+            src={product.imageUrl}
+            alt={product.imageAlt}
+            height={900}
+            sizes="(max-width: 900px) 100vw, 50vw"
+            srcSet={responsiveImageSrcSet(product.imageUrl, [480, 768, 960, 1200])}
+            width={900}
+          />
         </div>
         <div className="cx-detail__copy">
           {product.category ? (
@@ -422,5 +529,50 @@ function defaultFilters(category: string, search: string): StorefrontFilters {
     scope: "all",
     search,
     sort: "featured"
+  };
+}
+
+async function loadOptional<T>(request: Promise<T>, apply: (value: T) => void) {
+  try {
+    apply(await request);
+  } catch {
+    // Optional storefront regions fail independently so the primary catalog remains usable.
+  }
+}
+
+async function loadCatalogPageContent(searchPage: boolean) {
+  const optional = <T,>(request: Promise<T>, fallback: T) => request.catch(() => fallback);
+  const [bootstrap, branding, blogPosts] = await Promise.all([
+    optional(getStorefrontBootstrap(), {
+      announcement: null,
+      brandStrips: [],
+      campaignEvents: [],
+      discovery: emptyDiscovery,
+      featuredCards: [],
+      promotions: [],
+      seasonStrips: [],
+      siteNavigation: null,
+      sliders: []
+    }),
+    optional(getStorefrontBranding(), null),
+    searchPage
+      ? Promise.resolve([])
+      : optional(
+          listLatestBlogPosts().then((items) => items.slice(0, 3)),
+          []
+        )
+  ]);
+  return {
+    announcement: bootstrap.announcement,
+    blogPosts,
+    branding,
+    discovery: bootstrap.discovery,
+    brandStrips: searchPage ? [] : bootstrap.brandStrips,
+    campaignEvents: searchPage ? [] : bootstrap.campaignEvents,
+    featuredCards: searchPage ? [] : bootstrap.featuredCards,
+    promotions: searchPage ? [] : bootstrap.promotions,
+    seasonStrips: searchPage ? [] : bootstrap.seasonStrips,
+    siteNavigation: bootstrap.siteNavigation,
+    slides: searchPage ? [] : bootstrap.sliders
   };
 }

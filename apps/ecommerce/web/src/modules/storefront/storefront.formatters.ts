@@ -10,6 +10,11 @@ export function hasStorefrontPrice(value: number | null | undefined) {
   return typeof value === "number" && Number.isFinite(value) && value > 0;
 }
 
+export function responsiveImageSrcSet(source: string, widths: number[]) {
+  if (!source.startsWith("/api/platform/storefront/")) return undefined;
+  return widths.map((width) => `${source}?width=${width}&format=webp ${width}w`).join(", ");
+}
+
 export function whatsappLink(message: string, phone?: string | null) {
   const recipient = whatsappNumber(phone);
   return `https://wa.me/${recipient}?text=${encodeURIComponent(message)}`;

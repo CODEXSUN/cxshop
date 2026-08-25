@@ -1,4 +1,5 @@
 import type { FastifyInstance } from "fastify";
+import sharp from "sharp";
 import { z } from "zod";
 import { AppError } from "@cxshop/framework/errors";
 import { registerContractRoute } from "@cxshop/framework/http";
@@ -122,8 +123,28 @@ export async function registerProductImagePublicRoutes(app: FastifyInstance) {
   const storage = new ProductImageStorage();
   app.get("/storefront/product-images/:fileName", async (request, reply) => {
     const { fileName } = z.object({ fileName: z.string().min(1).max(255) }).parse(request.params);
+    const options = z
+      .object({
+        format: z.enum(["avif", "webp"]).default("webp"),
+        width: z.coerce.number().int().min(160).max(1600).optional()
+      })
+      .parse(request.query);
     const image = await storage.content(fileName);
-    return reply.header("Cache-Control", "public, max-age=86400").type(image.mime).send(image.body);
+    if (!options.width) {
+      return reply
+        .header("Cache-Control", "public, max-age=31536000, immutable")
+        .type(image.mime)
+        .send(image.body);
+    }
+    const body = await sharp(image.body)
+      .rotate()
+      .resize({ width: options.width, withoutEnlargement: true })
+      .toFormat(options.format, { quality: 82 })
+      .toBuffer();
+    return reply
+      .header("Cache-Control", "public, max-age=31536000, immutable")
+      .type(`image/${options.format}`)
+      .send(body);
   });
 }
 function required<T>(v: T | null) {
