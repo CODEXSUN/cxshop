@@ -85,7 +85,14 @@ const siteNavigation = z
       })
     ),
     paymentMethods: z.array(
-      z.object({ logoUrl: z.union([z.literal(""), z.string().url()]), name: z.string() })
+      z.object({
+        logoUrl: z.union([
+          z.literal(""),
+          z.string().url(),
+          z.string().startsWith("/api/platform/storefront/product-images/")
+        ]),
+        name: z.string()
+      })
     ),
     poweredByText: z.string(),
     serviceBanner: z.object({

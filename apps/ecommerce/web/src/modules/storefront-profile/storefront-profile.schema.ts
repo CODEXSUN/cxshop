@@ -2,7 +2,8 @@ import { z } from "zod";
 
 const optionalUrl = z.union([
   z.literal(""),
-  z.string().url("Enter a complete https:// link.").max(500)
+  z.string().url("Enter a complete https:// link.").max(500),
+  z.string().startsWith("/api/platform/storefront/product-images/").max(500)
 ]);
 export const storefrontProfileSchema = z.object({
   aboutUs: z.string().max(2000),

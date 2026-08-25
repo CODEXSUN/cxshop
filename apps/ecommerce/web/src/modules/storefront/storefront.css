@@ -1403,7 +1403,7 @@
 }
 .cx-store__campaign-card > span {
   aspect-ratio: 16 / 10;
-  background: #eceef1;
+  background: #fff;
   display: block;
   overflow: hidden;
   position: relative;

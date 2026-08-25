@@ -1,7 +1,7 @@
-import { Button } from "@cxshop/ui/components/button";
 import { Input } from "@cxshop/ui/components/input";
 import { Label } from "@cxshop/ui/components/label";
 import { Textarea } from "@cxshop/ui/components/textarea";
+import { StorefrontPaymentMethodsEditor } from "./storefront-profile.payment-methods";
 import type { StorefrontProfile } from "./storefront-profile.types";
 
 export function StorefrontProfileForm({
@@ -88,7 +88,7 @@ export function StorefrontProfileForm({
           />
         </Field>
       </div>
-      <PaymentMethodsEditor value={value} onChange={onChange} />
+      <StorefrontPaymentMethodsEditor value={value} onChange={onChange} />
       <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
         <Field label="Facebook">
           <Input inputMode="url" placeholder="https://facebook.com/..." {...field("facebookUrl")} />
@@ -121,99 +121,6 @@ export function StorefrontProfileForm({
         </Field>
       </div>
     </div>
-  );
-}
-
-function PaymentMethodsEditor({
-  value,
-  onChange
-}: {
-  value: StorefrontProfile;
-  onChange: (value: StorefrontProfile) => void;
-}) {
-  const update = (index: number, key: "logoUrl" | "name", fieldValue: string) => {
-    const paymentMethods = value.paymentMethods.map((method, methodIndex) =>
-      methodIndex === index ? { ...method, [key]: fieldValue } : method
-    );
-    onChange({ ...value, paymentMethods });
-  };
-  return (
-    <section className="grid gap-3" aria-labelledby="storefront-payment-methods-heading">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div className="grid gap-1">
-          <Label id="storefront-payment-methods-heading">Supported payment types</Label>
-          <p className="text-sm text-muted-foreground">
-            Add the name and logo shown in the storefront footer. Row order is preserved.
-          </p>
-        </div>
-        <Button
-          disabled={value.paymentMethods.length >= 12}
-          onClick={() =>
-            onChange({
-              ...value,
-              paymentMethods: [...value.paymentMethods, { logoUrl: "", name: "" }]
-            })
-          }
-          size="sm"
-          type="button"
-          variant="outline"
-        >
-          Add payment type
-        </Button>
-      </div>
-      <div className="grid gap-3">
-        {value.paymentMethods.map((method, index) => (
-          <div
-            className="grid items-end gap-3 rounded-md border p-3 md:grid-cols-[72px_minmax(160px,0.7fr)_minmax(240px,1.3fr)_auto]"
-            key={index}
-          >
-            <div className="flex h-11 w-[72px] items-center justify-center overflow-hidden rounded-md border bg-white p-2">
-              {method.logoUrl ? (
-                <img
-                  alt={`${method.name || "Payment method"} logo preview`}
-                  className="max-h-full max-w-full object-contain"
-                  src={method.logoUrl}
-                />
-              ) : (
-                <span className="text-xs text-slate-500">Logo</span>
-              )}
-            </div>
-            <Field label="Name">
-              <Input
-                maxLength={80}
-                onChange={(event) => update(index, "name", event.target.value)}
-                placeholder="VISA"
-                value={method.name}
-              />
-            </Field>
-            <Field label="Logo URL">
-              <Input
-                inputMode="url"
-                maxLength={500}
-                onChange={(event) => update(index, "logoUrl", event.target.value)}
-                placeholder="https://example.com/visa.svg"
-                value={method.logoUrl}
-              />
-            </Field>
-            <Button
-              aria-label={`Remove ${method.name || "payment type"}`}
-              onClick={() =>
-                onChange({
-                  ...value,
-                  paymentMethods: value.paymentMethods.filter(
-                    (_, methodIndex) => methodIndex !== index
-                  )
-                })
-              }
-              type="button"
-              variant="outline"
-            >
-              Remove
-            </Button>
-          </div>
-        ))}
-      </div>
-    </section>
   );
 }
 

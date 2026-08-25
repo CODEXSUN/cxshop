@@ -12,7 +12,11 @@ const profileSchema = z.object({
   paymentMethods: z
     .array(
       z.object({
-        logoUrl: z.union([z.literal(""), z.string().url().max(500)]),
+        logoUrl: z.union([
+          z.literal(""),
+          z.string().url().max(500),
+          z.string().startsWith("/api/platform/storefront/product-images/").max(500)
+        ]),
         name: z.string().trim().min(1).max(80)
       })
     )

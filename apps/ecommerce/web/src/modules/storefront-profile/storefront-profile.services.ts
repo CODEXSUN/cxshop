@@ -21,3 +21,17 @@ async function request(options: RequestInit = {}) {
 export const getStorefrontProfile = () => request();
 export const saveStorefrontProfile = (input: StorefrontProfile) =>
   request({ body: JSON.stringify(input), method: "PUT" });
+
+export async function uploadStorefrontProfileImage(fileName: string, contentBase64: string) {
+  const response = await fetch("/api/platform/ecommerce/catalog/images/upload", {
+    body: JSON.stringify({ contentBase64, fileName }),
+    credentials: "same-origin",
+    headers: { Accept: "application/json", "Content-Type": "application/json" },
+    method: "POST"
+  });
+  const body = (await response.json()) as Envelope<{ imageUrl: string; sizeBytes: number }>;
+  if (!response.ok || !body.success) {
+    throw new Error(body.success ? "The image upload failed." : body.error.message);
+  }
+  return body.data;
+}

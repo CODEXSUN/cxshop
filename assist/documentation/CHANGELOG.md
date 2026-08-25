@@ -2,11 +2,11 @@
 
 ## Version State
 
-Current version: 1.0.71
+Current version: 1.0.72
 
-Release tag: v-1.0.71
+Release tag: v-1.0.72
 
-Changelog label: v 1.0.71
+Changelog label: v 1.0.72
 
 This changelog starts fresh from the cleaned CODEXSUN foundation. Earlier copied application history was intentionally removed because it did not represent the current workspace.
 
@@ -26,6 +26,19 @@ New entries should keep database-facing work and application code work separate.
 - Added section enable and disable switches beside the Frappe pull action for Home Slider, Promotion Cards, Featured Cards, and Season Strips.
 - Removed the Promotion Cards fallback from `storefront.home.season`.
 - Connected footer payment types to Storefront Profile, including ordered back-office editing, logo previews, public API data, and responsive storefront rendering.
+- Changed Campaigns and Events image surfaces from gray to white while keeping contained image fitting and card behavior.
+
+## v-1.0.72
+
+### [v 1.0.72] 2026-08-25 6:54 pm - fixing storefront
+
+#### Database Changes
+
+- Database update: Yes (auto-check).
+
+#### App Codebase Changes
+
+- Bumped workspace version to 1.0.72.
 
 ## v-1.0.71
 
