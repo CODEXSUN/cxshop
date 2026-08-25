@@ -2,11 +2,11 @@
 
 ## Version State
 
-Current version: 1.0.68
+Current version: 1.0.69
 
-Release tag: v-1.0.68
+Release tag: v-1.0.69
 
-Changelog label: v 1.0.68
+Changelog label: v 1.0.69
 
 This changelog starts fresh from the cleaned CODEXSUN foundation. Earlier copied application history was intentionally removed because it did not represent the current workspace.
 
@@ -21,6 +21,18 @@ Records schema, migration, seed, tenant provisioning, and data compatibility cha
 ### App Codebase Changes
 
 Records UI, API, service logic, tooling, packaging, and documentation changes.
+
+## v-1.0.69
+
+### [v 1.0.69] 2026-08-25 2:04 pm - update npm packages
+
+#### Database Changes
+
+- Database update: No (auto-check).
+
+#### App Codebase Changes
+
+- Bumped workspace version to 1.0.69.
 
 ## v-1.0.68
 

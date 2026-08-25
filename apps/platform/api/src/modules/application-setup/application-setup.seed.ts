@@ -67,5 +67,5 @@ async function bootstrapStandaloneApplicationDatabase(enabledModuleKeys: string[
 }
 
 function stableUuid(value: string) {
-  return createHash("sha256").update(value).digest("hex").slice(0, 16);
+  return createHash("sha256").update(value).digest("hex").slice(0, 8);
 }

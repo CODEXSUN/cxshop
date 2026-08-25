@@ -376,12 +376,9 @@ export function WorkspaceEditor({
 
   function setBackgroundColor(color: string) {
     if (color === "reset") {
-      activeEditor
-        .chain()
-        .focus()
-        .setMark("textStyle", { backgroundColor: null })
-        .removeEmptyTextStyle()
-        .run();
+      runRemoveEmptyTextStyle(
+        activeEditor.chain().focus().setMark("textStyle", { backgroundColor: null })
+      );
       return;
     }
 
@@ -584,16 +581,16 @@ export function WorkspaceEditor({
             />
             <ToolbarDivider />
             <EditorIconButton
-              disabled={!activeEditor.can().chain().focus().undo().run()}
+              disabled={!runHistoryCommand(activeEditor.can().chain().focus(), "undo")}
               label="Undo"
-              onClick={() => activeEditor.chain().focus().undo().run()}
+              onClick={() => runHistoryCommand(activeEditor.chain().focus(), "undo")}
             >
               <Undo2 className="size-4" />
             </EditorIconButton>
             <EditorIconButton
-              disabled={!activeEditor.can().chain().focus().redo().run()}
+              disabled={!runHistoryCommand(activeEditor.can().chain().focus(), "redo")}
               label="Redo"
-              onClick={() => activeEditor.chain().focus().redo().run()}
+              onClick={() => runHistoryCommand(activeEditor.chain().focus(), "redo")}
             >
               <Redo2 className="size-4" />
             </EditorIconButton>
@@ -784,4 +781,17 @@ function ColorMenu({
 
 function ToolbarDivider() {
   return <span className="mx-1 h-5 w-px bg-border" />;
+}
+
+function runHistoryCommand(
+  commands: object,
+  command: "undo" | "redo"
+) {
+  const historyCommands = commands as Record<"undo" | "redo", () => { run(): boolean }>;
+  return historyCommands[command]().run();
+}
+
+function runRemoveEmptyTextStyle(commands: object) {
+  const textStyleCommands = commands as { removeEmptyTextStyle(): { run(): boolean } };
+  return textStyleCommands.removeEmptyTextStyle().run();
 }

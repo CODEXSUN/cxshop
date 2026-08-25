@@ -66,15 +66,15 @@ export function WorkspaceMinimalEditor({
         <span className="mx-1 h-5 w-px bg-border/70" />
         <EditorButton
           label="Undo"
-          disabled={!editor.can().undo()}
-          onClick={() => editor.chain().focus().undo().run()}
+          disabled={!runHistoryCommand(editor.can(), "undo")}
+          onClick={() => runHistoryCommand(editor.chain().focus(), "undo")}
         >
           <Undo2 className="size-4" />
         </EditorButton>
         <EditorButton
           label="Redo"
-          disabled={!editor.can().redo()}
-          onClick={() => editor.chain().focus().redo().run()}
+          disabled={!runHistoryCommand(editor.can(), "redo")}
+          onClick={() => runHistoryCommand(editor.chain().focus(), "redo")}
         >
           <Redo2 className="size-4" />
         </EditorButton>
@@ -82,6 +82,15 @@ export function WorkspaceMinimalEditor({
       <EditorContent editor={editor} />
     </div>
   );
+}
+
+function runHistoryCommand(
+  commands: object,
+  command: "undo" | "redo"
+) {
+  const historyCommands = commands as Record<"undo" | "redo", () => boolean | { run(): boolean }>;
+  const result = historyCommands[command]();
+  return typeof result === "boolean" ? result : result.run();
 }
 
 function EditorButton({

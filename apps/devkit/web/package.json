@@ -1,6 +1,6 @@
 {
   "name": "@cxshop/devkit-web",
-  "version": "1.0.68",
+  "version": "1.0.69",
   "private": true,
   "type": "module",
   "exports": {
@@ -14,12 +14,12 @@
     "lint": "eslint src --ext .ts,.tsx"
   },
   "dependencies": {
-    "@cxshop/ui": "^1.0.68",
-    "@tanstack/react-query": "^5.100.10",
+    "@cxshop/ui": "^1.0.69",
+    "@tanstack/react-query": "^5.102.3",
     "@tanstack/react-table": "^8.21.3",
-    "lucide-react": "^1.22.0",
-    "react": "^19.0.0",
-    "sonner": "^2.0.7",
+    "lucide-react": "^1.34.0",
+    "react": "^19.2.8",
+    "sonner": "^2.0.8",
     "zod": "^4.4.3"
   }
 }
