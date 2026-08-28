@@ -8,6 +8,7 @@ const landingApps = new Set([
   "billing",
   "blogs",
   "ecommerce",
+  "file-manager",
   "mail",
   "task-manager"
 ]);

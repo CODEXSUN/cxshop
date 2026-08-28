@@ -31,6 +31,7 @@ export default defineConfig(({ command, mode }) => {
       __APP_VERSION__: JSON.stringify(rootPackage.version)
     },
     optimizeDeps: {
+      exclude: ["@codexsun/blog/web", "@codexsun/file-manager/web"],
       include: ["react-is"]
     },
     plugins: [tailwindcss(), react()],
@@ -53,6 +54,7 @@ function platformDevelopmentServer(runtimeEnv: Record<string, string | undefined
       requireEnvValue(runtimeEnv.PLATFORM_WEB_ORIGIN, "PLATFORM_WEB_ORIGIN")
     ),
     headers: {
+      "Cache-Control": "no-store",
       "Permissions-Policy": "unload=*"
     },
     host: platformRuntime.webBindHost,

@@ -25,6 +25,7 @@ const seeds = [
   "role-permission.assign",
   "role-permission.update",
   "role-permission.remove",
+  "blog.manage",
   "honey.access",
   "task-manager.access"
 ].map((key) => ({
@@ -35,7 +36,11 @@ const seeds = [
         ? "Allows access to the Piko AI assistant."
         : undefined,
   key:
-    key === "task-manager.access" ? "platform.task-manager.access" : `platform.application.${key}`,
+    key === "blog.manage"
+      ? key
+      : key === "task-manager.access"
+        ? "platform.task-manager.access"
+        : `platform.application.${key}`,
   label: key
     .split(".")
     .map((x) => x.replace("-", " "))

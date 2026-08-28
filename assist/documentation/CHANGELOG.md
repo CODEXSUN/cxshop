@@ -22,6 +22,15 @@ New entries should keep database-facing work and application code work separate.
 
 ### App Codebase Changes
 
+- Replaced the Git-based Blog dependency with the compiled `@codexsun/blog` version 1.0.14 npm package.
+- Added the compiled `@codexsun/file-manager` version 1.1.4 npm package.
+- Added File Manager files and storage connections to the Application desk.
+- Connected Blog image browsing and uploads to managed File Manager media.
+- Added the CXShop host adapter, shared database migrations, and authenticated storage scope.
+- Registered the Blog add-on's protected `blog.manage` permission and assigned it through the application administrator role seed.
+- Allowed anonymous reads only for managed file content URLs so published Blog images render publicly while File Manager browsing and mutations remain authenticated.
+- Added the corrected compiled web ESM contract from the Blog patch release.
+- Removed the production requirement for GitHub SSH access and Blog source compilation during CXShop installation.
 - Separated Season Strip reads, administration, Frappe synchronization, and storefront rendering from Promotion Cards.
 - Added section enable and disable switches beside the Frappe pull action for Home Slider, Promotion Cards, Featured Cards, and Season Strips.
 - Removed the Promotion Cards fallback from `storefront.home.season`.

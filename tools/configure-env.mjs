@@ -170,7 +170,7 @@ if (!checkOnly) {
   current.set("FILE_MANAGER_DB_NAME", current.get("DB_MASTER_NAME") ?? "");
   current.set(
     "FILE_MANAGER_LOCAL_ROOT",
-    deployment ? "/storage/app/file-manager" : "storage/app/file-manager"
+    deployment ? "/storage" : "storage"
   );
   if (isMissing(current.get("FILE_MANAGER_ENCRYPTION_KEY"))) {
     current.set("FILE_MANAGER_ENCRYPTION_KEY", randomBytes(32).toString("hex"));

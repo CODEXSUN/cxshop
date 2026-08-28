@@ -16,6 +16,17 @@ export const defaultTenantModuleKeys = [
 
 export const platformAppRegistry: PlatformAppDefinition[] = [
   {
+    alwaysEnabled: true,
+    defaultLanding: false,
+    description: "Managed files, uploads, storage connections, and application media settings.",
+    appId: "file-manager",
+    id: 0,
+    label: "File Manager",
+    moduleKey: "platform.file-manager",
+    stack: "platform",
+    uuid: ""
+  },
+  {
     alwaysEnabled: false,
     defaultLanding: false,
     description: "MDX publishing, SEO pages, taxonomy, discussions, reviews, and engagement.",

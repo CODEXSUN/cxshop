@@ -58,9 +58,21 @@ import type { BlogsEditorHost } from "@codexsun/blog/web";
 
 const blogEditorHost: BlogsEditorHost = {
   listAuthors: async () => [],
-  listImages: async () => [],
-  uploadImage: async () => {
-    throw new Error("Blog media uploads are unavailable until storage integration is enabled.");
+  listImages: async () => {
+    const fileManager = await loadFileManagerModule();
+    return (await fileManager.listFilesInArea("public", "blog"))
+      .filter((file) => file.mimeType.startsWith("image/"))
+      .map(({ mimeType, name, url, uuid }) => ({ mimeType, name, url, uuid }));
+  },
+  uploadImage: async (file) => {
+    const fileManager = await loadFileManagerModule();
+    const uploaded = await fileManager.uploadFileToArea(file, "public", "blog");
+    return {
+      mimeType: uploaded.mimeType,
+      name: uploaded.name,
+      url: fileManager.resolveFileManagerUrl(uploaded.url),
+      uuid: uploaded.uuid
+    };
   }
 };
 
@@ -90,6 +102,11 @@ const loadFeaturedCardModule = () => import("@cxshop/ecommerce-web/modules/featu
 const loadSeasonStripModule = () => import("@cxshop/ecommerce-web/modules/season-strip");
 const loadBlogsEditorModule = () => import("@codexsun/blog/web");
 const loadCloudPublishingModule = () => import("../../modules/blog-cloud-publishing");
+const loadFileManagerModule = () =>
+  import("@codexsun/file-manager/web").then((module) => {
+    module.configureFileManagerClient({ baseUrl: "/api/platform/file-manager" });
+    return module;
+  });
 
 const billingWorkspacePreloaders = [
   loadBillingDashboardModule,
@@ -140,6 +157,21 @@ const BlogsEditorWorkspace = lazyWorkspace(() =>
 );
 const CloudPublishingWorkspace = lazyWorkspace(() =>
   loadCloudPublishingModule().then((module) => module.CloudPublishingWorkspace)
+);
+const FileBrowserWorkspace = lazyWorkspace(() =>
+  loadFileManagerModule().then((module) => module.FileBrowserWorkspace)
+);
+const StorageConnectionsWorkspace = lazyWorkspace(() =>
+  loadFileManagerModule().then((module) => module.StorageConnectionsWorkspace)
+);
+const FileManagerOverviewWorkspace = lazyWorkspace(() =>
+  loadFileManagerModule().then((module) => module.FileManagerOverviewWorkspace)
+);
+const FileManagerUploadsWorkspace = lazyWorkspace(() =>
+  loadFileManagerModule().then((module) => module.FileManagerUploadsWorkspace)
+);
+const FileManagerSettingsWorkspace = lazyWorkspace(() =>
+  loadFileManagerModule().then((module) => module.FileManagerSettingsWorkspace)
 );
 const AddressTypesWorkspace = lazyWorkspace(() =>
   import("@cxshop/core-web/modules/common/contacts/address-types").then(
@@ -385,6 +417,11 @@ type AppPage =
   | "application.profile"
   | "application.settings"
   | "application.connections.production"
+  | "file-manager.overview"
+  | "file-manager.files"
+  | "file-manager.uploads"
+  | "file-manager.connections"
+  | "file-manager.settings"
   | "application.access.users"
   | "application.access.roles"
   | "application.access.permissions"
@@ -674,8 +711,10 @@ export function AppDesk() {
       ? "Billing"
       : activeApp === "ecommerce"
         ? "Ecommerce"
-        : activeApp === "blogs"
-          ? "Blogs"
+          : activeApp === "blogs"
+            ? "Blogs"
+            : activeApp === "file-manager"
+              ? "File Manager"
           : activeApp === "mail"
             ? "Mail"
             : activeApp === "task-manager"
@@ -699,6 +738,8 @@ export function AppDesk() {
               ? "ecommerce.overview"
               : item.title === "Blogs"
                 ? "blogs.editor"
+                : item.title === "File Manager"
+                  ? "file-manager.overview"
                 : item.title === "Mail"
                   ? "mail.inbox"
                   : "task-manager.overview"
@@ -712,6 +753,8 @@ export function AppDesk() {
             ? "/admin/ecommerce/overview"
             : item.title === "Blogs"
               ? "/admin/blogs/editor"
+              : item.title === "File Manager"
+                ? "/admin/file-manager/overview"
               : item.title === "Mail"
                 ? "/admin/mail/inbox"
                 : "/admin/task-manager/overview"
@@ -765,6 +808,8 @@ export function AppDesk() {
           href:
             activeApp === "billing"
               ? "/admin/billing/overview"
+              : activeApp === "file-manager"
+                ? "/admin/file-manager/overview"
               : activeApp === "mail"
                 ? "/admin/mail/inbox"
                 : activeApp === "task-manager"
@@ -832,6 +877,13 @@ export function AppDesk() {
             {safePage === "application.connections.production" ? (
               <CloudPublishingWorkspace view="connection" />
             ) : null}
+            {safePage === "file-manager.overview" ? <FileManagerOverviewWorkspace /> : null}
+            {safePage === "file-manager.files" ? <FileBrowserWorkspace /> : null}
+            {safePage === "file-manager.uploads" ? <FileManagerUploadsWorkspace /> : null}
+            {safePage === "file-manager.connections" ? (
+              <StorageConnectionsWorkspace />
+            ) : null}
+            {safePage === "file-manager.settings" ? <FileManagerSettingsWorkspace /> : null}
             {safePage === "devkit.honey" ? (
               <DevkitWorkspaceHost initialPrompt={pikoDraft} workspaceId="honey" />
             ) : null}
@@ -986,6 +1038,11 @@ function pageFromUrl(landingApp: PlatformAppId | null): AppPage {
     key === "application.profile" ||
     key === "application.settings" ||
     key === "application.connections.production" ||
+    key === "file-manager.overview" ||
+    key === "file-manager.files" ||
+    key === "file-manager.uploads" ||
+    key === "file-manager.connections" ||
+    key === "file-manager.settings" ||
     key === "application.access.users" ||
     key === "application.access.roles" ||
     key === "application.access.permissions" ||
@@ -1501,6 +1558,11 @@ function titleForPage(page: AppPage) {
     "application.profile": "Application Profile",
     "application.settings": "Application Settings",
     "application.connections.production": "Production Site Connection",
+    "file-manager.overview": "File Manager",
+    "file-manager.files": "Files",
+    "file-manager.uploads": "Uploads",
+    "file-manager.connections": "Storage Connections",
+    "file-manager.settings": "Settings",
     "application.access.users": "Users",
     "application.access.roles": "Roles",
     "application.access.permissions": "Permissions",
@@ -1637,6 +1699,7 @@ function appFromPage(
   if (page.startsWith("ecommerce"))
     return enabledApps.includes("ecommerce") ? "ecommerce" : landingApp;
   if (page.startsWith("blogs")) return enabledApps.includes("blogs") ? "blogs" : landingApp;
+  if (page.startsWith("file-manager")) return "file-manager";
   if (page.startsWith("task-manager"))
     return enabledApps.includes("task-manager") ? "task-manager" : landingApp;
   if (page.startsWith("devkit.honey")) return "application";
@@ -1663,6 +1726,7 @@ function pageForApp(app: PlatformAppId): AppPage {
   if (app === "mail") return "mail.inbox";
   if (app === "ecommerce") return "ecommerce.overview";
   if (app === "blogs") return "blogs.editor";
+  if (app === "file-manager") return "file-manager.overview";
   return app === "billing" ? "billing.overview" : "application.overview";
 }
 

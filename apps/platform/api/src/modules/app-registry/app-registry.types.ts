@@ -1,5 +1,5 @@
 export type PlatformAppId =
-  "application" | "billing" | "blogs" | "devkit" | "ecommerce" | "mail" | "task-manager";
+  "application" | "billing" | "blogs" | "devkit" | "ecommerce" | "file-manager" | "mail" | "task-manager";
 
 export type PlatformAppDefinition = {
   alwaysEnabled: boolean;

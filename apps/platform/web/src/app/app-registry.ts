@@ -8,6 +8,7 @@ import {
   Clock3Icon,
   CreditCardIcon,
   FileTextIcon,
+  FolderOpenIcon,
   Globe2Icon,
   InboxIcon,
   LandmarkIcon,
@@ -24,12 +25,13 @@ import {
   SendIcon,
   ShieldCheckIcon,
   Trash2Icon,
+  UploadCloudIcon,
   type LucideIcon
 } from "lucide-react";
 import type { SidemenuItem } from "@cxshop/ui/blocks/menu/sidemenu/sub/sidemenu-section";
 
 export type PlatformAppId =
-  "application" | "billing" | "blogs" | "devkit" | "ecommerce" | "mail" | "task-manager";
+  "application" | "billing" | "blogs" | "devkit" | "ecommerce" | "file-manager" | "mail" | "task-manager";
 
 export type BillingNavigationFeatures = {
   exportSales: boolean;
@@ -59,6 +61,17 @@ export const defaultTenantModuleKeys = [
 ] as const;
 
 export const platformAppRegistry: PlatformAppDefinition[] = [
+  {
+    accentClass: "bg-teal-700",
+    alwaysEnabled: true,
+    defaultLanding: false,
+    description: "Managed files, uploads, storage connections, and application media settings.",
+    icon: FolderOpenIcon,
+    id: "file-manager",
+    label: "File Manager",
+    moduleKey: "platform.file-manager",
+    stack: "platform"
+  },
   {
     accentClass: "bg-amber-700",
     alwaysEnabled: false,
@@ -413,6 +426,20 @@ export function appMenuItemsFor(
   onSelect: (page: string) => void,
   billingFeatures?: BillingNavigationFeatures
 ): SidemenuItem[] {
+  if (appId === "file-manager") {
+    return [
+      { icon: CircleGaugeIcon, isActive: activePage === "file-manager.overview", onSelect: () => onSelect("file-manager.overview"), title: "Overview" },
+      { icon: FolderOpenIcon, isActive: activePage === "file-manager.files", onSelect: () => onSelect("file-manager.files"), title: "Files" },
+      { icon: UploadCloudIcon, isActive: activePage === "file-manager.uploads", onSelect: () => onSelect("file-manager.uploads"), title: "Uploads" },
+      {
+        icon: ArchiveIcon,
+        isActive: activePage === "file-manager.connections",
+        onSelect: () => onSelect("file-manager.connections"),
+        title: "Storage Connections"
+      },
+      { icon: Settings2Icon, isActive: activePage === "file-manager.settings", onSelect: () => onSelect("file-manager.settings"), title: "Settings" }
+    ];
+  }
   if (appId === "blogs") {
     return [
       {
@@ -880,6 +907,7 @@ export const applicationPageIcons = {
   application: Building2Icon,
   billing: CreditCardIcon,
   ecommerce: ShoppingBagIcon,
+  fileManager: FolderOpenIcon,
   mail: MailIcon,
   taskManager: ClipboardListIcon
 };

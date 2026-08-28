@@ -9,7 +9,8 @@
     "lint": "eslint src --ext .ts,.tsx"
   },
   "dependencies": {
-    "@codexsun/blog": "github:CODEXSUN/blog#v-1.0.12",
+    "@codexsun/blog": "*",
+    "@codexsun/file-manager": "*",
     "@cxshop/billing-web": "^1.0.72",
     "@cxshop/core-web": "^1.0.72",
     "@cxshop/devkit-web": "^1.0.72",

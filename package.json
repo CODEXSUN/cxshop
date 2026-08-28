@@ -107,12 +107,14 @@
     "npm": ">=12.0.1"
   },
   "dependencies": {
-    "@codexsun/blog": "github:CODEXSUN/blog#v-1.0.12",
+    "@codexsun/blog": "file:../blog",
+    "@codexsun/file-manager": "file:../file-manager",
     "@tiptap/core": "^2.27.2",
     "@tiptap/pm": "^2.27.2"
   },
   "allowScripts": {
     "@codexsun/blog": true,
+    "@codexsun/file-manager": true,
     "esbuild": true
   }
 }

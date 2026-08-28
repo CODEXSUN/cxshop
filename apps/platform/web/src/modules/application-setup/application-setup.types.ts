@@ -3,7 +3,7 @@ export type ApplicationSetupRuntime = {
     applicationCode: string;
     applicationName: string;
     databaseName: string;
-    defaultLandingApp: "application" | "billing" | "blogs" | "ecommerce" | "mail" | "task-manager";
+    defaultLandingApp: "application" | "billing" | "blogs" | "ecommerce" | "file-manager" | "mail" | "task-manager";
     enabledModuleKeys: string[];
     id: number;
     status: "active" | "inactive";
@@ -14,10 +14,10 @@ export type ApplicationSetupRuntime = {
     defaultLanding: boolean;
     description: string;
     enabled: boolean;
-    id: "application" | "billing" | "blogs" | "ecommerce" | "mail" | "task-manager";
+    id: "application" | "billing" | "blogs" | "ecommerce" | "file-manager" | "mail" | "task-manager";
     label: string;
     moduleKey: string;
     stack: string;
   }>;
-  defaultLandingApp: "application" | "billing" | "blogs" | "ecommerce" | "mail" | "task-manager";
+  defaultLandingApp: "application" | "billing" | "blogs" | "ecommerce" | "file-manager" | "mail" | "task-manager";
 };

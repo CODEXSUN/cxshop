@@ -10,7 +10,8 @@
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1117.0",
-    "@codexsun/blog": "github:CODEXSUN/blog#v-1.0.12",
+    "@codexsun/blog": "*",
+    "@codexsun/file-manager": "*",
     "@cxshop/billing-api": "^1.0.72",
     "@cxshop/core-api": "^1.0.72",
     "@cxshop/devkit-api": "^1.0.72",

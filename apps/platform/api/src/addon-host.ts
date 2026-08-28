@@ -22,6 +22,13 @@ import { runMigrationBatch } from "@cxshop/framework/db";
 import { applicationAccessContext } from "./auth/application-access-context.js";
 import { getPlatformDatabase } from "./database/platform-database.js";
 import { env } from "./env.js";
+import {
+  closeFileManagerDatabase,
+  fileManagerApiModuleKeys,
+  fileManagerPluginManifest,
+  registerFileManagerApi,
+  resolveFileManagerContext
+} from "./file-manager-host.js";
 
 type BlogDependencies = {
   enqueue: CloudPublishingQueuePort;
@@ -46,7 +53,12 @@ const registry = new AddonHostRegistry({
   runtimeMode: "single-client"
 });
 
-export const addonApiModuleKeys = [...blogsApiModuleKeys, cloudPublishingModuleKey] as const;
+const blogAddonModuleKeys = [...blogsApiModuleKeys, cloudPublishingModuleKey] as const;
+
+export const addonApiModuleKeys = [
+  ...blogAddonModuleKeys,
+  ...fileManagerApiModuleKeys
+] as const;
 
 export async function registerBlogAddon(app: FastifyInstance, dependencies: BlogDependencies) {
   try {
@@ -63,11 +75,25 @@ export async function registerBlogAddon(app: FastifyInstance, dependencies: Blog
       close: closeCloudPublishingDatabase,
       databaseMode: "host-database",
       manifest: blogManifest,
-      moduleKeys: addonApiModuleKeys
+      moduleKeys: blogAddonModuleKeys
     });
   } catch (error) {
     await closeAfterActivationFailure(error);
   }
+}
+
+export async function registerFileManagerAddon(app: FastifyInstance) {
+  await registry.register({
+    activate: async () => {
+      await registerFileManagerApi(app, {
+        resolveContext: resolveFileManagerContext
+      });
+    },
+    close: closeFileManagerDatabase,
+    databaseMode: "shared-host",
+    manifest: fileManagerManifest,
+    moduleKeys: fileManagerApiModuleKeys
+  });
 }
 
 export function activePlatformAddons() {
@@ -145,4 +171,9 @@ async function closeAfterActivationFailure(activationError: unknown): Promise<ne
 const blogManifest: AddonManifest = {
   ...blogPluginManifest,
   packages: { ...blogPluginManifest.packages }
+};
+
+const fileManagerManifest: AddonManifest = {
+  ...fileManagerPluginManifest,
+  packages: { ...fileManagerPluginManifest.packages }
 };

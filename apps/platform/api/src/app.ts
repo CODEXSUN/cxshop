@@ -52,7 +52,8 @@ import {
   activePlatformAddons,
   addonApiModuleKeys,
   closePlatformAddons,
-  registerBlogAddon
+  registerBlogAddon,
+  registerFileManagerAddon
 } from "./addon-host.js";
 
 export async function createApp() {
@@ -202,6 +203,8 @@ export async function createApp() {
     resolveActorEmail: (request) => request.authContext?.payload.email ?? "application-admin"
   });
   console.info("[platform.routes] Blogs package ready");
+  await registerFileManagerAddon(app);
+  console.info("[platform.routes] File Manager package ready");
   await registerModules(
     [
       appRegistryModule,

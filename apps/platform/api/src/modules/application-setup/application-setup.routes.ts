@@ -10,6 +10,7 @@ const appId = z.enum([
   "blogs",
   "devkit",
   "ecommerce",
+  "file-manager",
   "mail",
   "task-manager"
 ]);

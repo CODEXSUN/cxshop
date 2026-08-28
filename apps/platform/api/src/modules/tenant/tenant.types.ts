@@ -10,7 +10,7 @@ export type Tenant = {
   dbUser: string;
   enabledModuleKeys: string[];
   defaultLandingApp:
-    "application" | "billing" | "blogs" | "devkit" | "ecommerce" | "mail" | "task-manager";
+    "application" | "billing" | "blogs" | "devkit" | "ecommerce" | "file-manager" | "mail" | "task-manager";
   id: number;
   mobile: string | null;
   payloadSettings: Record<string, unknown>;
